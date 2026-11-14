@@ -13,6 +13,9 @@ extends CharacterBody3D
 @export var turn_speed := 12.0
 @export var pitch_min := -1.2
 @export var pitch_max := 0.7
+@export var wade_factor := 0.7    # speed multiplier while wading
+@export var swim_speed := 3.0
+@export var swim_kick := 4.5
 
 const COYOTE_TIME := 0.12
 const JUMP_BUFFER := 0.12
@@ -37,6 +40,13 @@ var _air_time := 0.0
 var _land_left := 0.0
 ## Set while in deep water (Phase 14 drives this).
 var swimming := false
+## "none" / "wade" / "swim", from the deepest WaterVolume around the feet.
+var water_state := "none"
+var water_surface := 0.0
+const SWIM_DEPTH := 1.45       # feet this far under the surface -> swim (chest-deep on a 2.1 m body)
+const UNSWIM_DEPTH := 1.25     # hysteresis back to wading
+const SWIM_FLOAT := 1.55       # feet held this far below the surface (head stays above)
+var _splash: GPUParticles3D
 ## Locked during cutscenes (summoning intro, secret reveal): movement/look input ignored.
 var input_locked := false
 ## Weave-in materials (per-instance copies so weave_progress is ours alone).
@@ -100,8 +110,14 @@ func _physics_process(delta: float) -> void:
 	dir = dir.normalized() * min(input.length(), 1.0)
 	sprinting = not input_locked and Input.is_action_pressed("sprint") and input.y < -0.3 and is_on_floor()
 
+	_update_water()
 	var on_floor := is_on_floor()
 	var speed := sprint_speed if sprinting else run_speed
+	if water_state == "wade":
+		speed *= wade_factor
+	elif water_state == "swim":
+		speed = swim_speed
+		sprinting = false
 	var target := dir * speed
 	var hvel := Vector3(velocity.x, 0.0, velocity.z)
 	var rate: float
@@ -120,6 +136,18 @@ func _physics_process(delta: float) -> void:
 	_jump_buffer = max(_jump_buffer - delta, 0.0)
 
 	var vy := velocity.y
+	if water_state == "swim":
+		# Buoyancy: hold the feet SWIM_FLOAT below the surface; Space kicks up (to climb banks).
+		hvel = Vector3(velocity.x, 0.0, velocity.z).move_toward(target, 8.0 * delta)
+		var target_y := water_surface - SWIM_FLOAT
+		vy = lerpf(vy, clampf((target_y - global_position.y) * 3.5, -3.0, 3.0), clampf(6.0 * delta, 0.0, 1.0))
+		if _jump_buffer > 0.0:
+			vy = swim_kick
+			_jump_buffer = 0.0
+		velocity = Vector3(hvel.x, vy, hvel.z)
+		move_and_slide()
+		_after_move(dir, delta)
+		return
 	if on_floor and vy < 0.0:
 		vy = 0.0
 	vy -= gravity * delta
@@ -133,7 +161,10 @@ func _physics_process(delta: float) -> void:
 
 	velocity = Vector3(hvel.x, vy, hvel.z)
 	move_and_slide()
+	_after_move(dir, delta)
 
+
+func _after_move(dir: Vector3, delta: float) -> void:
 	if dir.length() > 0.05:
 		var target_yaw := atan2(dir.x, dir.z)
 		model.rotation.y = lerp_angle(model.rotation.y, target_yaw, clamp(turn_speed * delta, 0.0, 1.0))
@@ -142,6 +173,62 @@ func _physics_process(delta: float) -> void:
 	if was_air and is_on_floor():
 		_squash = 0.12
 	_body_language(delta)
+
+
+func _update_water() -> void:
+	var feet := global_position
+	var best := -1.0
+	for w in get_tree().get_nodes_in_group("water"):
+		if w.contains(feet):
+			var d: float = w.surface_y - feet.y
+			if d > best:
+				best = d
+				water_surface = w.surface_y
+	if best < 0.12:
+		water_state = "none"
+	elif water_state == "swim":
+		water_state = "swim" if best > UNSWIM_DEPTH else "wade"
+	else:
+		water_state = "swim" if best > SWIM_DEPTH else "wade"
+	swimming = water_state == "swim"
+	_update_splash()
+
+
+func _update_splash() -> void:
+	if _splash == null:
+		_splash = GPUParticles3D.new()
+		_splash.name = "Splash"
+		_splash.amount = 40
+		_splash.lifetime = 0.6
+		_splash.local_coords = false
+		var pm := ParticleProcessMaterial.new()
+		pm.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_RING
+		pm.emission_ring_axis = Vector3.UP
+		pm.emission_ring_radius = 0.45
+		pm.emission_ring_inner_radius = 0.3
+		pm.emission_ring_height = 0.05
+		pm.direction = Vector3.UP
+		pm.spread = 35.0
+		pm.initial_velocity_min = 1.2
+		pm.initial_velocity_max = 2.6
+		pm.gravity = Vector3(0, -9.0, 0)
+		pm.scale_min = 0.5
+		pm.scale_max = 1.0
+		_splash.process_material = pm
+		var q := QuadMesh.new()
+		q.size = Vector2(0.12, 0.12)
+		var m := StandardMaterial3D.new()
+		m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		m.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
+		m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		m.albedo_color = Color(0.9, 0.98, 1.0, 0.8)
+		q.material = m
+		_splash.draw_pass_1 = q
+		add_child(_splash)
+	var moving := Vector2(velocity.x, velocity.z).length() > 0.8
+	_splash.emitting = water_state != "none" and moving
+	if water_state != "none":
+		_splash.position = Vector3(0, water_surface - global_position.y, 0)
 
 
 func _apply_look() -> void:
@@ -203,7 +290,9 @@ func _body_language(delta: float) -> void:
 	var target := Vector2(
 		clampf(accel.dot(fwd) * 0.012 + speed_k * 0.06, -0.15, 0.2),   # pitch: lean into acceleration/speed
 		clampf(-yaw_rate * speed_k * 0.09, -0.22, 0.22))                 # roll: bank into turns
-	if not is_on_floor() or swimming:
+	if swimming:
+		target = Vector2(0.55, 0.0)   # body stretched out forward in the water
+	elif not is_on_floor():
 		target = Vector2.ZERO
 	_lean = _lean.lerp(target, clampf(8.0 * delta, 0.0, 1.0))
 	model.rotation.x = _lean.x

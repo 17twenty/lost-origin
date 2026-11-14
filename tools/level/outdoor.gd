@@ -112,10 +112,31 @@ static func _water(out: Node3D) -> void:
 	im.set_shader_parameter("depth_scale", 7.0)  # stays turquoise: it's shallow
 	im.set_shader_parameter("shallow_color", Color(0.3, 0.95, 0.92))
 	im.set_shader_parameter("deep_color", Color(0.05, 0.5, 0.75))
-	im.set_shader_parameter("sparkle", 0.55)
+	im.set_shader_parameter("sparkle", 0.3)
 	(inlet.mesh as PlaneMesh).material = im
 	_water_plane(w, "PlungePool", Vector2(11, 11), Vector3(T.POOL_POS.x, -0.1, T.POOL_POS.y))
-	# The inlet is shallow: falling off the aqueduct is a splash, never a respawn.
+	# Water volumes: wading/swimming everywhere there is water; never a respawn.
+	_water_volume(w, "InletWater", Vector3(110, 5.0, 26), Vector3(0, T.WATER_Y - 2.5, T.CHASM_Z), T.WATER_Y)
+	_water_volume(w, "LagoonWater", Vector3(120, 6.0, 22), Vector3(0, T.WATER_Y - 3.0, 32), T.WATER_Y)
+	_water_volume(w, "PlungePoolWater", Vector3(11, 2.0, 11), Vector3(T.POOL_POS.x, -1.1, T.POOL_POS.y), -0.1)
+
+static func _water_volume(parent: Node3D, name: String, size: Vector3, pos: Vector3, surface_y: float) -> Area3D:
+	var a := Area3D.new()
+	a.name = name
+	a.set_script(load("res://scripts/water_volume.gd"))
+	a.set("surface_y", surface_y)
+	a.collision_layer = 0
+	a.collision_mask = 0
+	a.monitoring = false
+	a.position = pos
+	var cs := CollisionShape3D.new()
+	cs.name = "Col"
+	var bs := BoxShape3D.new()
+	bs.size = size
+	cs.shape = bs
+	a.add_child(cs)
+	parent.add_child(a)
+	return a
 
 static func _kill_zone(parent: Node3D, name: String, size: Vector3, pos: Vector3) -> Area3D:
 	var a := Area3D.new()
@@ -192,7 +213,7 @@ static func _bridge(out: Node3D) -> void:
 	var top := T.DECK_Y
 	var zc := (AQ_Z0 + AQ_Z1) * 0.5
 	var length := AQ_Z0 - AQ_Z1
-	var base := -2.6  # piers sink below the inlet floor
+	var base := -4.3  # piers sink below the deep channel floor
 	# Deck slab + arcade wall under it.
 	_csg_box(aq, Vector3(4.6, 0.8, length), Vector3(0, top - 0.4, zc))
 	_csg_box(aq, Vector3(2.4, 1.9, length), Vector3(0, top - 1.75, zc))  # arcade wall (arches cut below)
@@ -231,7 +252,7 @@ static func _bridge(out: Node3D) -> void:
 			child.set("material", pier_mat)
 	# Fallen chunks standing in the shallows.
 	var rubble := SceneUtil.add(out, Node3D.new(), "BridgeRubble")
-	for p in [Vector3(4.6, -1.0, -19.5), Vector3(-5.0, -1.2, -14.0), Vector3(6.5, -1.1, -24.0)]:
+	for p in [Vector3(4.6, -1.0, -24.5), Vector3(-5.0, -1.2, -12.5), Vector3(6.5, -1.1, -25.0)]:
 		var b := SceneUtil.box_body(Vector3(1.4, 1.2, 1.8), p, stone_mat, "Chunk")
 		b.rotation = Vector3(rng.randf_range(-0.4, 0.4), rng.randf() * TAU, rng.randf_range(-0.4, 0.4))
 		rubble.add_child(b)
@@ -331,6 +352,7 @@ static func _grotto(out: Node3D) -> void:
 	]:
 		pool.add_child(SceneUtil.box_body(r[0], r[1], stone_mat, "Rim"))
 	var pw := _water_plane(pool, "PoolWater", Vector2(9.4, 7.4), Vector3(0, floor_y + 0.16, -81.0))
+	_water_volume(pool, "GrottoPoolWater", Vector3(9.4, 1.0, 7.4), Vector3(0, floor_y - 0.3, -81.0), floor_y + 0.16)
 	var pwm: ShaderMaterial = water_mat.duplicate()
 	pwm.set_shader_parameter("shallow_color", Color(0.15, 0.7, 1.0))   # glowing grotto-pool blue (f01-02)
 	pwm.set_shader_parameter("deep_color", Color(0.05, 0.35, 0.9))
@@ -968,6 +990,8 @@ static func _markers(markers: Node3D, shots: Node3D) -> void:
 	beach.set_meta("player_pos", ground(-2, 12, 0.05))
 	var bridge := SceneUtil.marker(shots, "Shot_Bridge", Vector3(13, 2.0, -4.0), Vector3(0, 2.0, -22))
 	bridge.set_meta("player_pos", Vector3(0, T.DECK_Y + 0.05, -14))
+	var swim := SceneUtil.marker(shots, "Shot_Swim", Vector3(14.5, 1.6, -13.5), Vector3(10, -0.4, -18))
+	swim.set_meta("player_pos", Vector3(10.0, -1.9, -18.0))
 	var plateau := SceneUtil.marker(shots, "Shot_Plateau", Vector3(-6, 3.0, -36), Vector3(10, 4, -60))
 	plateau.set_meta("player_pos", ground(-1, -44, 0.05))
 	var lagoon := SceneUtil.marker(shots, "Shot_Lagoon", Vector3(-2.5, 2.3, 13), Vector3(12, 1.2, 30))

@@ -135,6 +135,7 @@ static func build(level: Node3D, markers: Node3D, shots: Node3D) -> void:
 	water.mesh = wm
 	water.position.y = 0.4
 	pool.add_child(water)
+	O._water_volume(pool, "GardenPoolWater", Vector3(POOL_APOTHEM * 1.9, 1.0, POOL_APOTHEM * 1.9), Vector3(0, -0.1, 0), F + 0.4)
 	var glowfloor := MeshInstance3D.new()
 	var gf := CylinderMesh.new()
 	gf.radial_segments = 8

@@ -29,22 +29,25 @@ func test_walk_beach_across_bridge_into_grotto() -> void:
 	await seconds(0.5)
 	check(p.is_on_floor(), "standing in the grotto")
 
-func test_jump_off_aqueduct_lands_in_shallows_no_respawn() -> void:
+func test_jump_off_aqueduct_lands_in_water_no_respawn() -> void:
 	await load_main()
 	var p := get_player()
-	p.global_position = Vector3(6.0, 4.0, -18.0)  # beside the deck, above the inlet
-	await seconds(2.0)
-	check(p.global_position.y < -0.2 and p.global_position.y > -2.6, "standing in the inlet shallows (y=%.2f)" % p.global_position.y)
-	check(abs(p.global_position.z + 18.0) < 1.5 and abs(p.global_position.x - 6.0) < 1.5, "not warped to a checkpoint (pos=%s)" % p.global_position)
-	check(p.is_on_floor(), "on the inlet floor")
+	p.global_position = Vector3(6.0, 5.0, -18.0)  # beside the deck, above the deep channel
+	var in_water_at := -1.0
+	for i in 120:
+		await tree.physics_frame
+		if p.water_state != "none" and in_water_at < 0.0:
+			in_water_at = i / 60.0
+	check(in_water_at >= 0.0 and in_water_at < 2.0, "in the water within 2 s (t=%.2f)" % in_water_at)
+	check(abs(p.global_position.z + 18.0) < 2.5 and abs(p.global_position.x - 6.0) < 2.5, "not warped to a checkpoint (pos=%s)" % p.global_position)
 
 func test_can_climb_out_of_inlet() -> void:
 	await load_main()
 	var p := get_player()
-	p.global_position = marker_pos("Zone_Inlet") + Vector3(0, 0.3, 0)
-	await seconds(0.5)
+	p.global_position = Vector3(7.0, -1.0, -18.0)
+	await seconds(1.0)
 	var ok := await walk_to(Vector3(7.0, 0, 2.0), 15.0)
-	check(ok and p.global_position.y > 0.0, "walked up the bank onto the beach (pos=%s)" % p.global_position)
+	check(ok and p.global_position.y > 0.0 and p.water_state == "none", "swam/waded out onto the beach within 15 s (pos=%s, %s)" % [p.global_position, p.water_state])
 
 func test_aqueduct_has_piers_in_water() -> void:
 	await load_main()
