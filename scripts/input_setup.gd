@@ -16,10 +16,18 @@ const KEYS := {
 	"jump": [KEY_SPACE],
 	"sprint": [KEY_SHIFT],
 	"interact": [KEY_E],
-	"ui_release_mouse": [KEY_ESCAPE],
+	"pause": [KEY_ESCAPE],
 }
 
+## Menus are keyboard-first: WASD also navigates (Enter/Space accept by default).
+const UI_EXTRA := {"ui_up": [KEY_W], "ui_down": [KEY_S], "ui_left": [KEY_A], "ui_right": [KEY_D]}
+
 func _enter_tree() -> void:
+	for action in UI_EXTRA:
+		for k in UI_EXTRA[action]:
+			var e := InputEventKey.new()
+			e.physical_keycode = k
+			InputMap.action_add_event(action, e)
 	for action in KEYS:
 		if not InputMap.has_action(action):
 			InputMap.add_action(action)

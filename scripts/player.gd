@@ -127,8 +127,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event is InputEventMouseButton and event.pressed:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-	elif event.is_action_pressed("ui_release_mouse"):
-		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	elif event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		look_input += event.relative * mouse_sensitivity * CameraSettings.sensitivity * Vector2(1.0, -1.0 if CameraSettings.invert_y else 1.0)
 		_manual(true)

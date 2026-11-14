@@ -25,6 +25,10 @@ func _initialize() -> void:
 	player.name = "Player"
 	root.add_child(player)
 	player.position = spawn_pos
+	var pause := CanvasLayer.new()
+	pause.name = "PauseMenu"
+	pause.set_script(load("res://scripts/ui/pause_menu.gd"))
+	root.add_child(pause)
 	var intro := Node.new()
 	intro.name = "SummonIntro"
 	intro.set_script(load("res://scripts/summon_intro.gd"))
