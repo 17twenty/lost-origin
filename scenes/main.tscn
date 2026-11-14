@@ -1,0 +1,56 @@
+[gd_scene format=3]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sgp6g"]
+sky_top_color = Color(0.18, 0.45, 0.95, 1)
+sky_horizon_color = Color(0.65, 0.85, 1, 1)
+
+[sub_resource type="Sky" id="Sky_o5qli"]
+sky_material = SubResource("ProceduralSkyMaterial_sgp6g")
+
+[sub_resource type="Environment" id="Environment_0wfyh"]
+background_mode = 2
+sky = SubResource("Sky_o5qli")
+ambient_light_source = 3
+tonemap_mode = 2
+glow_enabled = true
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_sugp2"]
+albedo_color = Color(0.93, 0.88, 0.72, 1)
+roughness = 0.8
+
+[sub_resource type="BoxMesh" id="BoxMesh_jyhfs"]
+material = SubResource("StandardMaterial3D_sugp2")
+size = Vector3(60, 1, 60)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_tbgi4"]
+size = Vector3(60, 1, 60)
+
+[node name="Main" type="Node3D" unique_id=1972212156]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=316935913]
+environment = SubResource("Environment_0wfyh")
+
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=1933956370]
+transform = Transform3D(0.81915206, 0.43938506, -0.36868784, 0, 0.64278764, 0.76604444, 0.57357645, -0.62750685, 0.5265408, 0, 0, 0)
+shadow_enabled = true
+
+[node name="Level" type="Node3D" parent="." unique_id=279428757]
+
+[node name="Ground" type="StaticBody3D" parent="Level" unique_id=428628580]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="Level/Ground" unique_id=422438392]
+mesh = SubResource("BoxMesh_jyhfs")
+
+[node name="Col" type="CollisionShape3D" parent="Level/Ground" unique_id=625004769]
+shape = SubResource("BoxShape3D_tbgi4")
+
+[node name="Markers" type="Node3D" parent="." unique_id=732024299]
+
+[node name="Spawn" type="Marker3D" parent="Markers" unique_id=1058732941]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+
+[node name="Shots" type="Node3D" parent="." unique_id=1735464544]
+
+[node name="Shot_Overview" type="Marker3D" parent="Shots" unique_id=132769578]
+transform = Transform3D(0.70710677, -0.30151135, 0.6396021, 0, 0.904534, 0.42640144, -0.70710677, -0.30151135, 0.6396021, 12, 8, 12)
