@@ -37,6 +37,12 @@ var _air_time := 0.0
 var _land_left := 0.0
 ## Set while in deep water (Phase 14 drives this).
 var swimming := false
+var motion: WickerMotion
+## Body language: lean into acceleration/turns, squash on landing.
+var _lean := Vector2.ZERO
+var _squash := 0.0
+var _prev_hvel := Vector3.ZERO
+var _prev_yaw := 0.0
 var sprinting := false
 var _coyote := 0.0
 var _jump_buffer := 0.0
@@ -47,6 +53,12 @@ var look_input := Vector2.ZERO
 
 func _ready() -> void:
 	WickerSkin.apply(model)
+	var sks := model.find_children("*", "Skeleton3D", true, false)
+	if sks.size() > 0:
+		motion = WickerMotion.new()
+		motion.name = "WickerMotion"
+		motion.body = self
+		sks[0].add_child(motion)
 	spring_arm.add_excluded_object(get_rid())
 	var ap: AnimationPlayer = anim_tree.get_node(anim_tree.anim_player)
 	for n in LOOPING:
@@ -110,7 +122,11 @@ func _physics_process(delta: float) -> void:
 	if dir.length() > 0.05:
 		var target_yaw := atan2(dir.x, dir.z)
 		model.rotation.y = lerp_angle(model.rotation.y, target_yaw, clamp(turn_speed * delta, 0.0, 1.0))
+	var was_air := _air_time > 0.35
 	_update_anim()
+	if was_air and is_on_floor():
+		_squash = 0.12
+	_body_language(delta)
 
 
 func _apply_look() -> void:
@@ -156,6 +172,27 @@ func _update_anim() -> void:
 	if next != "idle" and next != "look_around":
 		_idle_time = 0.0
 	_set_anim(next)
+
+
+func _body_language(delta: float) -> void:
+	var hv := Vector3(velocity.x, 0.0, velocity.z)
+	var accel := (hv - Vector3(_prev_hvel.x, 0.0, _prev_hvel.z)) / maxf(delta, 0.0001)
+	_prev_hvel = velocity
+	var fwd := Vector3(sin(model.rotation.y), 0.0, cos(model.rotation.y))
+	var yaw_rate := wrapf(model.rotation.y - _prev_yaw, -PI, PI) / maxf(delta, 0.0001)
+	_prev_yaw = model.rotation.y
+	var speed_k := clampf(hv.length() / sprint_speed, 0.0, 1.0)
+	var target := Vector2(
+		clampf(accel.dot(fwd) * 0.012 + speed_k * 0.06, -0.15, 0.2),   # pitch: lean into acceleration/speed
+		clampf(-yaw_rate * speed_k * 0.09, -0.22, 0.22))                 # roll: bank into turns
+	if not is_on_floor() or swimming:
+		target = Vector2.ZERO
+	_lean = _lean.lerp(target, clampf(8.0 * delta, 0.0, 1.0))
+	model.rotation.x = _lean.x
+	model.rotation.z = _lean.y
+	_squash = move_toward(_squash, 0.0, delta * 0.6)
+	var sq := sin(clampf(_squash / 0.12, 0.0, 1.0) * PI * 0.5) * _squash
+	model.scale = Vector3(1.0 + sq * 0.5, 1.0 - sq, 1.0 + sq * 0.5)
 
 
 func _set_anim(next: String) -> void:

@@ -19,7 +19,10 @@ void fragment() {
 	if (t.a < alpha_cut) {
 		discard;
 	}
-	ALBEDO = t.rgb * 1.25;
-	BACKLIGHT = t.rgb * 0.7;
+	ALBEDO = t.rgb * 1.15;
+	BACKLIGHT = t.rgb * 0.9;
+	RIM = 0.5;
+	RIM_TINT = 0.8;
+	EMISSION = t.rgb * 0.08;  // lift the self-shadowed inner cards so the mane never reads black
 	ROUGHNESS = 0.85;
 }

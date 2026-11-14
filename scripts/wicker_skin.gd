@@ -54,9 +54,9 @@ static func _straw_image() -> Image:
 	img.fill(Color(0, 0, 0, 0))
 	var r := RandomNumberGenerator.new()
 	r.seed = 21
-	for k in 70:
+	for k in 90:
 		var x := r.randf_range(10, 118)
-		var col := Color(0.55, 0.42, 0.24).lerp(Color(0.85, 0.72, 0.48), r.randf())
+		var col := Color(0.72, 0.58, 0.36).lerp(Color(0.96, 0.86, 0.62), r.randf())
 		var len := r.randf_range(150, 255)
 		var wob := r.randf_range(2, 9)
 		var ph := r.randf() * TAU

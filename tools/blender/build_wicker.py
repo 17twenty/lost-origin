@@ -72,6 +72,7 @@ L, R = 1, -1
 J = {  # joint positions (x, y, z); front is -Y
     "root": (0, 0, 0), "pelvis": (0, 0, 1.02), "waist": (0, 0.01, 1.2), "chest": (0, 0, 1.48),
     "neck": (0, 0.01, 1.76), "head": (0, 0.0, 1.88), "crown": (0, 0.01, HEIGHT),
+    "mane0": (0, 0.06, 2.04), "mane1": (0, 0.24, 1.86), "beard0": (0, -0.1, 1.9), "beard1": (0, -0.15, 1.72),
 }
 for s, sx in (("L", L), ("R", R)):
     J[f"clav.{s}"] = (sx * 0.08, 0, 1.68)
@@ -91,6 +92,8 @@ for s, sx in (("L", L), ("R", R)):
 BONES = {  # name: (head joint, tail joint, parent)
     "root": ("root", None, None), "hips": ("pelvis", "waist", "root"), "spine": ("waist", None, "hips"),
     "chest": (None, "neck", "spine"), "neck": ("neck", "head", "chest"), "head": ("head", "crown", "neck"),
+    # Secondary-motion bones: the straw mane and beard spring on these in Godot (wicker_motion.gd).
+    "mane": ("mane0", "mane1", "head"), "beard": ("beard0", "beard1", "head"),
 }
 for s in ("L", "R"):
     BONES[f"clavicle.{s}"] = (f"clav.{s}", f"shoulder.{s}", "chest")
@@ -151,33 +154,33 @@ def chain(ids):
 
 
 pelvis = sv((0, 0.01, 1.0), (0.225, 0.165))
-waist = sv((0, 0.015, 1.18), (0.205, 0.145))
+waist = sv((0, 0.015, 1.18), (0.19, 0.14))
 belly = sv((0, 0.0, 1.32), (0.235, 0.16))
 chest = sv((0, 0.0, 1.5), (0.31, 0.2))
 upper = sv((0, 0.01, 1.64), (0.34, 0.185))
 neck0 = sv((0, 0.015, 1.76), (0.105, 0.1))
 neck1 = sv((0, 0.01, 1.84), (0.09, 0.09))
-headc = sv((0, 0.0, 1.95), (0.112, 0.13))
-headt = sv((0, 0.01, 2.06), (0.085, 0.1))
+headc = sv((0, 0.0, 1.96), (0.125, 0.145))
+headt = sv((0, 0.01, 2.08), (0.098, 0.112))
 chain([pelvis, waist, belly, chest, upper, neck0, neck1, headc, headt])
 for s, sx in (("L", L), ("R", R)):
     clav = sv((sx * 0.21, 0.01, 1.66), (0.16, 0.145))
-    sho = sv((sx * 0.37, 0.01, 1.65), (0.14, 0.135))
-    bic = sv((sx * 0.44, 0.02, 1.51), (0.11, 0.115))
-    elb = sv((sx * 0.5, 0.03, 1.35), (0.078, 0.078))
-    fore = sv((sx * 0.53, 0.015, 1.22), (0.095, 0.085))
-    wri = sv((sx * 0.56, 0.0, 1.06), (0.058, 0.05))
-    hand = sv((sx * 0.578, -0.01, 0.97), (0.062, 0.032))
-    tip = sv((sx * 0.592, -0.02, 0.87), (0.042, 0.024))
+    sho = sv((sx * 0.37, 0.01, 1.65), (0.155, 0.15))
+    bic = sv((sx * 0.445, 0.02, 1.51), (0.125, 0.13))
+    elb = sv((sx * 0.5, 0.03, 1.35), (0.088, 0.088))
+    fore = sv((sx * 0.53, 0.015, 1.22), (0.108, 0.098))
+    wri = sv((sx * 0.56, 0.0, 1.06), (0.065, 0.056))
+    hand = sv((sx * 0.578, -0.01, 0.97), (0.07, 0.042))
+    tip = sv((sx * 0.592, -0.02, 0.87), (0.05, 0.032))
     EDGES.append((upper, clav))
     chain([clav, sho, bic, elb, fore, wri, hand, tip])
     th0 = sv((sx * 0.572, -0.035, 1.015), (0.026, 0.024))
     th1 = sv((sx * 0.582, -0.08, 0.955), (0.02, 0.018))
     chain([wri, th0, th1])
     hip = sv((sx * 0.125, 0.005, 0.98), (0.145, 0.14))
-    thi = sv((sx * 0.14, -0.01, 0.8), (0.13, 0.125))
+    thi = sv((sx * 0.14, -0.01, 0.8), (0.15, 0.14))
     kne = sv((sx * 0.15, -0.025, 0.58), (0.092, 0.09))
-    calf = sv((sx * 0.152, 0.015, 0.38), (0.105, 0.105))
+    calf = sv((sx * 0.152, 0.015, 0.38), (0.118, 0.12))
     ank = sv((sx * 0.155, 0.02, 0.13), (0.07, 0.07))
     heel = sv((sx * 0.157, -0.06, 0.07), (0.08, 0.055))
     toe = sv((sx * 0.162, -0.19, 0.045), (0.065, 0.038))
@@ -202,17 +205,62 @@ for o in scene.objects:
 bpy.context.view_layer.objects.active = body
 bpy.ops.object.modifier_apply(modifier="Skin")
 bpy.ops.object.modifier_apply(modifier="Sub")
+# --- Heroic anatomy: push the skin out along its normals with soft muscle blobs.
+# (centre, radius, amount); mirrored for L/R where x != 0. Front is -Y.
+MUSCLES = [
+    ((0.12, -0.16, 1.53), 0.12, 0.072),    # pecs
+    ((0.11, -0.12, 1.43), 0.08, -0.022),  # under-pec crease
+    ((0.37, -0.01, 1.63), 0.1, 0.063),    # delts
+    ((0.43, -0.07, 1.5), 0.07, 0.050),    # biceps
+    ((0.44, 0.07, 1.5), 0.07, 0.040),     # triceps
+    ((0.51, -0.04, 1.26), 0.075, 0.036),   # forearm flexors
+    ((0.2, 0.12, 1.53), 0.13, 0.054),      # lats / upper back
+    ((0.12, 0.05, 1.74), 0.08, 0.045),    # traps
+    ((0.16, -0.12, 0.84), 0.1, 0.063),    # quads
+    ((0.1, -0.1, 0.7), 0.06, 0.032),      # vastus medialis (teardrop)
+    ((0.1, 0.13, 0.96), 0.1, 0.054),       # glutes
+    ((0.16, 0.08, 0.42), 0.08, 0.058),    # calves
+    ((0.0, 0.17, 1.38), 0.06, -0.027),    # spine groove
+]
+for k in range(3):                         # six-pack rows
+    for sx in (-1, 1):
+        MUSCLES.append(((sx * 0.055, -0.15, 1.36 - k * 0.075), 0.045, 0.02))
+blobs = []
+for (c, r, a) in MUSCLES:
+    blobs.append((Vector(c), r, a))
+    if abs(c[0]) > 1e-4:
+        blobs.append((Vector((-c[0], c[1], c[2])), r, a))
+bm = bmesh.new()
+bm.from_mesh(body.data)
+bm.normal_update()
+for v in bm.verts:
+    push = 0.0
+    for c, r, a in blobs:
+        d2 = (v.co - c).length_squared
+        push += a * math.exp(-d2 / (r * r))
+    # V-taper: pinch the waist a touch.
+    if 1.1 < v.co.z < 1.3 and abs(v.co.x) < 0.3:
+        push -= 0.02 * (1.0 - abs(v.co.z - 1.2) / 0.1)
+    v.co += v.normal * push
+bm.to_mesh(body.data)
+bm.free()
 for m in MAT_ORDER:
     body.data.materials.append(MATS[m])
 for p in body.data.polygons:
-    p.material_index = 0
+    # Woven boots: the feet up to the ankle band take the tighter Band weave.
+    p.material_index = 1 if p.center.z < 0.17 else 0
     p.use_smooth = True
 
 # Automatic weights from the rig.
 for o in scene.objects:
     o.select_set(o in (body, rig))
 bpy.context.view_layer.objects.active = rig
+# Keep the spring bones out of the automatic skin weights (they only drive straw cards).
+for bn in ("mane", "beard"):
+    arm_data.bones[bn].use_deform = False
 bpy.ops.object.parent_set(type="ARMATURE_AUTO")
+for bn in ("mane", "beard"):
+    arm_data.bones[bn].use_deform = True
 
 # ------------------------------------------------------------------ shells
 parts = []
@@ -277,24 +325,30 @@ cod.scale = (0.075, 0.05, 0.095)
 apply_all(cod)
 rigid(cod, "hips", "Band")
 # Face: heavy brow and nose (woven), amber eyes.
-bpy.ops.mesh.primitive_cube_add(size=1.0, location=(0, -0.112, 2.0))
+bpy.ops.mesh.primitive_cube_add(size=1.0, location=(0, -0.127, 2.015))
 brow = bpy.context.active_object
-brow.scale = (0.16, 0.035, 0.03)
+brow.scale = (0.185, 0.04, 0.036)
 bv = brow.modifiers.new("b", "BEVEL")
 bv.width = 0.01
 bv.segments = 2
 apply_all(brow)
 rigid(brow, "head", "Wicker")
-bpy.ops.mesh.primitive_cone_add(vertices=8, radius1=0.026, radius2=0.008, depth=0.07, location=(0, -0.13, 1.955))
+bpy.ops.mesh.primitive_cone_add(vertices=8, radius1=0.03, radius2=0.009, depth=0.08, location=(0, -0.147, 1.965))
 nose = bpy.context.active_object
 nose.rotation_euler = (math.radians(-70), 0, 0)
 apply_all(nose)
 rigid(nose, "head", "Wicker")
 for sx in (L, R):
-    bpy.ops.mesh.primitive_uv_sphere_add(segments=8, ring_count=6, radius=0.011, location=(sx * 0.042, -0.108, 1.982))
+    bpy.ops.mesh.primitive_uv_sphere_add(segments=8, ring_count=6, radius=0.012, location=(sx * 0.047, -0.123, 1.995))
     eye = bpy.context.active_object
     apply_all(eye)
     rigid(eye, "head", "Eye")
+    # Woven cheekbones.
+    bpy.ops.mesh.primitive_uv_sphere_add(segments=10, ring_count=6, radius=1.0, location=(sx * 0.07, -0.118, 1.955))
+    cheek = bpy.context.active_object
+    cheek.scale = (0.035, 0.022, 0.025)
+    apply_all(cheek)
+    rigid(cheek, "head", "Wicker")
 
 # ------------------------------------------------------------- straw cards
 hb = bmesh.new()
@@ -324,35 +378,46 @@ def strand(base, direction, length, width):
             loop[hcol] = (v, 0, 0, 1)
 
 
-head_c = Vector((0, 0.01, 1.99))
+head_c = Vector((0, 0.01, 2.0))
 # Wild mane: whole skull above the ears, falling back and down with volume.
-for i in range(340):
+for i in range(440):
     th = random.uniform(0, math.tau)
     ph = random.uniform(0.0, 1.7)
     n = Vector((math.cos(th) * math.sin(ph), math.sin(th) * math.sin(ph), math.cos(ph)))
     if n.y < -0.5 and n.z < 0.8:
         continue  # keep the face clear
-    base = head_c + Vector((n.x * 0.11, n.y * 0.125, n.z * 0.105))
-    # Swept back and down, puffed outward; tufts at the crown stick up a little (windswept, like the turnaround).
-    d = n * 0.7 + Vector((0, 0.55, -0.55 if n.z < 0.6 else -0.15)) + Vector((random.uniform(-0.35, 0.35), random.uniform(-0.15, 0.3), random.uniform(-0.25, 0.35)))
-    strand(base, d, random.uniform(0.16, 0.32), random.uniform(0.07, 0.12))
+    base = head_c + Vector((n.x * 0.122, n.y * 0.138, n.z * 0.115))
+    # A big wild ball of straw around the skull (turnaround): strands radiate
+    # out in every direction, swept slightly back, crown tufts a little longer.
+    d = n + Vector((0, 0.25, -0.1)) + Vector((random.uniform(-0.3, 0.3), random.uniform(-0.2, 0.3), random.uniform(-0.2, 0.3)))
+    crown = n.z > 0.5
+    strand(base, d, random.uniform(0.13, 0.24) if crown else random.uniform(0.11, 0.2), random.uniform(0.07, 0.12))
+mane_me = bpy.data.meshes.new("WickerMane")
+hb.to_mesh(mane_me)
+hb.free()
+mane = bpy.data.objects.new("WickerMane", mane_me)
+col.objects.link(mane)
+rigid(mane, "mane", "Straw")
+hb = bmesh.new()
+hcol = hb.loops.layers.color.new("Col")
+huv = hb.loops.layers.uv.new("UVMap")
 # Beard and moustache: jaw and lower face, hanging down.
-for i in range(150):
+for i in range(170):
     th = random.uniform(-1.3, 1.3)
     zr = random.uniform(-0.09, -0.02)
-    base = Vector((math.sin(th) * 0.095, -math.cos(th) * 0.105, 1.95 + zr))
+    base = Vector((math.sin(th) * 0.106, -math.cos(th) * 0.118, 1.955 + zr))
     d = Vector((math.sin(th) * 0.3, -0.35, -1.0)) + Vector((random.uniform(-0.2, 0.2), random.uniform(-0.15, 0.15), 0))
     strand(base, d, random.uniform(0.09, 0.2), random.uniform(0.045, 0.075))
 for sx in (L, R):
     for i in range(10):
-        base = Vector((sx * random.uniform(0.0, 0.035), -0.128, 1.935))
+        base = Vector((sx * random.uniform(0.0, 0.04), -0.143, 1.94))
         strand(base, Vector((sx * 0.8, -0.3, -0.5)), random.uniform(0.04, 0.06), 0.025)
-hair_me = bpy.data.meshes.new("WickerHair")
+hair_me = bpy.data.meshes.new("WickerBeard")
 hb.to_mesh(hair_me)
 hb.free()
-hair = bpy.data.objects.new("WickerHair", hair_me)
+hair = bpy.data.objects.new("WickerBeard", hair_me)
 col.objects.link(hair)
-rigid(hair, "head", "Straw")
+rigid(hair, "beard", "Straw")
 
 # Join everything into the body (keeps vertex groups by name).
 for o in scene.objects:

@@ -23,8 +23,13 @@ void fragment() {
 	vec2 p = UV * density;
 	float colm = floor(p.x);
 	float row = floor(p.y);
-	float dir = mod(floor(colm / herring), 2.0) * 2.0 - 1.0;   // chevron flip
-	float twill = mod(row + dir * colm, 4.0);
+	// Chevron mirrored about the front midline (U = 0 faces forward on every
+	// region), so chest and limbs read as V-weaves like the turnaround; far from
+	// the midline the herringbone flips every `herring` columns.
+	float mid = step(abs(p.x), herring * 2.0);
+	float dir = mix(mod(floor(colm / herring), 2.0) * 2.0 - 1.0, sign(p.x + 0.001), mid);
+	float acol = mix(colm, floor(abs(p.x)), mid);
+	float twill = mod(row + dir * acol, 4.0);
 	bool along = twill < 2.0;                                   // strand runs along V (else along U)
 	float across = along ? fract(p.x) : fract(p.y);
 	float run = along ? fract(p.y) : fract(p.x);
@@ -33,6 +38,8 @@ void fragment() {
 	float tone = hash(vec2(id, along ? 1.0 : 2.0));
 	vec3 strand = mix(strand_dark, strand_light, 0.35 + 0.65 * tone);
 	strand *= 0.85 + 0.15 * sin(run * PI);                      // dips where it goes under
+	strand *= 0.92 + 0.08 * sin(run * 37.0 + tone * 20.0);      // fibre grain up close
+	strand += vec3(0.16, 0.12, 0.07) * pow(profile, 8.0);       // waxy sheen along each strand's crown
 	float gap = smoothstep(0.0, 0.22, profile);
 	vec3 col = mix(gap_color, strand, gap);
 	// Weave normal: tilt across the strand.
@@ -45,6 +52,10 @@ void fragment() {
 	SPECULAR = 0.35;
 	AO = mix(0.4, 1.0, gap);
 	AO_LIGHT_AFFECT = 0.5;
+	// Warm light bleeding through the thin rattan + a soft rim so he reads against foliage.
+	BACKLIGHT = vec3(0.45, 0.28, 0.1) * gap;
+	RIM = 0.35;
+	RIM_TINT = 0.7;
 	float edge = 1.0 - smoothstep(0.0, edge_width, weave_progress - order);
 	EMISSION = edge_color * edge * 4.0 * step(weave_progress, 0.999);
 }

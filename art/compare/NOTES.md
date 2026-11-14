@@ -40,3 +40,17 @@ Pairs: `./tools/compare_shots.sh` → `art/compare/<name>.png` (video left, game
 - **Atrium (f18):** glass column with fish, portholes onto the sea, glass ceiling, tube rail on the ring — matches; the column base glow is still hot.
 - **Control (f21):** glass panorama onto kelp/coral/fish, a row of console pods, floor grates — matches.
 
+
+## Quality-gap pass (Phase 13b)
+
+### Wicker Man — part 1 done
+- **Before:** tubular skin-modifier body, small head, mane rendered as a dark flat disc/fan, flat-lit weave, rigid straw, no body language.
+- **After:**
+  - **Anatomy:** a muscle displacement pass (pecs, delts, biceps/triceps, lats, traps, quads, teardrop, glutes, calves, six-pack, spine groove, V-taper) on thicker limbs and hands.
+  - **Face:** head ×1.12 with a heavier brow, nose and woven cheekbones.
+  - **Mane:** a round, fluffy ball of light straw (no disc).
+  - **Boots:** woven (tighter Band weave below the ankle band).
+  - **Weave shader:** a front-midline chevron on the chest and limbs, fibre grain, waxy strand sheen, warm backlight through the rattan, and a rim.
+  - **Straw:** lighter tones, translucency, rim, and an emission lift so inner cards don't go black.
+  - **Motion:** `mane`/`beard` spring bones driven by `WickerMotion` (a SkeletonModifier3D: lag behind head acceleration plus an idle breeze), chest breathing, the body leaning into acceleration and banking into turns, and a landing squash.
+- **Still different:** muscle definition is softer than the sculpted turnaround (a skin-modifier base can't reach that detail without a sculpt/normal bake); legs are straighter; the weave pattern is larger in scale than the design's.

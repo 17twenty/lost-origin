@@ -123,3 +123,27 @@ func test_oneshot_interact() -> void:
 	check_eq(player.anim_state, "interact", "interact one-shot plays")
 	await seconds(1.3)
 	check_eq(player.anim_state, "idle", "back to idle after the one-shot")
+
+func test_secondary_motion_and_body_language() -> void:
+	await _fixture()
+	check(player.motion != null and player.motion.get_skeleton() != null, "WickerMotion modifier on the skeleton")
+	Input.action_press("move_forward")
+	Input.action_press("sprint")
+	var max_spring := 0.0
+	var max_lean := 0.0
+	for i in 40:
+		await tree.physics_frame
+		max_spring = maxf(max_spring, absf(player.motion.spring.x) + absf(player.motion.spring.y))
+		max_lean = maxf(max_lean, player.model.rotation.x)
+	check(max_spring > 0.02, "mane/beard spring reacts to acceleration (%.3f)" % max_spring)
+	check(max_lean > 0.03, "body leans into acceleration (%.3f)" % max_lean)
+	Input.action_release("move_forward")
+	Input.action_release("sprint")
+	player.global_position = Vector3(0, 5, 3)
+	var squashed := false
+	for i in 120:
+		await tree.physics_frame
+		if player.model.scale.y < 0.97:
+			squashed = true
+			break
+	check(squashed, "landing squash")
