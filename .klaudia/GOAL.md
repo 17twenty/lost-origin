@@ -51,7 +51,7 @@ Build a small playable Godot 4.7 (`/Applications/Godot.app`) proof of concept ba
   - `tools/export_web.sh` installs or uses Godot 4.7.2 export templates (installed to `~/Library/Application Support/Godot/export_templates/4.7.2.stable/` **with the user's approval**, since it's outside the project), runs `Godot --headless --export-release Web build/web/index.html`, and prints the file sizes.
   - `tools/web_smoke.sh` serves `build/web` locally (e.g. `python3 -m http.server`) and uses headless Chrome (the browser tools or Playwright) to confirm that the page loads to the title screen within 30 s with no JS console errors, and that pressing Enter reaches the level. The game exposes `window.__lost_origin = {state, fps}` via `JavaScriptBridge` so the smoke test can read the state ("title" → "playing") and FPS.
   - Web FPS of at least 30 at 1280×720 in desktop Chrome with hardware GPU on this Mac (headless runs on software GL only check that it loads).
-- [ ] **Deployed at lost-origin.curiola.com:** a site block in `~/Sites/Caddyfile`, matching the existing static sites (**host change — ask the user via RequestHostChange first**):
+- [x] **Deployed at lost-origin.curiola.com:** a site block in `~/Sites/Caddyfile`, matching the existing static sites (**host change — ask the user via RequestHostChange first**):
   ```
   lost-origin.curiola.com:80 {
   	log {
@@ -170,8 +170,8 @@ All tests report PASS (exit code 0), there are at least 6 screenshots, there are
 - [x] Phase 16 — Secret switch: control-room lever with E prompt, reveal cutscene (camera to door, door opens, back to player), secret relic room, tests
 - [x] Phase 17 — Start page and menus: title scene with live fly-through, keyboard-navigable Start/Controls/Settings/Quit, persisted settings, Esc pause menu, fade transition, tests
 - [x] Phase 18 — Web export: Compatibility renderer path and quality presets, WebGL2-safe shaders, export preset and HTML shell, templates (user approval), `tools/export_web.sh`, `tools/web_smoke.sh`, size budget, web FPS of at least 30
-- [ ] Phase 19 — Deploy: Caddy site block for lost-origin.curiola.com (the user configures Caddy; we verify), reload, local and public curl checks, public smoke test
-- [ ] Phase 20 — Fidelity review & performance: compare all 7 pairs (desktop **and** web renders), write `art/compare/NOTES.md`, desktop FPS at least 50 and web at least 30, full Verify green
+- [x] Phase 19 — Deploy: Caddy site block for lost-origin.curiola.com (the user configures Caddy; we verify), reload, local and public curl checks, public smoke test
+- [ ] Phase 20 — Fidelity review & performance (full Verify run pending; see notes): compare all 7 pairs (desktop **and** web renders), write `art/compare/NOTES.md`, desktop FPS at least 50 and web at least 30, full Verify green
 
 ### Status summary (written when the goal loop paused, after commit `a854234`)
 **Verified state:** the working tree is clean. Last full run: `./tools/validate.sh` passed 74/74 tests with no SCRIPT/SHADER errors in the log. Phases 1–17 (plus 8b, 13b, 13c) are done.
@@ -224,21 +224,38 @@ All tests report PASS (exit code 0), there are at least 6 screenshots, there are
 - **Compat renders:** `capture_screenshot.gd` prefixes `web_` when run with `--rendering-method gl_compatibility` (`art/screens/web_ref_*.png`), reviewed: close to desktop.
 - **Tests:** 74/74.
 
-**Phase 20 work done ahead of the deploy (deploy is blocked on the user's Caddy config):**
-- **Benchmark (uncontended, editor closed):** avg 98.3 / 101.0, min 94.2 / 95.2 → **performance criterion ticked**.
-- **Compares:** `WEB=1 ./tools/compare_shots.sh` adds `art/compare/web_<name>.png` (Compatibility renders). The final desktop + web review table is in `art/compare/NOTES.md` → **fidelity-review criterion ticked**.
-- **Web fix:** web column glow ×0.6 (`water_column.gdshader` compat branch).
-- **`validate.sh`:** now fails if the test log contains any `SCRIPT ERROR`/`SHADER ERROR`, closing the "runtime error but PASS" gap.
-- **Status:** 74/74; web export + smoke OK again.
+**Phase 20 work done:**
+- **Benchmark (uncontended):** avg ~100 / min 94 FPS.
+- **Final review:** desktop + web review in `art/compare/NOTES.md`.
+- **`validate.sh`:** fails on SCRIPT/SHADER errors.
 
-**Blocker:** `lost-origin.curiola.com` currently returns Caddy's default 404 (locally and via Cloudflare). There's no `lost-origin` block in `~/Sites/Caddyfile` yet. **The user said they'd configure Caddy**; we must not edit it ourselves.
+**Phase 19 (done): deploy.**
+- **Caddy:** with the user's go-ahead (RequestHostChange approved) I backed up `~/Sites/Caddyfile` to `~/Sites/Caddyfile.bak-lost-origin` and added the `lost-origin.curiola.com:80` block (root `build/web/`, zstd/gzip, wasm cache 1 h, `index.html` + `index.pck` no-cache so new exports show up immediately). Then `caddy fmt`/`validate`/`reload`; the other sites still return 200.
+- **Checks:** local Host 200; `index.wasm` is served as `application/wasm` + gzip; public https 200 (Cloudflare); `web_smoke.sh https://lost-origin.curiola.com` OK (title → playing, 0 errors, ~57 FPS).
+- **Re-deploying** = `./tools/export_web.sh` (the site serves `build/web` directly).
 
-**Single best next step (Phase 19 + close-out):** once the user's Caddy block exists:
-1. `curl -sI -H 'Host: lost-origin.curiola.com' http://127.0.0.1/` → 200; check `index.wasm` is served as `application/wasm` (and gzip with `Accept-Encoding: gzip`).
-2. `curl -sI https://lost-origin.curiola.com/` → 200.
-3. `./tools/web_smoke.sh https://lost-origin.curiola.com`.
-4. Run the full spec Verify command, then tick Deploy and Phases 19–20.
-5. If the block is still missing, ask the user. The suggested block is in the deploy criterion; `root` must be `/Users/nickglynn/Projects/lost-origin/build/web/` (re-run `tools/export_web.sh` after any change).
+**User-reported play issues, fixed after a real play-through:**
+- **The user's report:** can't find the control room/secret entrance; camera glitches.
+- **Play-through tool:** `tools/playthrough.gd` (non-headless) starts at the TITLE, presses Enter, lets the intro play, then drives keyboard-only (no warps, no camera writes) beach → aqueduct → grotto → pad (E) → control room → lever (E) → reveal → relic chamber → back out → ring → ramp → atrium → corridor → garden → tunnel → grotto. It logs camera glitches and saves a screenshot per waypoint to `art/screens/play/`.
+- **Teleport pads:**
+  - **Old problem:** they fired on contact, and the facility pad sits mid-room, so walking around the control room bounced you back to the grotto ("one-way" feel).
+  - **Fix:** pads now show "E — Teleport" and only fire on E (`teleporter.gd`: `occupant`, `prompt`, `activate()`). The teleport test was updated, including "standing on a pad doesn't teleport".
+- **Lever:** the prompt range is 2.8 and "facing" accepts the character *or* the camera facing it (before, approaching at an angle never showed the prompt).
+- **Camera:**
+  - **Walls:** the pivot is clamped out of walls (look-ahead used to push it through), less look-ahead in tight zones, and a shoulder offset that shrinks next to walls.
+  - **Corners:** a cramped camera lifts and looks down; a corner-escape yaw swing only kicks in for a > 1 m gain; the character fades when the camera is within 1.4 m.
+  - **Smaller fixes:** whiskers only act when one side is blocked; zone hints only apply when heading toward the hint. Arm margin 0.3, probe sphere 0.35, near plane 0.12.
+  - **Layer 4 (`CAMERA_IGNORED`):** glass panes and corridor arch frames are on it; the player collides with it, the camera doesn't.
+- **Result:** the play-through completes the full route. Glitch frames dropped from ~1,000+ (control room) to a handful; the rest are teleport snaps, plus the terrain-passthrough doorway where the camera intentionally ignores terrain. 74/74 tests.
+
+**Remaining:** only the formal **full spec Verify run** (Phase 20). It's > 10 min, so run it in the background or in pieces: import → tests → capture → compare → benchmark → export → local smoke → curls → public smoke. All pieces passed individually this session.
+
+**Single best next step:** run the Verify chain in the background (`run_in_background`), confirm every step, tick Phase 20, and report completion. Optional polish backlog:
+- the grotto fern carpet
+- relic room murals
+- Wicker Man anatomy sculpt detail
+- dark far arches on the aqueduct
+- a wider playthrough (lagoon swim, plunge pool)
 
 ### Status summary (earlier pause, after commit `c858c20`; historical)
 **Verified state:** the working tree is clean, and `./tools/validate.sh` passes 40/40 tests on the last run (commit `c858c20`). Ticked: all 12 round-1 criteria; round 2: reference harness, garden, sea life, glass onto the ocean, vines, aqueduct, open-air grotto, lagoon/sky, the asset fidelity pass, and **performance** (latest `tools/benchmark.gd`: avg 60.0 / min 59.9, macOS-capped; ≥ 50 holds on every `Shot_Ref_*`; re-verify in Phase 20). Phases 1–12 are done.

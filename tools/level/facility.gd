@@ -12,6 +12,10 @@ class_name LevelFacility
 
 const O := preload("res://tools/level/outdoor.gd")
 const F := -6.0
+## Physics layer 4: glass panes and thin arch frames. The player collides with it,
+## the camera spring arm doesn't (passing a thin frame or seeing through glass is
+## fine; snapping the camera in front of every frame is not).
+const CAMERA_IGNORED := 1 << 3
 const RING_Y := -2.5
 const ATRIUM := Vector3(50, F, -88)
 const APOTHEM := 10.0
@@ -146,6 +150,7 @@ static func _corridor(fac: Node3D) -> void:
 			if wx == 24.0 and wz < -90.0:
 				continue
 			var pane := SceneUtil.box_body(Vector3(4.2, 2.8, 0.06), Vector3(wx, F + 2.6, wz), glass, "Glass")
+			pane.collision_layer = CAMERA_IGNORED
 			c.add_child(pane)
 			# Glowing frame.
 			_strip(c, Vector3(4.4, 0.08, 0.12), Vector3(wx, F + 4.04, wz))
@@ -176,6 +181,7 @@ static func _arch_frame(parent: Node3D, x: float, strip_mat: Material) -> void:
 	var fr := CSGCombiner3D.new()
 	fr.name = "ArchFrame"
 	fr.use_collision = true
+	fr.collision_layer = CAMERA_IGNORED
 	parent.add_child(fr)
 	var sub := CSGShape3D.OPERATION_SUBTRACTION
 	_box(fr, Vector3(0.55, 5.0, 8.0), Vector3(x, F + 2.5, -88), metal)
@@ -479,6 +485,7 @@ static func _portholes(a: Node3D, shell: CSGCombiner3D) -> void:
 			frame.scale = Vector3(WIDE, 1, 1)
 			var gl := StaticBody3D.new()
 			gl.name = "PortholeGlass%d" % k
+			gl.collision_layer = CAMERA_IGNORED
 			gl.position = ATRIUM + n * (APOTHEM + 0.3) + Vector3(0, y - F, 0)
 			gl.rotation.y = yaw
 			var gm := MeshInstance3D.new()
@@ -504,6 +511,7 @@ static func _glass_ceiling(a: Node3D, shell: CSGCombiner3D, h: float) -> void:
 	var cg := CSGCombiner3D.new()
 	cg.name = "CeilingGlass"
 	cg.use_collision = true
+	cg.collision_layer = CAMERA_IGNORED
 	a.add_child(cg)
 	_oct(cg, 6.5, 0.05, ATRIUM + Vector3(0, h + 0.15, 0), glass)
 	var hole := CSGCylinder3D.new()
@@ -610,6 +618,7 @@ static func _glass_bay(r: Node3D, x1: float) -> void:
 		var yaw := atan2(p1.x - p0.x, p1.z - p0.z)  # panel's long axis along p0 -> p1
 		var pane := SceneUtil.box_body(Vector3(0.06, 5.4, w + 0.02), mid + Vector3(0, 2.75, 0), glass, "Panorama%d" % k)
 		pane.rotation.y = yaw
+		pane.collision_layer = CAMERA_IGNORED
 		bay.add_child(pane)
 		for y in [0.12, 5.45]:
 			var rail := _strip(bay, Vector3(0.18, 0.1, w + 0.05), mid + Vector3(0, y, 0), trim_soft)
@@ -643,6 +652,7 @@ static func _secret(r: Node3D, shell: CSGCombiner3D) -> void:
 	_box(room, Vector3(1.4, 2.4, 3.6), Vector3(SECRET.x + 3.3, R + 1.9, SECRET.z), metal_dark, sub)  # ocean window
 	_hex_floor(r, Vector2(6.4, 7.6), Vector3(SECRET.x, R, SECRET.z))
 	var win := SceneUtil.box_body(Vector3(0.06, 2.4, 3.6), Vector3(SECRET.x + 3.25, R + 1.9, SECRET.z), glass, "SecretWindow")
+	win.collision_layer = CAMERA_IGNORED
 	r.add_child(win)
 	for y in [R + 0.7, R + 3.1]:
 		_strip(r, Vector3(0.12, 0.08, 3.8), Vector3(SECRET.x + 3.2, y, SECRET.z), trim_violet)

@@ -11,7 +11,7 @@ func _initialize() -> void:
 	p.name = "Player"
 	p.set_script(load("res://scripts/player.gd"))
 	p.collision_layer = 2
-	p.collision_mask = 1 | (1 << 2)  # world + terrain
+	p.collision_mask = 1 | (1 << 2) | (1 << 3)  # world + terrain + glass/frames (camera ignores layer 4)
 	p.floor_max_angle = deg_to_rad(50)
 	p.floor_snap_length = 0.3
 
@@ -68,10 +68,10 @@ func _initialize() -> void:
 	var arm := SpringArm3D.new()
 	arm.name = "SpringArm3D"
 	arm.spring_length = 4.0
-	arm.margin = 0.15
+	arm.margin = 0.3
 	arm.collision_mask = 1 | (1 << 2)
 	var sphere := SphereShape3D.new()
-	sphere.radius = 0.25
+	sphere.radius = 0.35
 	arm.shape = sphere
 	arm.position.x = 0.6  # over the right shoulder
 	pitch.add_child(arm)
@@ -80,6 +80,7 @@ func _initialize() -> void:
 	var cam := Camera3D.new()
 	cam.name = "Camera3D"
 	cam.fov = 70
+	cam.near = 0.12   # with the 0.35 m probe sphere, the near plane can't slice into walls
 	cam.far = 1500
 	cam.position = Vector3(0.6, 0, 4.0)
 	pitch.add_child(cam)

@@ -74,6 +74,10 @@ var _move_yaw := 0.0
 var _last_input := Vector2.ZERO
 var _since_dir := 0.0   # time the current movement direction has been held
 var _help: CanvasLayer
+var _shoulder := 0.6           # current over-the-shoulder offset (shrinks next to walls)
+var _cramped := 0.0            # 0..1: how squeezed the camera is (drives lift + fade)
+var _cramped_time := 0.0
+var _model_fade := 0.0
 ## Locked during cutscenes (summoning intro, secret reveal): movement/look input ignored.
 var input_locked := false
 ## Weave-in materials (per-instance copies so weave_progress is ours alone).
@@ -273,16 +277,26 @@ func _update_camera(delta: float) -> void:
 	var hv := Vector3(velocity.x, 0.0, velocity.z)
 	var la_target := Vector3.ZERO
 	if hv.length() > 0.5:
-		la_target = hv.normalized() * LOOK_AHEAD * clampf(hv.length() / sprint_speed, 0.0, 1.0)
+		# Less look-ahead in tight rooms (short zone arm), none when the view is blocked.
+		var la_scale := clampf(_arm_target / DEFAULT_ARM, 0.35, 1.0)
+		la_target = hv.normalized() * LOOK_AHEAD * la_scale * clampf(hv.length() / sprint_speed, 0.0, 1.0)
 	_look_ahead = _look_ahead.lerp(la_target, 1.0 - exp(-3.0 * delta))
 	camera_focus = Vector3(global_position.x, _grounded_y + PIVOT_H, global_position.z) + _look_ahead
 	var cur := cam_yaw.global_position
-	cam_yaw.global_position = Vector3(lerpf(cur.x, camera_focus.x, k_pos), lerpf(cur.y, camera_focus.y, k_y), lerpf(cur.z, camera_focus.z, k_pos))
+	var pivot := Vector3(lerpf(cur.x, camera_focus.x, k_pos), lerpf(cur.y, camera_focus.y, k_y), lerpf(cur.z, camera_focus.z, k_pos))
+	# Never let the pivot sit inside walls: the spring arm can only protect the
+	# camera if it starts in open space (look-ahead + lag used to push it through).
+	var space := get_world_3d().direct_space_state
+	var head := Vector3(global_position.x, pivot.y, global_position.z)   # player's column at pivot height
+	pivot = _clear_point(space, head, pivot, 0.35)
+	cam_yaw.global_position = pivot
 	# --- auto-recenter behind the motion (never while backpedalling toward the camera)
 	var behind := model.rotation.y + PI
 	if hv.length() > 1.0:
 		behind = atan2(-hv.x, -hv.z)
-	if hint_dir.length() > 0.5:
+	# Zone hint: lean the view toward a point of interest, but only when we're
+	# heading roughly toward it (never drag the camera off the way we're going).
+	if hint_dir.length() > 0.5 and (hv.length() < 1.0 or Vector2(hv.x, hv.z).normalized().dot(Vector2(hint_dir.x, hint_dir.z).normalized()) > 0.3):
 		behind = lerp_angle(behind, atan2(-hint_dir.x, -hint_dir.z), 0.3)
 	var cam_fwd := -cam_yaw.global_basis.z
 	var backpedal := hv.length() > 0.5 and Vector2(cam_fwd.x, cam_fwd.z).normalized().dot(Vector2(hv.x, hv.z).normalized()) < -0.5
@@ -296,22 +310,85 @@ func _update_camera(delta: float) -> void:
 	if not input_locked and (_recenter_now or (CameraSettings.auto_recenter and settled and hv.length() > 1.0 and not backpedal)):
 		cam_yaw.rotation.y = lerp_angle(cam_yaw.rotation.y, behind, k_rc)
 		cam_pitch.rotation.x = lerpf(cam_pitch.rotation.x, _pitch_target, k_rc)
-	# --- whiskers: swing away from walls before they block the view
-	var space := get_world_3d().direct_space_state
+	# --- corner escape: if the arm has been squeezed for a moment, swing toward
+	# the most open direction (probe a fan of yaws behind the character).
+	if _cramped > 0.5:
+		_cramped_time += delta
+	else:
+		_cramped_time = 0.0
+	if not input_locked and _cramped_time > 0.25 and _since_manual > 0.6:
+		var best_yaw := cam_yaw.rotation.y
+		var best_len := -1.0
+		var cur_len := -1.0
+		for off in [-1.4, -1.0, -0.6, -0.3, 0.0, 0.3, 0.6, 1.0, 1.4]:
+			var y: float = cam_yaw.rotation.y + off
+			var back := Basis(Vector3.UP, y) * Vector3(0, 0, 1)
+			var pq := PhysicsRayQueryParameters3D.create(cam_yaw.global_position, cam_yaw.global_position + back * _arm_target, spring_arm.collision_mask, [get_rid()])
+			var ph := space.intersect_ray(pq)
+			var free_len := _arm_target if ph.is_empty() else cam_yaw.global_position.distance_to(ph.position)
+			if off == 0.0:
+				cur_len = free_len
+			free_len -= absf(off) * 0.4   # prefer small swings
+			if free_len > best_len:
+				best_len = free_len
+				best_yaw = y
+		# Only swing for a real gain (in a narrow shaft every direction is tight:
+		# turning there just fights the player's steering).
+		if best_len > cur_len + 1.0:
+			cam_yaw.rotation.y = lerp_angle(cam_yaw.rotation.y, best_yaw, 1.0 - exp(-3.0 * delta))
+	# --- whiskers: swing away from a wall on ONE side before it blocks the view
+	# (both sides blocked = a corridor: leave the yaw alone, the arm handles it).
+	var hits := []
 	for side in [-1.0, 1.0]:
 		var d: Vector3 = (Basis(Vector3.UP, side * 0.6) * cam_yaw.global_basis.z).normalized()
 		var q := PhysicsRayQueryParameters3D.create(cam_yaw.global_position, cam_yaw.global_position + d * 2.2, spring_arm.collision_mask, [get_rid()])
-		if not space.intersect_ray(q).is_empty() and not input_locked:
-			cam_yaw.rotation.y += side * 0.9 * delta
+		hits.append(not space.intersect_ray(q).is_empty())
+	if not input_locked and hits[0] != hits[1]:
+		cam_yaw.rotation.y += (-1.0 if hits[0] else 1.0) * 0.6 * delta
 	cam_yaw.rotation.y = wrapf(cam_yaw.rotation.y, -PI, PI)
 	_cam_yaw_written = cam_yaw.rotation.y
+	# --- shoulder offset shrinks next to a wall on the right
+	var right: Vector3 = cam_yaw.global_basis.x
+	var sq := PhysicsRayQueryParameters3D.create(cam_yaw.global_position, cam_yaw.global_position + right * 0.9, spring_arm.collision_mask, [get_rid()])
+	var sh := space.intersect_ray(sq)
+	var shoulder_t := 0.6 if sh.is_empty() else clampf(cam_yaw.global_position.distance_to(sh.position) - 0.35, 0.0, 0.6)
+	_shoulder = lerpf(_shoulder, shoulder_t, 1.0 - exp(-12.0 * delta))
+	spring_arm.position.x = _shoulder
 	# --- arm: collide in fast, ease out slowly; zone length
 	spring_arm.spring_length = _arm_target
 	var hit := spring_arm.get_hit_length()
 	var target_len := minf(hit, _arm_target)
 	var k_arm := 1.0 - exp(-(25.0 if target_len < _arm_len else 2.5) * delta)
 	_arm_len = lerpf(_arm_len, target_len, k_arm)
-	camera.position = Vector3(spring_arm.position.x, 0.0, _arm_len)
+	# Cramped (arm squeezed): lift the camera up and look down over the head
+	# instead of jamming it into the back of the character.
+	_cramped = lerpf(_cramped, clampf(1.0 - _arm_len / maxf(_arm_target * 0.6, 0.1), 0.0, 1.0), 1.0 - exp(-8.0 * delta))
+	var lift := _cramped * 0.9
+	var lq := PhysicsRayQueryParameters3D.create(cam_yaw.global_position, cam_yaw.global_position + Vector3.UP * (lift + 0.4), spring_arm.collision_mask, [get_rid()])
+	var lh := space.intersect_ray(lq)
+	if not lh.is_empty():
+		lift = minf(lift, maxf(cam_yaw.global_position.distance_to(lh.position) - 0.4, 0.0))
+	camera.position = Vector3(spring_arm.position.x * (1.0 - _cramped), 0.0, _arm_len) + cam_pitch.global_basis.inverse() * Vector3.UP * lift
+	camera.rotation.x = -_cramped * 0.35
+	# Fade the character out when the camera is right on top of it.
+	var cam_dist := camera.global_position.distance_to(global_position + Vector3(0, 1.5, 0))
+	var fade_t := clampf((1.4 - cam_dist) / 0.7, 0.0, 1.0)
+	if absf(fade_t - _model_fade) > 0.01:
+		_model_fade = lerpf(_model_fade, fade_t, 1.0 - exp(-12.0 * delta))
+		for gi in model.find_children("*", "GeometryInstance3D", true, false):
+			(gi as GeometryInstance3D).transparency = _model_fade * 0.85
+
+
+## Point on the segment from -> to, pulled back `margin` from the first hit.
+func _clear_point(space: PhysicsDirectSpaceState3D, from: Vector3, to: Vector3, margin: float) -> Vector3:
+	var d := to - from
+	if d.length() < 0.01:
+		return to
+	var q := PhysicsRayQueryParameters3D.create(from, to + d.normalized() * margin, spring_arm.collision_mask, [get_rid()])
+	var hit := space.intersect_ray(q)
+	if hit.is_empty():
+		return to
+	return from + d.normalized() * maxf(from.distance_to(hit.position) - margin, 0.0)
 
 
 func _build_help() -> void:

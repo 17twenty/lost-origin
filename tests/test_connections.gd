@@ -27,6 +27,12 @@ func test_walk_from_beach_down_into_atrium() -> void:
 func _pad(path: String) -> Node3D:
 	return scene.get_node(path)
 
+func _press_e() -> void:
+	Input.action_press("interact")
+	await physics_frames(2)
+	Input.action_release("interact")
+	await seconds(0.3)
+
 func test_teleport_grotto_to_facility_and_back() -> void:
 	await load_main()
 	var p := get_player()
@@ -40,7 +46,10 @@ func test_teleport_grotto_to_facility_and_back() -> void:
 	p.warp_to((scene.get_node("Markers/Zone_GrottoEntrance") as Node3D).global_transform)
 	await seconds(0.3)
 	await walk_to(gpad.global_position, 15.0, false, 0.3)
-	await seconds(0.3)
+	await seconds(0.5)
+	check(p.global_position.distance_to(f_arrival) > 10.0, "standing on a pad does not teleport by itself")
+	check(g_trig.prompt.visible, "E — Teleport prompt on the pad")
+	await _press_e()
 	check(p.global_position.distance_to(f_arrival) < 1.5, "arrived in control room (pos=%s, expected %s)" % [p.global_position, f_arrival])
 	check(g_trig.flash_count >= 1 and f_trig.flash_count >= 1, "flash effect at both pads (%d/%d)" % [g_trig.flash_count, f_trig.flash_count])
 	check((fpad.get_node("Beam") as Node3D).visible, "arrival beam visible right after teleport")
@@ -49,7 +58,8 @@ func test_teleport_grotto_to_facility_and_back() -> void:
 	check(p.global_position.distance_to(f_arrival) < 1.5, "no ping-pong back to the grotto")
 	# Facility -> grotto: step back onto the facility pad.
 	await walk_to(fpad.global_position, 10.0, false, 0.3)
-	await seconds(0.3)
+	await seconds(0.5)
+	await _press_e()
 	check(p.global_position.distance_to(g_arrival) < 1.5, "arrived back in the grotto (pos=%s, expected %s)" % [p.global_position, g_arrival])
 	await seconds(1.0)
 	check(p.is_on_floor(), "standing in the grotto")

@@ -399,42 +399,43 @@ states/walk/position = Vector2(200, 100)
 transitions = ["idle", "walk", SubResource("AnimationNodeStateMachineTransition_a8ls1"), "idle", "run", SubResource("AnimationNodeStateMachineTransition_qfm1y"), "idle", "sprint", SubResource("AnimationNodeStateMachineTransition_fulsm"), "idle", "jump", SubResource("AnimationNodeStateMachineTransition_4r5pv"), "idle", "fall", SubResource("AnimationNodeStateMachineTransition_60mlk"), "idle", "land", SubResource("AnimationNodeStateMachineTransition_i4ail"), "idle", "swim", SubResource("AnimationNodeStateMachineTransition_a38lo"), "idle", "interact", SubResource("AnimationNodeStateMachineTransition_4ni07"), "idle", "look_around", SubResource("AnimationNodeStateMachineTransition_l71n6"), "idle", "summon", SubResource("AnimationNodeStateMachineTransition_ke2ow"), "walk", "idle", SubResource("AnimationNodeStateMachineTransition_ujl30"), "walk", "run", SubResource("AnimationNodeStateMachineTransition_31cv2"), "walk", "sprint", SubResource("AnimationNodeStateMachineTransition_pf23h"), "walk", "jump", SubResource("AnimationNodeStateMachineTransition_dt7fs"), "walk", "fall", SubResource("AnimationNodeStateMachineTransition_wqfne"), "walk", "land", SubResource("AnimationNodeStateMachineTransition_wnwbv"), "walk", "swim", SubResource("AnimationNodeStateMachineTransition_gl8cc"), "walk", "interact", SubResource("AnimationNodeStateMachineTransition_487ah"), "walk", "look_around", SubResource("AnimationNodeStateMachineTransition_md1ol"), "walk", "summon", SubResource("AnimationNodeStateMachineTransition_bj30b"), "run", "idle", SubResource("AnimationNodeStateMachineTransition_jc3p3"), "run", "walk", SubResource("AnimationNodeStateMachineTransition_hax0n"), "run", "sprint", SubResource("AnimationNodeStateMachineTransition_t4otl"), "run", "jump", SubResource("AnimationNodeStateMachineTransition_j2b1d"), "run", "fall", SubResource("AnimationNodeStateMachineTransition_cs1tg"), "run", "land", SubResource("AnimationNodeStateMachineTransition_2dvfe"), "run", "swim", SubResource("AnimationNodeStateMachineTransition_giy8y"), "run", "interact", SubResource("AnimationNodeStateMachineTransition_fdfoy"), "run", "look_around", SubResource("AnimationNodeStateMachineTransition_hhpqf"), "run", "summon", SubResource("AnimationNodeStateMachineTransition_g5jhy"), "sprint", "idle", SubResource("AnimationNodeStateMachineTransition_holxr"), "sprint", "walk", SubResource("AnimationNodeStateMachineTransition_mx1m4"), "sprint", "run", SubResource("AnimationNodeStateMachineTransition_4gjji"), "sprint", "jump", SubResource("AnimationNodeStateMachineTransition_u2ulf"), "sprint", "fall", SubResource("AnimationNodeStateMachineTransition_6e8lb"), "sprint", "land", SubResource("AnimationNodeStateMachineTransition_2gdjj"), "sprint", "swim", SubResource("AnimationNodeStateMachineTransition_sc3ue"), "sprint", "interact", SubResource("AnimationNodeStateMachineTransition_lxlsd"), "sprint", "look_around", SubResource("AnimationNodeStateMachineTransition_ha2mi"), "sprint", "summon", SubResource("AnimationNodeStateMachineTransition_apa73"), "jump", "idle", SubResource("AnimationNodeStateMachineTransition_74r1k"), "jump", "walk", SubResource("AnimationNodeStateMachineTransition_8svfe"), "jump", "run", SubResource("AnimationNodeStateMachineTransition_2a3c5"), "jump", "sprint", SubResource("AnimationNodeStateMachineTransition_42b1b"), "jump", "fall", SubResource("AnimationNodeStateMachineTransition_h7ic4"), "jump", "land", SubResource("AnimationNodeStateMachineTransition_au7lq"), "jump", "swim", SubResource("AnimationNodeStateMachineTransition_nubpm"), "jump", "interact", SubResource("AnimationNodeStateMachineTransition_ua5cf"), "jump", "look_around", SubResource("AnimationNodeStateMachineTransition_51ujp"), "jump", "summon", SubResource("AnimationNodeStateMachineTransition_tk41t"), "fall", "idle", SubResource("AnimationNodeStateMachineTransition_fuw3a"), "fall", "walk", SubResource("AnimationNodeStateMachineTransition_8txt3"), "fall", "run", SubResource("AnimationNodeStateMachineTransition_2w11d"), "fall", "sprint", SubResource("AnimationNodeStateMachineTransition_770dr"), "fall", "jump", SubResource("AnimationNodeStateMachineTransition_8f1cb"), "fall", "land", SubResource("AnimationNodeStateMachineTransition_vdulj"), "fall", "swim", SubResource("AnimationNodeStateMachineTransition_vau08"), "fall", "interact", SubResource("AnimationNodeStateMachineTransition_qsb7e"), "fall", "look_around", SubResource("AnimationNodeStateMachineTransition_qjsmb"), "fall", "summon", SubResource("AnimationNodeStateMachineTransition_mwp2n"), "land", "idle", SubResource("AnimationNodeStateMachineTransition_0yhus"), "land", "walk", SubResource("AnimationNodeStateMachineTransition_jlll7"), "land", "run", SubResource("AnimationNodeStateMachineTransition_qk6i7"), "land", "sprint", SubResource("AnimationNodeStateMachineTransition_6c3st"), "land", "jump", SubResource("AnimationNodeStateMachineTransition_1da1t"), "land", "fall", SubResource("AnimationNodeStateMachineTransition_p21yu"), "land", "swim", SubResource("AnimationNodeStateMachineTransition_irpag"), "land", "interact", SubResource("AnimationNodeStateMachineTransition_bpsgo"), "land", "look_around", SubResource("AnimationNodeStateMachineTransition_jx8is"), "land", "summon", SubResource("AnimationNodeStateMachineTransition_vx63k"), "swim", "idle", SubResource("AnimationNodeStateMachineTransition_lw0jh"), "swim", "walk", SubResource("AnimationNodeStateMachineTransition_ry8ed"), "swim", "run", SubResource("AnimationNodeStateMachineTransition_au8ao"), "swim", "sprint", SubResource("AnimationNodeStateMachineTransition_w5j5w"), "swim", "jump", SubResource("AnimationNodeStateMachineTransition_cbf1i"), "swim", "fall", SubResource("AnimationNodeStateMachineTransition_4vfid"), "swim", "land", SubResource("AnimationNodeStateMachineTransition_ljgr3"), "swim", "interact", SubResource("AnimationNodeStateMachineTransition_fr8ja"), "swim", "look_around", SubResource("AnimationNodeStateMachineTransition_gvmy4"), "swim", "summon", SubResource("AnimationNodeStateMachineTransition_fcu33"), "interact", "idle", SubResource("AnimationNodeStateMachineTransition_qmsq4"), "interact", "walk", SubResource("AnimationNodeStateMachineTransition_5vs2b"), "interact", "run", SubResource("AnimationNodeStateMachineTransition_a7i4v"), "interact", "sprint", SubResource("AnimationNodeStateMachineTransition_b5l0c"), "interact", "jump", SubResource("AnimationNodeStateMachineTransition_2a33p"), "interact", "fall", SubResource("AnimationNodeStateMachineTransition_reqs7"), "interact", "land", SubResource("AnimationNodeStateMachineTransition_2yjfb"), "interact", "swim", SubResource("AnimationNodeStateMachineTransition_dnnjp"), "interact", "look_around", SubResource("AnimationNodeStateMachineTransition_wqna8"), "interact", "summon", SubResource("AnimationNodeStateMachineTransition_l7gmo"), "look_around", "idle", SubResource("AnimationNodeStateMachineTransition_kft7l"), "look_around", "walk", SubResource("AnimationNodeStateMachineTransition_2s4os"), "look_around", "run", SubResource("AnimationNodeStateMachineTransition_2em0j"), "look_around", "sprint", SubResource("AnimationNodeStateMachineTransition_qe2k6"), "look_around", "jump", SubResource("AnimationNodeStateMachineTransition_edwuo"), "look_around", "fall", SubResource("AnimationNodeStateMachineTransition_5eiju"), "look_around", "land", SubResource("AnimationNodeStateMachineTransition_uukdq"), "look_around", "swim", SubResource("AnimationNodeStateMachineTransition_3k3j0"), "look_around", "interact", SubResource("AnimationNodeStateMachineTransition_0bpox"), "look_around", "summon", SubResource("AnimationNodeStateMachineTransition_5c21n"), "summon", "idle", SubResource("AnimationNodeStateMachineTransition_e8m1u"), "summon", "walk", SubResource("AnimationNodeStateMachineTransition_77pet"), "summon", "run", SubResource("AnimationNodeStateMachineTransition_tlhxf"), "summon", "sprint", SubResource("AnimationNodeStateMachineTransition_hrkfm"), "summon", "jump", SubResource("AnimationNodeStateMachineTransition_oxcmq"), "summon", "fall", SubResource("AnimationNodeStateMachineTransition_wylla"), "summon", "land", SubResource("AnimationNodeStateMachineTransition_a3eqm"), "summon", "swim", SubResource("AnimationNodeStateMachineTransition_plx2b"), "summon", "interact", SubResource("AnimationNodeStateMachineTransition_3capk"), "summon", "look_around", SubResource("AnimationNodeStateMachineTransition_kg5hq"), "Start", "idle", SubResource("AnimationNodeStateMachineTransition_kp0if")]
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_dqoq3"]
-radius = 0.25
+radius = 0.35
 
-[node name="Player" type="CharacterBody3D" unique_id=1733576293]
+[node name="Player" type="CharacterBody3D" unique_id=1040816042]
 collision_layer = 2
-collision_mask = 5
+collision_mask = 13
 floor_max_angle = 0.87266463
 floor_snap_length = 0.3
 script = ExtResource("1_g2els")
 
-[node name="Collision" type="CollisionShape3D" parent="." unique_id=1157200690]
+[node name="Collision" type="CollisionShape3D" parent="." unique_id=245641297]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.05, 0)
 shape = SubResource("CapsuleShape3D_dqkch")
 
-[node name="Model" type="Node3D" parent="." unique_id=1580561238]
+[node name="Model" type="Node3D" parent="." unique_id=2070104640]
 
 [node name="Wicker" type="Node3D" parent="Model" unique_id=1627028346 instance=ExtResource("2_qhqgy")]
 
-[node name="AnimationTree" type="AnimationTree" parent="." unique_id=927764474]
+[node name="AnimationTree" type="AnimationTree" parent="." unique_id=984086725]
 tree_root = SubResource("AnimationNodeStateMachine_2xkbm")
 anim_player = NodePath("../Model/Wicker/AnimationPlayer")
 
-[node name="CameraYaw" type="Node3D" parent="." unique_id=571355328]
+[node name="CameraYaw" type="Node3D" parent="." unique_id=330099037]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.85, 0)
 top_level = true
 
-[node name="CameraPitch" type="Node3D" parent="CameraYaw" unique_id=580925996]
+[node name="CameraPitch" type="Node3D" parent="CameraYaw" unique_id=2098087315]
 transform = Transform3D(1, 0, 0, 0, 0.9838437, 0.17902958, 0, -0.17902958, 0.9838437, 0, 0, 0)
 
-[node name="SpringArm3D" type="SpringArm3D" parent="CameraYaw/CameraPitch" unique_id=147702794]
+[node name="SpringArm3D" type="SpringArm3D" parent="CameraYaw/CameraPitch" unique_id=230878957]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.6, 0, 0)
 collision_mask = 5
 shape = SubResource("SphereShape3D_dqoq3")
 spring_length = 4.0
-margin = 0.15
+margin = 0.3
 
-[node name="Camera3D" type="Camera3D" parent="CameraYaw/CameraPitch" unique_id=923136609]
+[node name="Camera3D" type="Camera3D" parent="CameraYaw/CameraPitch" unique_id=2021235157]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.6, 0, 4)
 fov = 70.0
+near = 0.12
 far = 1500.0

@@ -5,7 +5,7 @@ extends Node3D
 signal pulled
 
 @export var reveal_path: NodePath
-@export var range := 2.0
+@export var range := 2.8
 
 var used := false
 var in_range := false
@@ -24,7 +24,12 @@ func _physics_process(_delta: float) -> void:
 	var to := global_position - player.global_position
 	to.y = 0.0
 	var facing := Vector3(sin(player.model.rotation.y), 0.0, cos(player.model.rotation.y))
-	in_range = not used and to.length() < range and facing.dot(to.normalized()) > 0.3 and not player.input_locked
+	var view: Vector3 = -player.cam_yaw.global_basis.z
+	view.y = 0.0
+	# "Facing it" = the character OR the camera is turned toward the lever (players
+	# stop at all angles in third person; what matters is that it's in front of them).
+	var facing_ok := facing.dot(to.normalized()) > 0.2 or view.normalized().dot(to.normalized()) > 0.3
+	in_range = not used and to.length() < range and facing_ok and not player.input_locked
 	prompt.visible = in_range
 	if in_range and Input.is_action_just_pressed("interact"):
 		pull(player)

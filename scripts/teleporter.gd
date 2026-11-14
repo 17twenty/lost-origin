@@ -9,13 +9,40 @@ signal teleported(body: Node3D)
 
 static var _last_warp_frame := -1000
 var flash_count := 0
+## Body standing on the pad (teleport only on E, so nobody gets whisked away by
+## walking across a pad).
+var occupant: Node3D
+var prompt: Label3D
 
 
 func _ready() -> void:
-	body_entered.connect(_on_body_entered)
+	body_entered.connect(func(b: Node3D) -> void:
+		if b.has_method("warp_to"):
+			occupant = b)
+	body_exited.connect(func(b: Node3D) -> void:
+		if b == occupant:
+			occupant = null)
+	prompt = Label3D.new()
+	prompt.name = "Prompt"
+	prompt.text = "E — Teleport"
+	prompt.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	prompt.position = Vector3(0, 2.6, 0)
+	prompt.font_size = 48
+	prompt.outline_size = 10
+	prompt.modulate = Color(0.75, 0.97, 1.0)
+	prompt.no_depth_test = true
+	prompt.visible = false
+	add_child(prompt)
 
 
-func _on_body_entered(body: Node3D) -> void:
+func _physics_process(_delta: float) -> void:
+	var ready: bool = occupant != null and not bool(occupant.get("input_locked"))
+	prompt.visible = ready
+	if ready and Input.is_action_just_pressed("interact"):
+		activate(occupant)
+
+
+func activate(body: Node3D) -> void:
 	if not body.has_method("warp_to") or target_path.is_empty():
 		return
 	var now := Engine.get_physics_frames()

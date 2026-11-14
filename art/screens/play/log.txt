@@ -1,0 +1,47 @@
+level loaded; intro state=playing
+intro finished after ~3.5 s more; input_locked=false
+reached Zone_BridgeSouth (aqueduct south ramp) pos=(0.000019, 0.300936, 1.841741)
+reached Zone_BridgeMid (on the aqueduct deck) pos=(0.000007, 4.300824, -17.12636)
+reached Zone_BridgeNorth (aqueduct north ramp) pos=(0.00002, 0.302691, -36.10421)
+reached Zone_Plateau (plateau) pos=(0.000038, 0.300936, -43.15284)
+reached Zone_GrottoEntrance (grotto mouth) pos=(0.00006, 0.300936, -56.15956)
+reached Zone_GrottoInside (inside the grotto) pos=(0.000061, 0.320835, -65.12578)
+reached @TeleporterGrotto (onto the grotto teleporter) pos=(3.692277, 0.980831, -72.19424)
+on grotto pad; prompt visible=true
+after pad: pos=(64.2, -2.499966, -88.0) in_control_room=true
+reached Zone_LeverFront (lever) pos=(63.94594, -2.499169, -89.7281)
+lever prompt visible=true in_range=true lever=(63.6, -1.25, -91.85) player=(63.68682, -2.499206, -90.08823) model_yaw=-2.46 locked=false grp=Player:<CharacterBody3D#190572403834>
+reveal state=done door open=true
+reached Zone_SecretDoor (secret door) pos=(68.5323, -2.49918, -90.08272)
+reached Zone_Secret (relic chamber) pos=(70.43326, -2.49917, -95.41133)
+reached Zone_SecretDoor (back out) pos=(69.12085, -2.499205, -91.68478)
+reached Zone_Control (control room (walking past the pad must not teleport)) pos=(63.77827, -2.499169, -86.58041)
+reached Zone_RingEast (ring walkway east) pos=(59.44709, -2.499177, -87.57059)
+reached Zone_RingSE (ring SE) pos=(55.94421, -2.499176, -82.76063)
+reached Zone_AtriumRing (ring above the ramp) pos=(48.32373, -2.49917, -78.83358)
+reached Zone_RampTop (ramp top) pos=(47.20541, -2.499157, -81.02602)
+reached Zone_RampBottom (ramp bottom) pos=(55.9706, -2.499181, -82.10776)
+reached Zone_Atrium (atrium floor) pos=(43.56723, -5.999165, -87.32867)
+reached Zone_CorridorEnd (corridor east) pos=(39.21262, -5.999064, -86.38094)
+reached Zone_Corridor (corridor west) pos=(22.34593, -5.999168, -85.30979)
+reached Zone_CorridorSouthDoor (garden door) pos=(21.04416, -5.999193, -90.36765)
+reached Zone_GardenExit (garden) pos=(22.48315, -5.999188, -93.52039)
+reached Zone_Garden (garden pool) pos=(19.29581, -5.999268, -95.7049)
+reached Zone_GardenEntry (garden west) pos=(16.03654, -5.999193, -94.73242)
+reached Zone_TunnelBottom (tunnel bottom) pos=(14.98985, -5.999192, -88.36018)
+reached Zone_RampMid (tunnel ramp) pos=(15.30786, -3.153019, -76.86707)
+reached Zone_TunnelTop (tunnel top) pos=(15.29191, 0.320838, -66.83144)
+reached Zone_GrottoDoor (back in the grotto) pos=(8.846795, 0.320835, -65.79774)
+---- camera glitch summary (frames) ----
+   26  grotto: view to the Terrain)   e.g. view to the character blocked by geometry (Terrain) at (11.0, 0.3, -65.6)
+    8  control/secret: view to the Shell)   e.g. view to the character blocked by geometry (Shell) at (69.4, -2.5, -91.3)
+    6  control/secret: camera position jump   e.g. camera position jump 67.47 m in one frame at (64.2, -2.5, -88.0)
+    4  control/secret: view to the SecretRoom)   e.g. view to the character blocked by geometry (SecretRoom) at (69.4, -2.5, -92.0)
+    4  atrium: camera yaw snap   e.g. camera yaw snap 5 deg in one frame at (57.8, -2.5, -84.6)
+    4  atrium: camera position jump   e.g. camera position jump 0.61 m in one frame at (53.7, -2.5, -80.4)
+    4  tunnel: view to the Shell)   e.g. view to the character blocked by geometry (Shell) at (51.6, -2.5, -78.9)
+    1  control/secret: camera yaw snap   e.g. camera yaw snap 96 deg in one frame at (64.2, -2.5, -88.0)
+    1  garden: camera position jump   e.g. camera position jump 0.61 m in one frame at (22.2, -6.0, -92.7)
+    1  garden: camera yaw snap   e.g. camera yaw snap 5 deg in one frame at (16.0, -6.0, -92.7)
+    1  tunnel: view to the Terrain)   e.g. view to the character blocked by geometry (Terrain) at (11.1, 0.3, -65.6)
+RESULT completed the full route
