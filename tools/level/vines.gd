@@ -31,7 +31,7 @@ static func build(level: Node3D) -> int:
 			if r.randf() < 0.25:
 				continue
 			var dir := t.basis.get_rotation_quaternion() * Vector3(cos(k * PI / 2.0), 0, sin(k * PI / 2.0))
-			add.call(t.position + Vector3(0, 3.7 * s, 0) + dir * 0.62 * s, dir, s * r.randf_range(0.7, 1.0), "Vine_C" if k % 2 == 0 else "Vine_A")
+			add.call(t.position + Vector3(0, O.TOTEM_CROWN * s, 0) + dir * 0.63 * s, dir, s * r.randf_range(0.7, 1.0), "Vine_C" if k % 2 == 0 else "Vine_A")
 
 	# Aqueduct: under both deck edges and off each pier's impost.
 	var z := -7.0

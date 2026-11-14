@@ -13,6 +13,8 @@ Pairs: `./tools/compare_shots.sh` → `art/compare/<name>.png` (video left, game
 - **Before:** Kenney rocks partly pastel tan/brown.
 - **After:** every rock/stone surface uses the mossy rock shader (grey stone, moss on top faces).
 
-### Totems — to do
+### Totems — done
+- **Before:** squat 4.35 m carved block with a finned crown; read as a stocky idol, not the video's tall shoreline monoliths.
+- **After:** 7.6 m slender monolith (`build_totem.py`): tapered shaft with a carved band and glowing glyph channel, a heavy-browed carved head high up with glowing eye/mouth slits, a cap stone and crest; mossy weathered stone shader and hanging vines from the crown. Scales 0.75–1.15 so the shoreline row varies like the video.
 ### Facility kit (arches, panels, consoles, grates) — to do
 ### Water bodies — partly (glints/caustics done in Phase 10; sunken corridor pools to do)

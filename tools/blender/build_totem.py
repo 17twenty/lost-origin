@@ -70,30 +70,26 @@ def box(loc, size, m=STONE, rot=(0, 0, 0), bevel=0.04, taper=None):
     return ob
 
 
-# Front faces -Y (Godot +Z). Total height ~5.2 m.
-box((0, 0, 0.25), (1.6, 1.6, 0.5), bevel=0.08)                     # plinth
-box((0, 0, 0.55), (1.3, 1.3, 0.15))                                # step
-box((0, 0, 1.25), (1.1, 1.0, 1.3), taper=0.9)                      # lower body
-for sx in (-1, 1):                                                 # carved side ribs
-    box((sx * 0.56, 0, 1.25), (0.08, 0.7, 1.1))
-box((0, -0.5, 1.1), (0.5, 0.06, 0.7), GLOW, bevel=0)               # lower glyph strip (inset)
-box((0, -0.52, 1.1), (0.62, 0.05, 0.82), bevel=0.01)               # glyph frame
-box((0, 0, 2.0), (1.25, 1.15, 0.22))                               # collar
-# Head block with carved face
-box((0, 0, 2.75), (1.2, 1.1, 1.3), bevel=0.06)
-box((0, -0.58, 3.12), (1.15, 0.2, 0.18))                           # brow ridge
+# Front faces -Y (Godot +Z). Tall slender monolith like the video (f04-06): ~7.6 m,
+# long weathered shaft, carved face high up, moss cap. Glow = eyes/mouth/glyphs
+# (they flare during the summoning intro).
+box((0, 0, 0.2), (1.5, 1.4, 0.4), bevel=0.08)                       # plinth
+box((0, 0, 2.0), (1.15, 1.0, 3.2), taper=0.92, bevel=0.05)           # lower shaft
+box((0, 0, 3.7), (1.25, 1.1, 0.18))                                  # carved band
+box((0, -0.5, 2.3), (0.3, 0.05, 1.3), GLOW, bevel=0)                 # glyph channel
+box((0, -0.52, 2.3), (0.44, 0.05, 1.46), bevel=0.01)                 # glyph frame
+box((0, 0, 4.5), (1.05, 0.95, 1.4), taper=1.06, bevel=0.04)          # upper shaft
+box((0, 0, 6.15), (1.22, 1.1, 1.9), bevel=0.07)                      # head block
+box((0, -0.6, 6.62), (1.18, 0.24, 0.22))                             # heavy brow
 for sx in (-1, 1):
-    box((sx * 0.28, -0.56, 2.9), (0.3, 0.06, 0.16), GLOW, bevel=0)     # eye slits
-    box((sx * 0.28, -0.6, 2.82), (0.36, 0.08, 0.06))                   # cheek lid under eye
-box((0, -0.62, 2.7), (0.16, 0.14, 0.45), taper=0.7)                # nose ridge
-box((0, -0.57, 2.3), (0.6, 0.06, 0.1), GLOW, bevel=0)              # mouth slot glow
-box((0, -0.6, 2.22), (0.75, 0.1, 0.08))                            # jaw
-# Crown with forward-swept fins
-box((0, 0, 3.55), (1.0, 0.95, 0.3), taper=0.85)
-for sx in (-1, 1):
-    box((sx * 0.62, 0.05, 3.85), (0.16, 0.8, 0.9), rot=(0, sx * -0.35, 0), taper=0.5)
-box((0, 0.08, 4.0), (0.22, 0.9, 0.7), taper=0.4)                   # centre crest
-box((0, -0.38, 3.72), (0.1, 0.04, 0.22), GLOW, bevel=0)            # crown gem
+    box((sx * 0.28, -0.56, 6.36), (0.3, 0.06, 0.12), GLOW, bevel=0)  # eye slits
+    box((sx * 0.28, -0.61, 6.26), (0.38, 0.09, 0.07))                # lower lids
+    box((sx * 0.6, -0.1, 6.1), (0.06, 0.5, 0.9))                     # cheek planes
+box((0, -0.66, 5.98), (0.22, 0.2, 0.62), taper=0.65)                 # long nose
+box((0, -0.57, 5.56), (0.55, 0.06, 0.08), GLOW, bevel=0)             # mouth slot
+box((0, -0.62, 5.45), (0.82, 0.12, 0.1))                             # jaw ridge
+box((0, 0, 7.2), (1.32, 1.2, 0.24), taper=0.9)                       # cap stone
+box((0, 0.05, 7.45), (0.5, 1.0, 0.35), taper=0.6)                    # crest
 
 bpy.ops.object.select_all(action="DESELECT")
 for p in parts:

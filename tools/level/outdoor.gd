@@ -214,6 +214,9 @@ static func _bridge(out: Node3D) -> void:
 		rubble.add_child(b)
 
 # --------------------------------------------------------------------- totems
+const TOTEM_H := 7.6       # Blender totem height (build_totem.py)
+const TOTEM_CROWN := 6.9   # where vines hang from the head
+
 static func _totem_mesh() -> Mesh:
 	var path := GEN + "/totem_mesh.res"
 	var src: Node = (load(TOTEM_GLB) as PackedScene).instantiate()
@@ -242,9 +245,9 @@ static func _totem(parent: Node3D, mesh: Mesh, x: float, z: float, face: Vector2
 	var cs := CollisionShape3D.new()
 	cs.name = "Col"
 	var bs := BoxShape3D.new()
-	bs.size = Vector3(1.6, 4.4, 1.6)
+	bs.size = Vector3(1.4, TOTEM_H - 0.2, 1.4)
 	cs.shape = bs
-	cs.position.y = 2.2
+	cs.position.y = (TOTEM_H - 0.2) * 0.5
 	body.add_child(cs)
 	parent.add_child(body)
 
@@ -254,15 +257,15 @@ static func _totems(out: Node3D) -> void:
 	var centre := Vector2(0, 6)
 	# Beach crescent facing the spawn.
 	for p in [Vector2(-13, 3), Vector2(13, 1), Vector2(-19, 11), Vector2(20, 9), Vector2(-9, -3), Vector2(10, -4)]:
-		_totem(g, mesh, p.x, p.y, centre, rng.randf_range(1.0, 1.3))
+		_totem(g, mesh, p.x, p.y, centre, rng.randf_range(0.8, 1.05))
 	# Shoreline row standing in the shallows, gazing out to sea (as in the video).
 	for p in [Vector2(9, 22.5), Vector2(14, 24.0), Vector2(19.5, 23.0), Vector2(25, 21.5), Vector2(-12, 23.0), Vector2(-18, 21.5)]:
-		_totem(g, mesh, p.x, p.y, Vector2(p.x * 1.2, 200), rng.randf_range(1.1, 1.5))
+		_totem(g, mesh, p.x, p.y, Vector2(p.x * 1.2, 200), rng.randf_range(0.85, 1.15))
 	# Gateways: bridge head and grotto entrance.
 	for sx in [-1.0, 1.0]:
-		_totem(g, mesh, sx * 4.0, 1.5, Vector2(sx * 4.0, 12), 1.15)     # aqueduct south ramp foot
-		_totem(g, mesh, sx * 4.0, -37.5, Vector2(sx * 4.0, -50), 1.0)   # north ramp foot
-		_totem(g, mesh, sx * 6.5, -57.0, Vector2(sx * 6.5, -40), 1.35)
+		_totem(g, mesh, sx * 4.0, 1.5, Vector2(sx * 4.0, 12), 0.8)      # aqueduct south ramp foot
+		_totem(g, mesh, sx * 4.0, -37.5, Vector2(sx * 4.0, -50), 0.75)  # north ramp foot
+		_totem(g, mesh, sx * 6.5, -57.0, Vector2(sx * 6.5, -40), 0.95)
 
 # --------------------------------------------------------------------- grotto
 static func _grotto(out: Node3D) -> void:
