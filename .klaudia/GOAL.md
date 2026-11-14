@@ -82,7 +82,7 @@ Build a small playable Godot 4.7 (`/Applications/Godot.app`) proof of concept ba
   - **Facility kit:** octagonal arch frames with cyan/violet light strips along the corridor (video f11–13), lighter blue-grey panelling with recessed doors, pale reflective hex floors, rounded console pedestals with angled screens, and floor grates in the control room.
   - **Character scale and lighting:** sky, sun and ambient retuned per composition.
   - `tools/compare_shots.sh` pairs are re-reviewed after the pass.
-- [ ] **The Wicker Man (new player character):** our own rigged Blender model (`tools/blender/build_wicker.py` → `assets/characters/wicker.glb`), following the turnaround:
+- [x] **The Wicker Man (new player character):** our own rigged Blender model (`tools/blender/build_wicker.py` → `assets/characters/wicker.glb`), following the turnaround:
   - **Body:** a heroic muscular build of about 2.1 m.
   - **Woven parts:** shoulder plates, braided bands at the waist, knees and ankles, and woven boots.
   - **Hair:** a wild straw mane and beard made of strand cards that sway.
@@ -93,6 +93,29 @@ Build a small playable Godot 4.7 (`/Applications/Godot.app`) proof of concept ba
   The rig is humanoid with spine ×3, neck, head, clavicles, arms, hands (one finger group + thumb), legs and feet/toes. Clips: `idle`, `walk`, `run`, `sprint`, `jump`, `fall`, `land`, `swim`, `interact` (lever pull), `look_around` (an idle variant, curious about the tech) and `summon` (the rise pose used by the weave-in).
 
   It replaces Wayfinder in `scenes/player.tscn`, with the AnimationTree updated and the collision capsule resized. Every existing movement, route and camera test passes with the new character. The GLB pipeline rules apply (Z-up, `export_apply=False` for the skinned mesh).
+- [ ] **Quality-gap pass (user request: "give it a red-hot go" before web export, matching the established aesthetic; animation and shaders are easy wins):**
+  - **Wicker Man fidelity vs the turnaround:**
+    - Sculpted heroic anatomy: pecs, delts, biceps/triceps, abs, quads and calves via extra skin-modifier verts and/or a muscle displacement pass, with no tubular limbs.
+    - A head about 10–15% larger with a defined woven face (cheekbones, brow, beard mass).
+    - A light, fluffy straw mane (no dark disc on top).
+    - Woven boots.
+    - Weave orientation that reads like the design: a chest chevron and spiralling limbs.
+  - **Shader wins:**
+    - Wicker: warm subsurface-ish wrap lighting, fresnel rim, per-strand sheen highlights, and finer weave detail up close.
+    - Straw: translucency and rim.
+    - Foliage: backlight translucency in sun.
+    - Water: ripples or caustics where they're missing.
+  - **Animation wins:**
+    - Secondary motion: spring-damped hair/beard sway driven by velocity, breathing in idle.
+    - Body lean into turns and acceleration, plus a slight upper-body counter-rotation.
+    - Smoother blends and foot-plant-ish timing; landing squash.
+    - The gameplay camera keeps all of this readable.
+  - **Environment fidelity gaps:**
+    - Round, moss-wrapped aqueduct piers (no longer square and dark).
+    - A tamed atrium column-base glow.
+    - A curved, multi-panel control-room glass panorama like f21.
+    - Any other worst-offender items from a fresh `compare_shots.sh` review.
+  - **Proof:** a before/after per item in `art/compare/NOTES.md` (with turnaround and compare images regenerated); all tests green; benchmark ≥ 50 on every `Shot_Ref_*`.
 - [ ] **Summoning intro ("weave-in"):** on starting a new game, the player appears inside a **summoning ring** among the beach totems, whose eyes flare. The ring is new: a stone circle with glowing glyphs at the spawn.
   - **Weave-in:** over about 4–6 s, the Wicker Man weaves into existence. `wicker.gdshader` has a `weave_progress` uniform (0→1) that reveals strands in a woven order: per-vertex order data (e.g. a UV2 channel baked in Blender from feet to head with spiralling per-limb offsets) drives a dissolve with a glowing ember/cyan edge. Fibre particles spiral in toward the body, the `summon` clip plays, and the camera does a slow orbit and push-in.
   - **Handover:** the camera then blends to the gameplay camera and control unlocks. Input is locked during the intro, and any key skips it, as does a setting.
@@ -133,6 +156,7 @@ All tests report PASS (exit code 0), there are at least 6 screenshots, there are
 - [x] Phase 11 — Asset fidelity pass: own leaf-card vegetation replacing Kenney plants, totem remodel, rocks and cliffs, water bodies, facility kit (arch frames, panels, consoles, grates), per-family before/after notes
 - [x] Phase 12 — Wicker Man model: Blender body + woven plates + hair/beard cards + original woven face, humanoid rig, `wicker.gdshader` procedural weave, replaces Wayfinder, all tests green
 - [ ] Phase 13 — Wicker Man animation & summoning: full clip set, AnimationTree update, summoning ring at spawn, weave-in intro (weave_progress + fibre particles + camera), lore card, skip, re-weave on respawn/teleport, tests
+- [ ] Phase 13b — Quality-gap pass: Wicker Man anatomy/head/mane/boots + weave/straw/foliage shader wins, animation secondary motion (hair spring, lean, breathing, landing squash), round mossy aqueduct piers, atrium glow, curved control glass, before/after notes
 - [ ] Phase 14 — Water and swimming: Area3D water volumes, wading slowdown and splashes, swimming with buoyancy and a swim clip, climb-out banks, chasm → wadeable inlet, remove ChasmKill, tests
 - [ ] Phase 15 — Assisted camera and no-mouse controls: arrow-key orbit, recenter key, delayed auto-recenter, vertical stability, look-ahead, damping, collision ease-out and whiskers, zone hints, settings, F1 controls hint, tests
 - [ ] Phase 16 — Secret switch: control-room lever with E prompt, reveal cutscene (camera to door, door opens, back to player), secret relic room, tests
@@ -175,7 +199,8 @@ All tests report PASS (exit code 0), there are at least 6 screenshots, there are
 - The atrium column base glow is hot.
 - The control glass is a flat panel, not a curved wall.
 
-**Single best next step:** Phase 13 part 1. Extend `tools/blender/build_wicker.py` (run via the Blender MCP) with `thumb.L/R` bones and the clips `fall`, `land`, `swim`, `interact`, `look_around` and `summon`. Add `walk`/`fall`/`land`/`look_around` to the AnimationTree in `tools/build_player.gd`, and update `player.gd` `_update_anim`, keeping 40/40 green. Then tick the Wicker Man criterion and move on to the summoning intro (the detailed plan is in the Phase 12 note below).
+**Update (Phase 13 part 1 done, user instructions):** the Wicker Man now has `thumb.L/R` (26 bones) and all 11 clips (idle, walk, run, sprint, jump, fall, land, swim, interact, look_around, summon). The AnimationTree state machine has every clip. `player.gd` handles walk (< `WALK_MAX` 3.2 m/s), fall (vy < -2 after 0.15 s airborne), land (`LAND_TIME` after > 0.35 s airtime), look_around (after 8 s idle), `swimming` → swim (Phase 14 sets it), and `play_oneshot(clip)` for interact/summon. 4 new player tests; 44/44 pass. Wicker Man criterion ticked. **The user will install the Godot export templates and configure Caddy themselves**, so Phases 18–19 don't need RequestHostChange: verify the templates exist and that the Caddy site answers, and coordinate with the user if not. **The user asked for a quality-gap pass before web export** (new criterion + Phase 13b).
+**Single best next step:** Phase 13b, the quality-gap pass, starting with the Wicker Man. In `build_wicker.py`, add muscle-defining skin verts (pec/delt/bicep/forearm/quad/calf bulges as extra branch points along each chain, radii tuned against the turnaround), scale the head ~1.12, give the mane a lighter, fuller volume (more cards and lighter straw tones, no crown disc), and add boots. In `wicker.gdshader`: wrap/subsurface-ish warmth, fresnel rim, strand sheen, and chevron direction on the chest via a UV-region flag. Then animation secondary motion in `player.gd`/a `scripts/wicker_motion.gd` (spring-damped head/hair sway via a bone-pose offset, idle breathing, lean into turns/acceleration). Then the environment gaps: round mossy piers, atrium glow, curved control glass. Re-render `Shot_Turn*` and the compares and write notes. After that, Phase 13 part 2 (summoning intro).
 
 ### Notes (resume here)
 - **Phase 1 (done):** `project.godot` (Forward+, autoload `InputSetup` registers WASD/Space/Shift/E/Esc in code). `tools/build_level.gd` → `scenes/main.tscn` (helpers `tools/scene_util.gd`: `box_body`, `mat`, `marker`, `save`). Conventions: `Main/Markers/Spawn`, `Main/Player`, `Main/Shots/Shot_*` markers (optional meta `player_pos`) → `tools/capture_screenshot.gd` writes `art/screens/<snake>.png` (non-headless; PNGs gitignored; `-- Shot_Name` for one). Tests: `tests/test_*.gd` extend `TestCase` (`load_main`, `seconds`, `physics_frames`, `ground_below`, `check`); filter `-- <substr>`. `./tools/validate.sh` = import → build_player → build_level → import → tests (`SHOTS=1` capture, `REBUILD_ASSETS=1` reruns Blender).

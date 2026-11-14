@@ -16,7 +16,10 @@ extends CharacterBody3D
 
 const COYOTE_TIME := 0.12
 const JUMP_BUFFER := 0.12
-const LOOPING := ["idle", "run", "sprint"]
+const LOOPING := ["idle", "walk", "run", "sprint", "fall", "swim", "look_around"]
+const WALK_MAX := 3.2          # below this ground speed the walk cycle plays
+const LOOK_AROUND_AFTER := 8.0 # seconds of idling before the curious look-around
+const LAND_TIME := 0.28
 
 @onready var model: Node3D = $Model
 @onready var cam_yaw: Node3D = $CameraYaw
@@ -26,6 +29,14 @@ const LOOPING := ["idle", "run", "sprint"]
 @onready var anim_tree: AnimationTree = $AnimationTree
 
 var anim_state := "idle"
+## One-shot clip (interact, summon) that owns the AnimationTree until it ends.
+var oneshot := ""
+var _oneshot_left := 0.0
+var _idle_time := 0.0
+var _air_time := 0.0
+var _land_left := 0.0
+## Set while in deep water (Phase 14 drives this).
+var swimming := false
 var sprinting := false
 var _coyote := 0.0
 var _jump_buffer := 0.0
@@ -111,18 +122,55 @@ func _apply_look() -> void:
 
 
 func _update_anim() -> void:
+	var dt := get_physics_process_delta_time()
 	var hspeed := Vector2(velocity.x, velocity.z).length()
+	var on_floor := is_on_floor()
 	var next := "idle"
-	if not is_on_floor():
-		next = "jump"
-	elif hspeed > run_speed + 0.5:
-		next = "sprint"
-	elif hspeed > 0.4:
-		next = "run"
+	if oneshot != "":
+		_oneshot_left -= dt
+		if _oneshot_left > 0.0:
+			_set_anim(oneshot)
+			return
+		oneshot = ""
+	if swimming:
+		next = "swim"
+	elif not on_floor:
+		_air_time += dt
+		next = "fall" if velocity.y < -2.0 and _air_time > 0.15 else "jump"
+	else:
+		if _air_time > 0.35:
+			_land_left = LAND_TIME
+		_air_time = 0.0
+		if _land_left > 0.0 and hspeed < 1.0:
+			_land_left -= dt
+			next = "land"
+		elif hspeed > run_speed + 0.5:
+			next = "sprint"
+		elif hspeed > WALK_MAX:
+			next = "run"
+		elif hspeed > 0.4:
+			next = "walk"
+		else:
+			_idle_time += dt
+			next = "look_around" if _idle_time > LOOK_AROUND_AFTER else "idle"
+	if next != "idle" and next != "look_around":
+		_idle_time = 0.0
+	_set_anim(next)
+
+
+func _set_anim(next: String) -> void:
 	if next != anim_state:
 		anim_state = next
 		var pb: AnimationNodeStateMachinePlayback = anim_tree.get("parameters/playback")
 		pb.travel(next)
+
+
+## Play a one-shot clip (e.g. "interact", "summon") over the locomotion states.
+func play_oneshot(clip: String) -> void:
+	var ap: AnimationPlayer = anim_tree.get_node(anim_tree.anim_player)
+	oneshot = clip
+	_oneshot_left = ap.get_animation(clip).length if ap.has_animation(clip) else 0.5
+	_set_anim(clip)
 
 
 ## Teleport helper used by teleporters and tests.

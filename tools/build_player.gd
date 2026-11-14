@@ -4,7 +4,7 @@ extends SceneTree
 
 const OUT := "res://scenes/player.tscn"
 const MODEL := "res://assets/characters/wicker.glb"
-const STATES := ["idle", "run", "sprint", "jump"]
+const STATES := ["idle", "walk", "run", "sprint", "jump", "fall", "land", "swim", "interact", "look_around", "summon"]
 
 func _initialize() -> void:
 	var p := CharacterBody3D.new()
@@ -47,7 +47,7 @@ func _initialize() -> void:
 		for b in STATES:
 			if a != b:
 				var t := AnimationNodeStateMachineTransition.new()
-				t.xfade_time = 0.12 if b == "jump" else 0.2
+				t.xfade_time = 0.1 if b in ["jump", "land"] else (0.35 if b in ["look_around", "summon"] else 0.2)
 				sm.add_transition(a, b, t)
 	var start := AnimationNodeStateMachineTransition.new()
 	start.advance_mode = AnimationNodeStateMachineTransition.ADVANCE_MODE_AUTO

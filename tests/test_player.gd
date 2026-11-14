@@ -80,3 +80,46 @@ func test_camera_collides_with_wall() -> void:
 	await physics_frames(5)
 	dist = player.spring_arm.get_hit_length()
 	check(dist > 3.0, "full arm length in open space (len=%.2f)" % dist)
+
+func test_wicker_has_full_clip_set_and_thumbs() -> void:
+	await _fixture()
+	var ap: AnimationPlayer = player.anim_tree.get_node(player.anim_tree.anim_player)
+	for c in ["idle", "walk", "run", "sprint", "jump", "fall", "land", "swim", "interact", "look_around", "summon"]:
+		check(ap.has_animation(c), "clip %s" % c)
+	var skel: Skeleton3D = player.model.find_children("*", "Skeleton3D", true, false)[0]
+	check(skel.find_bone("thumb.L") >= 0 and skel.find_bone("thumb.R") >= 0, "thumb bones")
+	check(skel.get_bone_count() >= 24, "humanoid rig (%d bones)" % skel.get_bone_count())
+
+func test_walk_fall_land_states() -> void:
+	await _fixture()
+	Input.action_press("move_forward")
+	await physics_frames(6)
+	check_eq(player.anim_state, "walk", "slow start plays walk (v=%.2f)" % Vector2(player.velocity.x, player.velocity.z).length())
+	Input.action_release("move_forward")
+	await seconds(1.0)
+	player.global_position = Vector3(0, 6, 0)
+	await seconds(0.5)
+	check_eq(player.anim_state, "fall", "falling from height plays fall")
+	var saw_land := false
+	for i in 90:
+		await tree.physics_frame
+		if player.anim_state == "land":
+			saw_land = true
+			break
+	check(saw_land, "touchdown plays land")
+
+func test_look_around_after_idling() -> void:
+	await _fixture()
+	await seconds(8.6)
+	check_eq(player.anim_state, "look_around", "curious look-around after ~8 s idle")
+	Input.action_press("move_forward")
+	await physics_frames(10)
+	check(player.anim_state != "look_around", "moving cancels look-around")
+
+func test_oneshot_interact() -> void:
+	await _fixture()
+	player.play_oneshot("interact")
+	await physics_frames(5)
+	check_eq(player.anim_state, "interact", "interact one-shot plays")
+	await seconds(1.3)
+	check_eq(player.anim_state, "idle", "back to idle after the one-shot")
