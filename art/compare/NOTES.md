@@ -110,3 +110,11 @@ Pairs: `art/compare/<name>.png` (desktop) and `art/compare/web_<name>.png` (web)
 - **Shader:** finer weave (density 64 / bands 90); muted khaki rattan like the turnaround (was orange); less backlight.
 - **Turnaround shots:** moved to neutral beach daylight (the ring's warm light was tinting him).
 - **Still different:** arm silhouette is more tubular than the sculpted design; the mane reads as a spiky crown rather than a full round halo; the back view sits in shade.
+
+## Wicker Man round 3 (detube + spiky hair)
+- **Body:** a CC0 anatomical base (Quaternius superhero) on our rig, so limbs now taper deltoid→elbow→wrist and thigh→knee→calf→ankle. The proportions are closer to the turnaround: longer legs, V-taper torso.
+- **Hair:** stiff tapered quills in clumps over the whole scalp, swept back and windblown, longer at the crown and back, with lighter tips. It reads as spiky woven hair, not a crown or fan. The beard is coarse, short and hanging.
+- **Remaining gaps vs the sheet:**
+  - The face is the generic base face under weave: no strong brow.
+  - The torso weave still shows block patches at panel borders.
+  - The body tone is lighter than the sheet under neutral studio light.

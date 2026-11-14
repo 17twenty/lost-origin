@@ -401,40 +401,40 @@ transitions = ["idle", "walk", SubResource("AnimationNodeStateMachineTransition_
 [sub_resource type="SphereShape3D" id="SphereShape3D_dqoq3"]
 radius = 0.35
 
-[node name="Player" type="CharacterBody3D" unique_id=273496045]
+[node name="Player" type="CharacterBody3D" unique_id=1468298863]
 collision_layer = 2
 collision_mask = 13
 floor_max_angle = 0.87266463
 floor_snap_length = 0.3
 script = ExtResource("1_g2els")
 
-[node name="Collision" type="CollisionShape3D" parent="." unique_id=559697623]
+[node name="Collision" type="CollisionShape3D" parent="." unique_id=1535864145]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.05, 0)
 shape = SubResource("CapsuleShape3D_dqkch")
 
-[node name="Model" type="Node3D" parent="." unique_id=172141208]
+[node name="Model" type="Node3D" parent="." unique_id=864210860]
 
-[node name="Wicker" type="Node3D" parent="Model" unique_id=1172135624 instance=ExtResource("2_qhqgy")]
+[node name="Wicker" type="Node3D" parent="Model" unique_id=895508355 instance=ExtResource("2_qhqgy")]
 
-[node name="AnimationTree" type="AnimationTree" parent="." unique_id=1088826255]
+[node name="AnimationTree" type="AnimationTree" parent="." unique_id=1666416373]
 tree_root = SubResource("AnimationNodeStateMachine_2xkbm")
 anim_player = NodePath("../Model/Wicker/AnimationPlayer")
 
-[node name="CameraYaw" type="Node3D" parent="." unique_id=1925234776]
+[node name="CameraYaw" type="Node3D" parent="." unique_id=1993025522]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.85, 0)
 top_level = true
 
-[node name="CameraPitch" type="Node3D" parent="CameraYaw" unique_id=771626875]
+[node name="CameraPitch" type="Node3D" parent="CameraYaw" unique_id=132648042]
 transform = Transform3D(1, 0, 0, 0, 0.9838437, 0.17902958, 0, -0.17902958, 0.9838437, 0, 0, 0)
 
-[node name="SpringArm3D" type="SpringArm3D" parent="CameraYaw/CameraPitch" unique_id=879999398]
+[node name="SpringArm3D" type="SpringArm3D" parent="CameraYaw/CameraPitch" unique_id=1385840847]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.6, 0, 0)
 collision_mask = 5
 shape = SubResource("SphereShape3D_dqoq3")
 spring_length = 4.0
 margin = 0.3
 
-[node name="Camera3D" type="Camera3D" parent="CameraYaw/CameraPitch" unique_id=2112326362]
+[node name="Camera3D" type="Camera3D" parent="CameraYaw/CameraPitch" unique_id=1494336836]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.6, 0, 4)
 fov = 70.0
 near = 0.12

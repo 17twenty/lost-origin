@@ -1,15 +1,16 @@
 class_name WickerSkin
 ## Builds (and caches) the Wicker Man materials and applies them by the GLB
-## material names: Wicker, Band, Straw, Eye.
+## material names: Wicker, Band, Straw, Eye, Spike.
 
 const DIR := "res://assets/characters/wicker_mats"
 
 static func materials() -> Dictionary:
-	if not ResourceLoader.exists(DIR + "/wicker.tres"):
+	if not ResourceLoader.exists(DIR + "/spike.tres"):
 		build()
 	return {
 		"Wicker": load(DIR + "/wicker.tres"), "Band": load(DIR + "/band.tres"),
 		"Straw": load(DIR + "/straw.tres"), "Eye": load(DIR + "/eye.tres"),
+		"Spike": load(DIR + "/spike.tres"),
 	}
 
 static func build() -> void:
@@ -34,6 +35,11 @@ static func build() -> void:
 	ResourceSaver.save(tex, DIR + "/straw_tex.res")
 	straw.set_shader_parameter("straw_tex", load(DIR + "/straw_tex.res"))
 	ResourceSaver.save(straw, DIR + "/straw.tres")
+	var spike := ShaderMaterial.new()   # spiky wicker hair quills (opaque)
+	spike.shader = straw.shader
+	spike.set_shader_parameter("solid", true)
+	spike.set_shader_parameter("sway", 0.006)
+	ResourceSaver.save(spike, DIR + "/spike.tres")
 	var eye := StandardMaterial3D.new()
 	eye.albedo_color = Color(1.0, 0.6, 0.15)
 	eye.emission_enabled = true

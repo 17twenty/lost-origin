@@ -10,3 +10,6 @@
 | Asset | Author | Source | Licence | Location |
 |---|---|---|---|---|
 | Nature Kit 2.1 (rocks, logs, lilies, flowers, mushrooms in use; its palms/bushes/grass are only used to size our own replacement plants) | Kenney | https://kenney.nl/assets/nature-kit | CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/) | `assets/third_party/kenney_nature_kit/` |
+
+## Quaternius — Universal Base Characters (CC0)
+- Superhero male base mesh and skin weights (`assets/third_party/quaternius_ubc/`, licence alongside). Re-posed, scaled and re-rigged onto our own skeleton by `tools/blender/build_wicker.py`, then re-skinned with our wicker weave, braids, pauldrons and spiky quill hair. https://quaternius.com

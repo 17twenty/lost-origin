@@ -1,5 +1,7 @@
 .godot/
 *.import.tmp
+./inspiration.mp4
+./wicker-inspo/
 /art/screens/*.png
 .DS_Store
 *.blend1

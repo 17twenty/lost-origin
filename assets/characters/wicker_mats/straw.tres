@@ -10,3 +10,6 @@ shader_parameter/straw_tex = ExtResource("2_8h5tk")
 shader_parameter/alpha_cut = null
 shader_parameter/sway = null
 shader_parameter/weave_progress = null
+shader_parameter/solid = null
+shader_parameter/spike_root = null
+shader_parameter/spike_tip = null

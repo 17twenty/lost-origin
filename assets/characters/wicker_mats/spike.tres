@@ -1,0 +1,13 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://shaders/straw.gdshader" id="1_fq3u8"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_fq3u8")
+shader_parameter/alpha_cut = null
+shader_parameter/sway = 0.006
+shader_parameter/weave_progress = null
+shader_parameter/solid = true
+shader_parameter/spike_root = null
+shader_parameter/spike_tip = null

@@ -143,6 +143,8 @@ func _walk(target: Vector3, reach: float) -> bool:
 	var since_progress := 0
 	var prev := player.global_position
 	for i in frames:
+		if i % 300 == 299:
+			print("HEARTBEAT leg frame %d pos=%s" % [i, player.global_position])
 		if player.global_position.distance_to(prev) > 4.0:
 			_release_all()   # teleported mid-leg
 			return true
@@ -160,14 +162,24 @@ func _walk(target: Vector3, reach: float) -> bool:
 		var fwd: Vector3 = -player.cam_yaw.global_basis.z
 		var a: float = Vector2(fwd.x, fwd.z).angle_to(Vector2(d.x, d.z))
 		_release_all()
+		# Unstick: if wedged for 2 s, back off half a second at an angle, as a player would.
+		if since_progress >= 120 and since_progress < 150:
+			Input.action_press("move_back")
+			Input.action_press("move_left" if (i / 600) % 2 == 0 else "move_right")
+			await physics_frame
+			_watch_camera()
+			continue
+		if since_progress == 150:
+			last_progress = player.global_position + Vector3(100, 0, 0)   # count as progress, try again
 		if absf(a) < 1.2:
 			Input.action_press("move_forward")
 		elif absf(a) > 2.2:
 			Input.action_press("move_back")
 			a = 0.0
-		if a > 0.3:
+		# Steer tightly (doorways are only ~1.5 capsule widths wider than the hero).
+		if a > 0.12:
 			Input.action_press("move_right")
-		elif a < -0.3:
+		elif a < -0.12:
 			Input.action_press("move_left")
 		# Unstick: hop if no progress for 1.5 s.
 		if since_progress == 90 or since_progress == 180:
