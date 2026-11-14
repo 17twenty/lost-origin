@@ -106,10 +106,12 @@ static func _water(out: Node3D) -> void:
 	var w := SceneUtil.add(out, Node3D.new(), "Water")
 	# One sea plane from the beach southwards (stays clear of the chasm).
 	_water_plane(w, "Ocean", Vector2(3000, 3000), Vector3(0, T.WATER_Y, 1520), 0)
-	_water_plane(w, "ChasmRiver", Vector2(160, 16), Vector3(0, T.CHASM_WATER_Y, T.CHASM_Z), 40)
+	var inlet := _water_plane(w, "Inlet", Vector2(110, 26), Vector3(0, T.WATER_Y, T.CHASM_Z), 60)
+	var im: ShaderMaterial = water_mat.duplicate()
+	im.set_shader_parameter("depth_scale", 7.0)  # stays turquoise: it's shallow
+	(inlet.mesh as PlaneMesh).material = im
 	_water_plane(w, "PlungePool", Vector2(11, 11), Vector3(T.POOL_POS.x, -0.1, T.POOL_POS.y))
-	# Falling into the chasm respawns you at the nearest checkpoint.
-	_kill_zone(w, "ChasmKill", Vector3(200, 6, 15), Vector3(0, T.CHASM_WATER_Y - 2.5, T.CHASM_Z))
+	# The inlet is shallow: falling off the aqueduct is a splash, never a respawn.
 
 static func _kill_zone(parent: Node3D, name: String, size: Vector3, pos: Vector3) -> Area3D:
 	var a := Area3D.new()
@@ -148,38 +150,64 @@ static func _csg_arch(parent: Node, radius: float, length: float, pos: Vector3, 
 	c.position = pos
 	parent.add_child(c)
 
+## Aqueduct (video f14-16): a long run of tall mossy piers standing in the
+## shallow inlet, arches between them, a walkable deck at DECK_Y with ruined
+## parapets, and stone ramps down to the beach (south) and plateau (north).
+const AQ_Z0 := -6.5    # deck south end
+const AQ_Z1 := -29.5   # deck north end
+const AQ_RAMP_S := 0.0  # south ramp foot (beach)
+const AQ_RAMP_N := -36.0
+const AQ_PIERS := 8
+
+static func _ramp_poly(parent: Node, z_top: float, z_foot: float, y_top: float, y_foot: float, width: float) -> void:
+	var poly := CSGPolygon3D.new()
+	poly.name = "Ramp"
+	# Local X maps to world -Z (rotated 90 deg about Y); extrusion depth runs along world X.
+	poly.polygon = PackedVector2Array([Vector2(-z_foot, y_foot), Vector2(-z_top, y_top), Vector2(-z_top, -2.6), Vector2(-z_foot, -2.6)])
+	poly.depth = width
+	poly.rotation.y = PI / 2.0
+	poly.position.x = width * 0.5
+	poly.material = stone_mat
+	parent.add_child(poly)
+
 static func _bridge(out: Node3D) -> void:
 	var aq := CSGCombiner3D.new()
 	aq.name = "AqueductBridge"
 	aq.use_collision = true
 	out.add_child(aq)
-	var top := T.PATH_Y
-	var z0 := -7.5
-	var z1 := -28.5
-	var zc := (z0 + z1) * 0.5
-	var length := z0 - z1
-	_csg_box(aq, Vector3(4.6, 11.0, length), Vector3(0, top - 5.5, zc))
-	# Lower tier: three big arches over the river.
-	for az in [-13.0, -18.0, -23.0]:
-		_csg_arch(aq, 2.0, 5.0, Vector3(0, -4.5, az))
-		_csg_box(aq, Vector3(5.0, 7.0, 4.0), Vector3(0, -8.0, az), CSGShape3D.OPERATION_SUBTRACTION)
-	# Upper tier: small arcade openings.
-	var z := -11.25
-	while z > -25.0:
-		_csg_arch(aq, 0.75, 5.0, Vector3(0, -1.9, z))
-		_csg_box(aq, Vector3(5.0, 1.0, 1.5), Vector3(0, -2.4, z), CSGShape3D.OPERATION_SUBTRACTION)
-		z -= 2.5
+	var top := T.DECK_Y
+	var zc := (AQ_Z0 + AQ_Z1) * 0.5
+	var length := AQ_Z0 - AQ_Z1
+	var base := -2.6  # piers sink below the inlet floor
+	# Deck slab + arcade wall under it.
+	_csg_box(aq, Vector3(4.6, 0.8, length), Vector3(0, top - 0.4, zc))
+	_csg_box(aq, Vector3(2.4, 1.9, length), Vector3(0, top - 1.75, zc))  # arcade wall (arches cut below)
+	# Piers.
+	var spacing := length / float(AQ_PIERS - 1)
+	for k in AQ_PIERS:
+		var pz := AQ_Z0 - k * spacing
+		_csg_box(aq, Vector3(2.0, top - 0.8 - base, 1.0), Vector3(0, (top - 0.8 + base) * 0.5, pz))
+		_csg_box(aq, Vector3(2.5, 0.3, 1.3), Vector3(0, top - 2.35, pz))   # impost where the arches spring
+		_csg_box(aq, Vector3(2.5, 0.5, 1.5), Vector3(0, -0.9, pz))         # footing at the waterline
+	# Arches between piers (cut through the arcade wall).
+	for k in AQ_PIERS - 1:
+		var az := AQ_Z0 - (k + 0.5) * spacing
+		var r := spacing * 0.5 - 0.5
+		_csg_arch(aq, r, 3.2, Vector3(0, top - 2.3, az), true)
+		_csg_box(aq, Vector3(3.2, 2.0, r * 2.0), Vector3(0, top - 3.3, az), CSGShape3D.OPERATION_SUBTRACTION)
+	# Ramps down to the beach and the plateau.
+	_ramp_poly(aq, AQ_Z0, AQ_RAMP_S, top, T.PATH_Y, 4.2)
+	_ramp_poly(aq, AQ_Z1, AQ_RAMP_N, top, T.PATH_Y, 4.2)
 	# Parapets with ruined gaps.
 	for sx in [-1.0, 1.0]:
 		_csg_box(aq, Vector3(0.4, 0.8, length), Vector3(sx * 2.1, top + 0.4, zc))
-	_csg_box(aq, Vector3(0.6, 1.0, 2.6), Vector3(2.1, top + 0.55, -15.5), CSGShape3D.OPERATION_SUBTRACTION)
-	_csg_box(aq, Vector3(0.6, 0.5, 1.6), Vector3(-2.1, top + 0.65, -22.0), CSGShape3D.OPERATION_SUBTRACTION)
-	_csg_box(aq, Vector3(0.6, 1.0, 1.2), Vector3(-2.1, top + 0.55, -12.0), CSGShape3D.OPERATION_SUBTRACTION)
-	# Broken corner bite out of the deck edge (ruin), not on the walk line.
-	_csg_box(aq, Vector3(1.2, 1.4, 1.8), Vector3(2.6, top - 0.2, -19.5), CSGShape3D.OPERATION_SUBTRACTION)
-	# Fallen chunks in the river.
+	for gap in [[2.1, -11.0, 2.6], [-2.1, -16.5, 1.6], [2.1, -21.5, 1.4], [-2.1, -26.0, 2.2]]:
+		_csg_box(aq, Vector3(0.6, 1.0, gap[2]), Vector3(gap[0], top + 0.55, gap[1]), CSGShape3D.OPERATION_SUBTRACTION)
+	# Broken bite out of the deck edge (ruin), off the walk line.
+	_csg_box(aq, Vector3(1.2, 1.4, 1.8), Vector3(2.6, top - 0.2, -19.0), CSGShape3D.OPERATION_SUBTRACTION)
+	# Fallen chunks standing in the shallows.
 	var rubble := SceneUtil.add(out, Node3D.new(), "BridgeRubble")
-	for p in [Vector3(4.5, T.CHASM_WATER_Y - 0.3, -19.0), Vector3(-5.0, T.CHASM_WATER_Y - 0.5, -14.0)]:
+	for p in [Vector3(4.6, -1.0, -19.5), Vector3(-5.0, -1.2, -14.0), Vector3(6.5, -1.1, -24.0)]:
 		var b := SceneUtil.box_body(Vector3(1.4, 1.2, 1.8), p, stone_mat, "Chunk")
 		b.rotation = Vector3(rng.randf_range(-0.4, 0.4), rng.randf() * TAU, rng.randf_range(-0.4, 0.4))
 		rubble.add_child(b)
@@ -231,8 +259,8 @@ static func _totems(out: Node3D) -> void:
 		_totem(g, mesh, p.x, p.y, Vector2(p.x * 1.2, 200), rng.randf_range(1.1, 1.5))
 	# Gateways: bridge head and grotto entrance.
 	for sx in [-1.0, 1.0]:
-		_totem(g, mesh, sx * 4.2, -5.5, Vector2(sx * 4.2, 10), 1.15)
-		_totem(g, mesh, sx * 4.2, -30.5, Vector2(sx * 4.2, -50), 1.0)
+		_totem(g, mesh, sx * 4.0, 1.5, Vector2(sx * 4.0, 12), 1.15)     # aqueduct south ramp foot
+		_totem(g, mesh, sx * 4.0, -37.5, Vector2(sx * 4.0, -50), 1.0)   # north ramp foot
 		_totem(g, mesh, sx * 6.5, -57.0, Vector2(sx * 6.5, -40), 1.35)
 
 # --------------------------------------------------------------------- grotto
@@ -654,7 +682,7 @@ static func _foliage(out: Node3D) -> void:
 	# Beach.
 	_scatter(f, 22, Rect2(-34, -8, 68, 26), palms, Vector2(5.0, 7.5), 7.0, totems, true, 0.3, 0.0)
 	_scatter(f, 30, Rect2(-34, -8, 68, 24), ["grass_large", "grass_leafsLarge", "plant_flatShort"], Vector2(3, 5), 5.0, [], false, 0.4, 0.1)
-	_scatter(f, 14, Rect2(-40, -9, 80, 34), ["rock_largeA", "rock_largeC", "rock_largeE", "rock_smallA"], Vector2(2.5, 5), 6.0, totems, false, 0.6, -2.5)
+	_scatter(f, 14, Rect2(-40, -4, 80, 29), ["rock_largeA", "rock_largeC", "rock_largeE", "rock_smallA"], Vector2(2.5, 5), 9.0, totems, false, 0.6, -0.1)
 	# Jungle plateau.
 	var plateau := Rect2(-30, -58, 60, 30)
 	var keep := [Vector2(T.POOL_POS.x, T.POOL_POS.y), Vector2(0, -57)]
@@ -690,30 +718,29 @@ static func _bounds(out: Node3D) -> void:
 
 # -------------------------------------------------------------------- markers
 static func _markers(markers: Node3D, shots: Node3D) -> void:
+	var D := T.DECK_Y
 	var zones := {
-		"Zone_Beach": Vector2(0, 8),
-		"Zone_BridgeSouth": Vector2(0, -6.5),
-		"Zone_BridgeMid": Vector2(0, -18),
-		"Zone_BridgeNorth": Vector2(0, -30),
-		"Zone_Plateau": Vector2(0, -44),
-		"Zone_GrottoEntrance": Vector2(0, -57),
-		"Zone_GrottoPad": Vector2(0, -71),
-		"Zone_GrottoInside": Vector2(0, -66),
+		"Zone_Beach": ground(0, 8),
+		"Zone_BridgeSouth": Vector3(0, T.PATH_Y, 1.0),      # foot of the south ramp
+		"Zone_BridgeMid": Vector3(0, D, -18.0),             # on the deck
+		"Zone_BridgeNorth": Vector3(0, T.PATH_Y, -37.0),    # foot of the north ramp
+		"Zone_Plateau": ground(0, -44),
+		"Zone_GrottoEntrance": ground(0, -57),
+		"Zone_GrottoPad": Vector3(0, T.PATH_Y, -71),
+		"Zone_GrottoInside": Vector3(0, T.PATH_Y, -66),
+		"Zone_Inlet": Vector3(7.0, h(7.0, -18.0), -18.0),    # in the shallows beside the piers
 	}
 	for n in zones:
-		var p: Vector2 = zones[n]
-		var y := T.PATH_Y if abs(p.y + 18) < 10 or p.y < -58 else h(p.x, p.y)
-		SceneUtil.marker(markers, n, Vector3(p.x, y + 0.05, p.y))
-	var cps := {"CP_Beach": Vector2(0, 8), "CP_BridgeSouth": Vector2(0, -6), "CP_BridgeNorth": Vector2(0, -30), "CP_Grotto": Vector2(0, -57)}
+		SceneUtil.marker(markers, n, zones[n] + Vector3(0, 0.05, 0))
+	var cps := {"CP_Beach": ground(0, 8), "CP_BridgeSouth": Vector3(0, T.PATH_Y, 2.0), "CP_BridgeNorth": Vector3(0, T.PATH_Y, -38.5), "CP_Grotto": ground(0, -57)}
 	for cp_name in cps:
-		var cp: Vector2 = cps[cp_name]
-		var m := SceneUtil.marker(markers, cp_name, Vector3(cp.x, h(cp.x, cp.y) + 0.1, cp.y))
+		var m := SceneUtil.marker(markers, cp_name, cps[cp_name] + Vector3(0, 0.1, 0))
 		m.rotation.y = 0.0  # face north (-Z) along the route
 		m.add_to_group("checkpoint", true)
 	var beach := SceneUtil.marker(shots, "Shot_Beach", Vector3(-6, 3.2, 20), Vector3(2, 1.5, -2))
 	beach.set_meta("player_pos", ground(-2, 12, 0.05))
-	var bridge := SceneUtil.marker(shots, "Shot_Bridge", Vector3(16, 4.5, -8.5), Vector3(0, -2.0, -19))
-	bridge.set_meta("player_pos", Vector3(0, T.PATH_Y + 0.05, -16))
+	var bridge := SceneUtil.marker(shots, "Shot_Bridge", Vector3(13, 2.0, -4.0), Vector3(0, 2.0, -22))
+	bridge.set_meta("player_pos", Vector3(0, T.DECK_Y + 0.05, -14))
 	var plateau := SceneUtil.marker(shots, "Shot_Plateau", Vector3(-6, 3.0, -36), Vector3(10, 4, -60))
 	plateau.set_meta("player_pos", ground(-1, -44, 0.05))
 	var lagoon := SceneUtil.marker(shots, "Shot_Lagoon", Vector3(-2.5, 2.3, 13), Vector3(12, 1.2, 30))

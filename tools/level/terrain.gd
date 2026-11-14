@@ -5,7 +5,7 @@ class_name LevelTerrain
 ## Layout (Y up, -Z = north):
 ##   z  > 18        lagoon shore sloping under the water (south)
 ##   z  -10..18     beach (spawn, totems, palms)
-##   z  -25.5..-10.5 chasm crossed by the aqueduct bridge (deck top y = PATH_Y)
+##   z  -29.5..-6.5 shallow inlet crossed by the pier aqueduct (deck y = DECK_Y)
 ##   z  -60..-26    jungle plateau
 ##   z  < -60       back cliff with a slot for the grotto (|x| < 11)
 ##   |x| > 28       side hills enclosing the island
@@ -16,9 +16,11 @@ const Z_MIN := -100
 const Z_MAX := 70
 const PATH_Y := 0.3
 const WATER_Y := -0.35
-const CHASM_Z := -18.0
-const CHASM_FLOOR := -10.0
-const CHASM_WATER_Y := -6.0
+const CHASM_Z := -18.0          # centre of the shallow inlet the aqueduct strides across
+const CHASM_FLOOR := -1.3       # wading depth (~1 m under WATER_Y)
+const CHASM_DEEP := -2.3        # deeper channel down the middle
+const INLET_HALF := 9.0         # flat inlet floor |z - CHASM_Z| < INLET_HALF, banks 2.5 m wide
+const DECK_Y := 3.3             # aqueduct deck top (ramps up from PATH_Y at both ends)
 const CLIFF_Z := -60.0
 const SLOT_HALF := 11.0
 const POOL_POS := Vector2(20.0, -55.0)
@@ -45,9 +47,11 @@ static func height(x: float, z: float) -> float:
 		h += n * 0.5 * (1.0 - on_path)
 	# Lagoon: shore slopes under the water to the south.
 	h = lerp(h, -4.0, smoothstep(16.0, 50.0, z))
-	# Chasm.
-	var c := 1.0 - smoothstep(5.0, 7.5, abs(z - CHASM_Z))
-	h = lerp(h, CHASM_FLOOR + n * 0.5, c)
+	# Shallow turquoise inlet (was a chasm): wadeable floor, deeper middle channel, walkable banks.
+	var dz: float = abs(z - CHASM_Z)
+	var c := 1.0 - smoothstep(INLET_HALF, INLET_HALF + 2.5, dz)
+	var inlet_floor: float = lerp(CHASM_DEEP, CHASM_FLOOR, smoothstep(1.5, 5.0, dz)) + n * 0.15
+	h = lerp(h, inlet_floor, c)
 	# Side hills (open to the sea in the south).
 	var side := smoothstep(28.0, 50.0, abs(x)) * (20.0 + n * 6.0)
 	side *= 1.0 - smoothstep(18.0, 45.0, z)
