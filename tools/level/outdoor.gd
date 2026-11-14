@@ -327,7 +327,7 @@ static func _grotto(out: Node3D) -> void:
 		shaft.spot_range = 34
 		shaft.spot_angle = 14
 		shaft.light_energy = sh[2]
-		shaft.light_volumetric_fog_energy = 5.0
+		shaft.light_volumetric_fog_energy = 1.2
 		shaft.light_color = Color(1.0, 0.95, 0.8)
 		shaft.shadow_enabled = true
 		g.add_child(shaft)
@@ -345,7 +345,11 @@ static func _grotto(out: Node3D) -> void:
 	fill2.light_energy = 1.2
 	fill2.light_color = Color(1.0, 0.92, 0.8)
 	g.add_child(fill2)
-	_fog_volume(g, "CaveHaze", Vector3(20, 14, 25), Vector3(0, 7.0, -73), 0.022, Color(0.9, 0.97, 1.0))
+	_fog_volume(g, "CaveHaze", Vector3(20, 14, 25), Vector3(0, 7.0, -73), 0.012, Color(0.9, 0.97, 1.0))
+	# Visible sun shafts over the east rim (mesh-based, so they also show on web).
+	_light_shaft(g, "LightShaft0", Vector3(10.5, 17.0, -70.5), Vector3(-3.0, floor_y, -72.5), 0.9, 2.6, 0.09)
+	_light_shaft(g, "LightShaft1", Vector3(10.5, 17.0, -78.0), Vector3(-2.0, floor_y, -79.5), 0.7, 2.2, 0.08)
+	_light_shaft(g, "LightShaft2", Vector3(10.0, 16.5, -64.0), Vector3(-1.0, floor_y, -66.0), 0.6, 1.8, 0.06)
 	_mist(g, "PoolMist", Vector3(0, floor_y + 0.6, -81.2), 3.0)
 	# Rocky facade so the entrance reads as a cave mouth, not a wall.
 	for r in [[Vector3(-7.5, 0, -58.8), 6.0], [Vector3(7.8, 0, -58.6), 6.5], [Vector3(-11.5, 4, -59.2), 8.0],
@@ -395,6 +399,32 @@ static func _grotto(out: Node3D) -> void:
 		var x := side * rng.randf_range(7.5, 9.5)
 		_kenney(g, ["rock_tallA", "rock_tallB", "rock_largeD", "rock_largeF"][rng.randi() % 4], Vector3(x, floor_y, z), rng.randf_range(2.0, 3.5), false)
 		_kenney(g, ["plant_bushDetailed", "plant_flatTall", "grass_leafsLarge"][rng.randi() % 3], Vector3(x - side * 1.5, floor_y, z + 1), rng.randf_range(3, 5), false)
+
+## Fake light shaft: open cone from `top` (narrow) to `bottom` (wide), additive.
+static func _light_shaft(parent: Node3D, name: String, top: Vector3, bottom: Vector3, r_top: float, r_bottom: float, intensity := 0.3, color := Color(1.0, 0.95, 0.8)) -> MeshInstance3D:
+	var mi := MeshInstance3D.new()
+	mi.name = name
+	var cm := CylinderMesh.new()
+	cm.top_radius = r_top
+	cm.bottom_radius = r_bottom
+	cm.height = top.distance_to(bottom)
+	cm.radial_segments = 16
+	cm.rings = 1
+	cm.cap_top = false
+	cm.cap_bottom = false
+	var m := ShaderMaterial.new()
+	m.shader = load("res://shaders/light_shaft.gdshader")
+	m.set_shader_parameter("noise_tex", noise_tex)
+	m.set_shader_parameter("intensity", intensity)
+	m.set_shader_parameter("color", color)
+	cm.material = m
+	mi.mesh = cm
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	var up := (top - bottom).normalized()
+	var side := up.cross(Vector3.FORWARD if abs(up.z) < 0.9 else Vector3.RIGHT).normalized()
+	mi.transform = Transform3D(Basis(side, up, side.cross(up)), (top + bottom) * 0.5)
+	parent.add_child(mi)
+	return mi
 
 ## tiers > 0 raises the pad on stepped, walkable truncated-cone tiers (0.25 m each).
 static func _pad(parent: Node3D, name: String, pos: Vector3, tiers := 0) -> Node3D:

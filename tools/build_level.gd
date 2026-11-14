@@ -16,6 +16,7 @@ func _initialize() -> void:
 	LevelFacility.build(level, markers, shots)
 	LevelConnector.build(level, markers, shots)
 	LevelGarden.build(level, markers, shots)
+	LevelVines.build(level)
 	LevelReferenceShots.build(shots)
 	var spawn_pos := LevelOutdoor.ground(0, 10, 0.05)
 	SceneUtil.marker(markers, "Spawn", spawn_pos)
