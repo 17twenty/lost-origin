@@ -87,12 +87,13 @@ def curve(start, direction, length, segs, bend, rise):
     return pts
 
 
-def leaf_card(center, size, tilt):
-    """Two crossed quads; vertex colour R is the sway weight."""
+def leaf_card(center, size, tilt, stretch=0.9):
+    """Two crossed quads; vertex colour R is the sway weight. stretch > 1 = hanging strand."""
     for rot in (0.0, math.pi * 0.5):
         m = Matrix.Rotation(tilt[2] + rot, 4, "Z") @ Matrix.Rotation(tilt[0], 4, "X")
         hw = size * 0.5
-        corners = [Vector((-hw, 0, -hw * 0.9)), Vector((hw, 0, -hw * 0.9)), Vector((hw, 0, hw * 0.9)), Vector((-hw, 0, hw * 0.9))]
+        hh = hw * stretch
+        corners = [Vector((-hw, 0, -hh * 1.6 + hh * 0.6)), Vector((hw, 0, -hh * 1.6 + hh * 0.6)), Vector((hw, 0, hh * 0.6)), Vector((-hw, 0, hh * 0.6))]
         vs = [bm.verts.new(center + m @ c) for c in corners]
         f = bm.faces.new(vs)
         f.material_index = 1
@@ -103,23 +104,23 @@ def leaf_card(center, size, tilt):
 
 
 # Trunk: leans toward +X/-Y (over the pool), twists, flares into roots.
-trunk = curve(Vector((0, 0, -0.2)), Vector((0.25, -0.1, 1)), 4.6, 9, 0.35, 0.15)
-tube(trunk, [0.78 - 0.055 * i for i in range(len(trunk))], flare=1.0)
+trunk = curve(Vector((0, 0, -0.2)), Vector((0.3, -0.12, 1)), 6.2, 12, 0.3, 0.12)
+tube(trunk, [0.9 - 0.052 * i for i in range(len(trunk))], flare=1.1)
 # Surface roots.
-for k in range(5):
-    ang = k / 5 * math.tau + 0.4
-    d = Vector((math.cos(ang), math.sin(ang), -0.25))
-    pts = curve(Vector((0, 0, 0.35)), d, 1.8, 4, 0.2, -0.05)
-    tube(pts, [0.24, 0.18, 0.12, 0.07, 0.03])
+for k in range(6):
+    ang = k / 6 * math.tau + 0.4
+    d = Vector((math.cos(ang), math.sin(ang), -0.2))
+    pts = curve(Vector((0, 0, 0.45)), d, 2.4, 5, 0.25, -0.06)
+    tube(pts, [0.3, 0.24, 0.17, 0.11, 0.06, 0.02])
 
 # Branches from the upper trunk, arching out then drooping.
 tips = []
-for k in range(7):
-    idx = random.randint(4, len(trunk) - 2)
+for k in range(8):
+    idx = random.randint(7, len(trunk) - 2)
     base = trunk[idx]
-    ang = k / 7 * math.tau + random.uniform(-0.3, 0.3)
-    d = Vector((math.cos(ang), math.sin(ang), random.uniform(0.3, 0.8)))
-    length = random.uniform(2.2, 3.4)
+    ang = k / 8 * math.tau + random.uniform(-0.3, 0.3)
+    d = Vector((math.cos(ang), math.sin(ang), random.uniform(0.25, 0.6)))
+    length = random.uniform(2.6, 3.8)
     pts = curve(base, d, length, 6, 0.4, -0.06)
     tube(pts, [0.26 * (1 - j / 7) + 0.03 for j in range(len(pts))])
     tips.extend(pts[2:])
@@ -137,11 +138,16 @@ tips.extend(crown[1:])
 # Canopy: leaf cards clustered around branch points, drooping.
 cards = 0
 for p in tips:
-    if p.z < 3.6:
-        continue  # keep the trunk and lower branches readable (canopy up high)
+    if p.z < 5.0:
+        continue  # keep the trunk readable: canopy starts high
     for n in range(5):
-        c = p + Vector((random.uniform(-0.7, 0.7), random.uniform(-0.7, 0.7), random.uniform(-0.9, 0.3)))
-        leaf_card(c, random.uniform(1.1, 1.7), (random.uniform(-0.35, 0.35), 0, random.uniform(0, math.tau)))
+        c = p + Vector((random.uniform(-0.8, 0.8), random.uniform(-0.8, 0.8), random.uniform(-0.4, 0.5)))
+        leaf_card(c, random.uniform(1.2, 1.8), (random.uniform(-0.3, 0.3), 0, random.uniform(0, math.tau)))
+        cards += 1
+    # Willow-like hanging strands.
+    for n in range(2):
+        c = p + Vector((random.uniform(-0.5, 0.5), random.uniform(-0.5, 0.5), -0.2))
+        leaf_card(c, random.uniform(0.6, 0.9), (0.0, 0, random.uniform(0, math.tau)), stretch=random.uniform(2.6, 3.6))
         cards += 1
 
 me = bpy.data.meshes.new("GardenTree")

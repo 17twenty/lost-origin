@@ -109,7 +109,7 @@ static func build(level: Node3D, markers: Node3D, shots: Node3D) -> void:
 	moss.set_shader_parameter("moss_amount", 0.95)
 	bedm.material = moss
 	bed.mesh = bedm
-	bed.position = Vector3(15.4, F + 0.05, -100.2)
+	bed.position = Vector3(15.6, F + 0.05, -98.6)
 	g.add_child(bed)
 
 	# Octagonal pool with glowing rim, and twin waterfalls from the skylight.
@@ -152,7 +152,7 @@ static func build(level: Node3D, markers: Node3D, shots: Node3D) -> void:
 	O._mist(g, "PoolMist", Vector3(POOL.x, F + 0.6, POOL.z - 0.4), 2.0)
 
 	# The tree: leaning over the pool from the south-west.
-	_tree(g, Vector3(15.4, F + 0.1, -100.2), 0.95)
+	_tree(g, Vector3(15.6, F + 0.1, -98.6), 0.9)
 
 	# Ferns, bushes and mossy rocks (clear of the walk strip z > -96.5 and the pool).
 	for i in 60:
@@ -194,6 +194,8 @@ static func build(level: Node3D, markers: Node3D, shots: Node3D) -> void:
 	}
 	for n in zones:
 		SceneUtil.marker(markers, n, zones[n] + Vector3(0, 0.05, 0))
+	var tv := SceneUtil.marker(shots, "Shot_GardenTree", Vector3(23.5, F + 1.7, -96.0), Vector3(15.6, F + 3.6, -98.6))
+	tv.set_meta("hide_player", true)
 	var s := SceneUtil.marker(shots, "Shot_Garden", Vector3(25.5, F + 2.4, -94.2), Vector3(18.5, F + 2.8, -102))
 	s.set_meta("player_pos", Vector3(22.5, F + 0.05, -95.2))
 
