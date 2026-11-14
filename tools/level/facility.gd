@@ -60,6 +60,18 @@ static func _materials() -> void:
 	pool_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	pool_mat.albedo_color.a = 0.75
 
+## Flat octagonal water surface (single cap, faces up) for an octagonal pool of
+## the given inner apothem; rotate by PI/8 like `_oct` so the flats line up.
+static func oct_water_mesh(apothem: float) -> PrimitiveMesh:
+	var cm := CylinderMesh.new()
+	cm.radial_segments = 8
+	cm.rings = 1
+	cm.top_radius = circumradius(apothem) - 0.02
+	cm.bottom_radius = cm.top_radius
+	cm.height = 0.001
+	cm.cap_bottom = false
+	return cm
+
 static func circumradius(apothem: float) -> float:
 	return apothem / cos(PI / 8.0)
 
@@ -166,7 +178,7 @@ static func _corridor(fac: Node3D) -> void:
 		_arch_frame(c, [21.0, 27.0, 33.0, 38.6][i], trim if i % 2 == 0 else trim_violet)
 	# Octagonal pools down the centre line.
 	for i in 3:
-		_pool(c, Vector3(25.0 + i * 5.5, F, -88))
+		_pool(c, Vector3(25.0 + i * 5.5, F, -88), i)
 	for x in [22.0, 30.0, 38.0]:
 		_light(c, Vector3(x, F + 4.2, -88), Color(0.75, 0.9, 1.0), 1.2, 9.0)
 	O.camera_zone(c, "CamCorridor", Vector3(23.0, 5.0, 8.0), Vector3(28.5, F + 2.5, -88), 3.0, -0.14)
@@ -210,9 +222,9 @@ static func _oct_x(parent: Node, x: float, thickness: float, h: float, w: float,
 	c.transform = Transform3D(b, Vector3(x, F + h * 0.5 + 0.05, -88))
 	parent.add_child(c)
 
-static func _pool(parent: Node3D, pos: Vector3) -> void:
+static func _pool(parent: Node3D, pos: Vector3, idx := 0) -> void:
 	var p := Node3D.new()
-	p.name = "OctPool"
+	p.name = "OctPool%d" % idx
 	p.position = pos
 	parent.add_child(p)
 	var rim := CSGCombiner3D.new()
@@ -236,14 +248,14 @@ static func _pool(parent: Node3D, pos: Vector3) -> void:
 	p.add_child(bed)
 	var water := MeshInstance3D.new()
 	water.name = "Water"
-	var wm := PlaneMesh.new()
-	wm.size = Vector2(3.0, 3.0)
+	var wm := oct_water_mesh(1.5)   # octagonal: matches the rim (a square plane poked through the corners)
 	var wmat: ShaderMaterial = O.water_mat.duplicate()
 	wmat.set_shader_parameter("shallow_color", Color(0.3, 0.95, 1.0))
 	wmat.set_shader_parameter("depth_scale", 0.6)
 	wmat.set_shader_parameter("foam_distance", 0.0)
 	wm.material = wmat
 	water.mesh = wm
+	water.rotation.y = PI / 8.0
 	water.position.y = 0.14
 	p.add_child(water)
 	var glow := CSGCombiner3D.new()

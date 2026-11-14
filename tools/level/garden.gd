@@ -129,11 +129,11 @@ static func build(level: Node3D, markers: Node3D, shots: Node3D) -> void:
 	FAC._oct(glow, POOL_APOTHEM - 0.12, 0.1, Vector3(0, 0.56, 0), FAC.trim, sub)
 	var water := MeshInstance3D.new()
 	water.name = "Water"
-	var wm := PlaneMesh.new()
-	wm.size = Vector2(POOL_APOTHEM * 2.0, POOL_APOTHEM * 2.0)
+	var wm := FAC.oct_water_mesh(POOL_APOTHEM - 0.35)   # inside the rim, octagonal
 	wm.material = O.water_mat
 	water.mesh = wm
 	water.position.y = 0.4
+	water.rotation.y = PI / 8.0
 	pool.add_child(water)
 	O._water_volume(pool, "GardenPoolWater", Vector3(POOL_APOTHEM * 1.9, 1.0, POOL_APOTHEM * 1.9), Vector3(0, -0.1, 0), F + 0.4)
 	var glowfloor := MeshInstance3D.new()

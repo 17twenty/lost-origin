@@ -41,3 +41,23 @@ func test_walk_tunnel_through_garden_to_corridor() -> void:
 		if not check(ok, "reached %s (stuck at %s)" % [z, p.global_position]):
 			return
 	check(p.is_on_floor(), "standing in the corridor")
+
+func test_octagonal_pool_water_stays_inside_rims() -> void:
+	await load_main()
+	var pools := scene.find_children("OctPool*", "Node3D", true, false)
+	check(pools.size() >= 4, "garden + corridor octagonal pools (%d)" % pools.size())
+	for pool: Node3D in pools:
+		var water := pool.get_node_or_null("Water") as MeshInstance3D
+		if not check(water != null, "%s has water" % pool.get_path()):
+			continue
+		check(water.mesh is CylinderMesh and (water.mesh as CylinderMesh).radial_segments == 8, "%s water is octagonal" % pool.get_path())
+		# Every water vertex must sit inside the octagon the rim's inner wall makes.
+		var arr := water.mesh.surface_get_arrays(0)
+		var worst := 0.0
+		var rim_apothem := 1.5 if String(pool.get_path()).contains("Corridor") else LevelGarden.POOL_APOTHEM - 0.35
+		for v: Vector3 in arr[Mesh.ARRAY_VERTEX]:
+			var w := water.transform * v
+			for k in 8:
+				var n := Vector2(cos(k * PI / 4.0), sin(k * PI / 4.0))
+				worst = maxf(worst, Vector2(w.x, w.z).dot(n) - rim_apothem)
+		check(worst <= 0.01, "%s water inside the rim (overhang %.2f m)" % [pool.get_path(), worst])

@@ -130,6 +130,13 @@ Build a small playable Godot 4.7 (`/Applications/Godot.app`) proof of concept ba
   - **Reuse:** a short (about 1 s) re-weave plays on respawn and when arriving by teleporter.
   - **Tests:** `weave_progress` goes from 0 to 1 within 7 s of a new game; input is ignored during the intro; skipping jumps to 1 and hands over control; and respawn triggers a short re-weave.
   - `Shot_Summon` captures mid-weave.
+- [x] **Octagonal pool water fits its rims (user report):** the garden and corridor pools used square water planes whose corners poked through the octagonal rims. They now use `LevelFacility.oct_water_mesh()` octagons (rotated π/8 like the rims); `test_octagonal_pool_water_stays_inside_rims` checks every vertex is inside the inner rim octagon.
+- [ ] **Wicker Man fidelity round 2 (user request: "we could further improve the quality/fidelity of our character"):** closer to `wicker-inspo/turn-around-final.png` while keeping the established look.
+  - **Head and face:** a sculpted woven face (jaw, cheekbones, brow, eye sockets, nose bridge), a fuller beard mass, and a mane with a clear wild silhouette.
+  - **Anatomy:** a more anatomical silhouette (thigh/knee/calf shaping, chest band under the pecs, shoulder caps), so the limbs aren't tubular.
+  - **Woven parts:** braided twisted bands (not plain tori), layered leaf-shaped pauldrons with a centre ridge, and woven boots with a sole/rim.
+  - **Weave:** a finer weave matching the design's strand scale, with a chevron down the sternum and spirals on the limbs.
+  - **Proof:** before/after turnaround renders in `art/compare/wicker_turnaround.png` + a NOTES entry; all tests green; playthrough still completes.
 - [x] **Performance:** `tools/benchmark.gd` (non-headless) visits every `Shot_Ref_*` and reports an average FPS of at least 50 at 1280×720 on this Mac, printed as `BENCH avg_fps=<n>`.
 - [x] **Fidelity review:** all 7 `art/compare/*.png` pairs have been reviewed, with a short per-composition note in `art/compare/NOTES.md` saying what matches and any deliberate differences. Every round-1 and round-2 test passes headless.
 
@@ -171,7 +178,8 @@ All tests report PASS (exit code 0), there are at least 6 screenshots, there are
 - [x] Phase 17 — Start page and menus: title scene with live fly-through, keyboard-navigable Start/Controls/Settings/Quit, persisted settings, Esc pause menu, fade transition, tests
 - [x] Phase 18 — Web export: Compatibility renderer path and quality presets, WebGL2-safe shaders, export preset and HTML shell, templates (user approval), `tools/export_web.sh`, `tools/web_smoke.sh`, size budget, web FPS of at least 30
 - [x] Phase 19 — Deploy: Caddy site block for lost-origin.curiola.com (the user configures Caddy; we verify), reload, local and public curl checks, public smoke test
-- [x] Phase 20 — Fidelity review & performance: compare all 7 pairs (desktop **and** web renders), write `art/compare/NOTES.md`, desktop FPS at least 50 and web at least 30, full Verify green
+- [x] Phase 20 — Fidelity review & performance:
+- [ ] Phase 21 — Post-launch polish: octagonal pool water (done) + Wicker Man fidelity round 2 (face, anatomy, braids, pauldrons, finer weave), re-export + redeploy compare all 7 pairs (desktop **and** web renders), write `art/compare/NOTES.md`, desktop FPS at least 50 and web at least 30, full Verify green
 
 ### Status summary (written when the goal loop paused, after commit `a854234`)
 **Verified state:** the working tree is clean. Last full run: `./tools/validate.sh` passed 74/74 tests with no SCRIPT/SHADER errors in the log. Phases 1–17 (plus 8b, 13b, 13c) are done.
