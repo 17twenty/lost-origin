@@ -267,83 +267,104 @@ static func _totems(out: Node3D) -> void:
 static func _grotto(out: Node3D) -> void:
 	var g := SceneUtil.add(out, Node3D.new(), "Grotto")
 	var floor_y := T.PATH_Y + 0.02
-	# Floor slab running out of the entrance to meet the path.
-	g.add_child(SceneUtil.box_body(Vector3(20, 1, 28), Vector3(0, floor_y - 0.5, -72), rock_mat, "Floor"))
-	# Shell: walls + roof cap with a skylight above the waterfall pool.
+	var cliff: ShaderMaterial = rock_mat.duplicate()
+	cliff.set_shader_parameter("moss_amount", 0.95)
+	cliff.set_shader_parameter("moss_color", Color(0.22, 0.52, 0.12))
+	var turf: ShaderMaterial = cliff.duplicate()
+	turf.set_shader_parameter("moss_amount", 1.0)
+	turf.set_shader_parameter("moss_color", Color(0.28, 0.62, 0.15))
+	# Grassy floor slab running out of the gorge mouth to meet the path.
+	g.add_child(SceneUtil.box_body(Vector3(20, 1, 28), Vector3(0, floor_y - 0.5, -72), turf, "Floor"))
+	# Open-air basin (video f01-03): cliff walls, no roof, waterfall off the back lip.
 	var shell := CSGCombiner3D.new()
 	shell.name = "Shell"
 	shell.use_collision = true
 	g.add_child(shell)
 	for b in [
-		[Vector3(3, 12, 28), Vector3(-11.5, 5.5, -73)],    # west wall
-		[Vector3(3, 12, 28), Vector3(11.5, 5.5, -73)],     # east wall (Phase 5: facility door)
-		[Vector3(26, 12, 3), Vector3(0, 5.5, -86.5)],      # back wall
-		[Vector3(9.5, 12, 2.5), Vector3(-8.25, 5.5, -60.5)],  # front wall west
-		[Vector3(9.5, 12, 2.5), Vector3(8.25, 5.5, -60.5)],   # front wall east
-		[Vector3(7, 6, 2.5), Vector3(0, 8.5, -60.5)],      # lintel
-		[Vector3(26, 14, 29), Vector3(0, 17.0, -73)],      # roof cap (top below cliff crest)
+		[Vector3(3, 15, 28), Vector3(-11.5, 7.0, -73)],    # west cliff
+		[Vector3(3, 15, 28), Vector3(11.5, 7.0, -73)],     # east cliff (facility door cut in connector.gd)
+		[Vector3(26, 17, 3), Vector3(0, 8.0, -86.5)],      # back cliff; the waterfall pours off its lip
+		[Vector3(9.5, 13, 2.5), Vector3(-8.25, 6.0, -60.5)],  # gorge mouth west
+		[Vector3(9.5, 13, 2.5), Vector3(8.25, 6.0, -60.5)],   # gorge mouth east
 	]:
 		var cb := _csg_box(shell, b[0], b[1])
-		cb.material = rock_mat
-	# Rough arch for the entrance and the skylight shaft.
-	var arch := _csg_box(shell, Vector3(7, 7, 4), Vector3(0, floor_y + 2.0, -60.5), CSGShape3D.OPERATION_SUBTRACTION)
-	arch.material = rock_mat
-	var sky := CSGCylinder3D.new()
-	sky.radius = 2.2
-	sky.height = 30
-	sky.sides = 12
-	sky.operation = CSGShape3D.OPERATION_SUBTRACTION
-	sky.material = rock_mat
-	sky.position = Vector3(0, 20, -81)
-	shell.add_child(sky)
+		cb.material = cliff
+	# Notch in the back lip where the water spills over.
+	_csg_box(shell, Vector3(4.0, 1.2, 3.4), Vector3(0, 16.2, -86.5), CSGShape3D.OPERATION_SUBTRACTION).material = rock_mat
 	# Waterfall pool against the back wall.
 	var pool := SceneUtil.add(g, Node3D.new(), "Pool")
 	for r in [
-		[Vector3(10, 0.6, 0.6), Vector3(0, floor_y + 0.3, -77.2)],
-		[Vector3(0.6, 0.6, 7.6), Vector3(-5.0, floor_y + 0.3, -81.0)],
-		[Vector3(0.6, 0.6, 7.6), Vector3(5.0, floor_y + 0.3, -81.0)],
+		[Vector3(10, 0.22, 0.6), Vector3(0, floor_y + 0.11, -77.2)],
+		[Vector3(0.6, 0.22, 7.6), Vector3(-5.0, floor_y + 0.11, -81.0)],
+		[Vector3(0.6, 0.22, 7.6), Vector3(5.0, floor_y + 0.11, -81.0)],
 	]:
 		pool.add_child(SceneUtil.box_body(r[0], r[1], stone_mat, "Rim"))
-	_water_plane(pool, "PoolWater", Vector2(9.4, 7.4), Vector3(0, floor_y + 0.45, -81.0))
-	_fall(g, "GrottoFall", Vector3(0, 10.5, -81.5), Vector3(0, floor_y + 0.4, -81.5), 3.2)
-	# Teleporter pad (Phase 5 wires up the Area3D).
-	var pad := _pad(g, "TeleporterGrotto", Vector3(0, floor_y, -71))
+	var pw := _water_plane(pool, "PoolWater", Vector2(9.4, 7.4), Vector3(0, floor_y + 0.16, -81.0))
+	var glowpool := StandardMaterial3D.new()
+	glowpool.albedo_color = Color(0.1, 0.65, 0.95)
+	glowpool.emission_enabled = true
+	glowpool.emission = Color(0.1, 0.6, 1.0)
+	glowpool.emission_energy_multiplier = 1.2
+	var pbed := MeshInstance3D.new()
+	var pbm := PlaneMesh.new()
+	pbm.size = Vector2(9.4, 7.4)
+	pbm.material = glowpool
+	pbed.mesh = pbm
+	pbed.position = Vector3(0, floor_y + 0.01, -81.0)
+	pool.add_child(pbed)
+	_fall(g, "GrottoFall", Vector3(0, 15.6, -84.9), Vector3(0, floor_y + 0.4, -83.2), 3.4)
+	_fall(g, "GrottoFallVeil", Vector3(1.2, 15.4, -84.8), Vector3(1.6, floor_y + 0.4, -82.8), 1.4)
+	# Stepped teleporter pad (raised tiers + glowing ring, like the video).
+	var pad := _pad(g, "TeleporterGrotto", Vector3(0, floor_y, -71), 2)
 	pad.set_meta("zone", "grotto")
 	# Lights: cool pad glow + warm shaft from the skylight.
-	var shaft := SpotLight3D.new()
-	shaft.name = "SkylightShaft"
-	shaft.position = Vector3(0, 12, -79)
-	shaft.rotation_degrees = Vector3(-80, 0, 0)
-	shaft.spot_range = 20
-	shaft.spot_angle = 30
-	shaft.light_energy = 10
-	shaft.light_volumetric_fog_energy = 4.0
-	shaft.light_color = Color(1.0, 0.94, 0.78)
-	shaft.shadow_enabled = true
-	g.add_child(shaft)
+	# Sun shafts slanting in over the west rim (volumetric haze makes them visible).
+	for sh in [[Vector3(9.5, 21, -72), Vector3(-55, 90, 0), 14.0], [Vector3(9.5, 21, -80), Vector3(-58, 95, 0), 12.0], [Vector3(8.5, 21, -66), Vector3(-52, 85, 0), 9.0]]:
+		var shaft := SpotLight3D.new()
+		shaft.name = "SunShaft"
+		shaft.position = sh[0]
+		shaft.rotation_degrees = sh[1]
+		shaft.spot_range = 34
+		shaft.spot_angle = 14
+		shaft.light_energy = sh[2]
+		shaft.light_volumetric_fog_energy = 5.0
+		shaft.light_color = Color(1.0, 0.95, 0.8)
+		shaft.shadow_enabled = true
+		g.add_child(shaft)
 	var fill := OmniLight3D.new()
 	fill.name = "CaveFill"
 	fill.position = Vector3(0, 6, -66)
 	fill.omni_range = 20
-	fill.light_energy = 3.0
-	fill.light_color = Color(0.85, 1.0, 0.85)
+	fill.light_energy = 2.4
+	fill.light_color = Color(0.8, 1.0, 0.75)
 	g.add_child(fill)
 	var fill2 := OmniLight3D.new()
 	fill2.name = "CaveFillBack"
 	fill2.position = Vector3(0, 5, -78)
 	fill2.omni_range = 14
-	fill2.light_energy = 2.2
+	fill2.light_energy = 1.2
 	fill2.light_color = Color(1.0, 0.92, 0.8)
 	g.add_child(fill2)
-	_fog_volume(g, "CaveHaze", Vector3(19, 9, 25), Vector3(0, 4.8, -73), 0.035, Color(0.9, 0.97, 1.0))
+	_fog_volume(g, "CaveHaze", Vector3(20, 14, 25), Vector3(0, 7.0, -73), 0.022, Color(0.9, 0.97, 1.0))
 	_mist(g, "PoolMist", Vector3(0, floor_y + 0.6, -81.2), 3.0)
 	# Rocky facade so the entrance reads as a cave mouth, not a wall.
 	for r in [[Vector3(-7.5, 0, -58.8), 6.0], [Vector3(7.8, 0, -58.6), 6.5], [Vector3(-11.5, 4, -59.2), 8.0],
-			[Vector3(11.5, 4, -59.0), 8.0], [Vector3(-4.5, 9.5, -59.5), 6.0], [Vector3(4.0, 10.0, -59.4), 6.5], [Vector3(0, 11.5, -59.8), 5.0]]:
+			[Vector3(11.5, 4, -59.0), 8.0]]:
 		var rp: Vector3 = r[0]
 		_kenney(g, ["rock_tallA", "rock_tallB", "rock_largeD", "rock_largeF"][rng.randi() % 4], rp + Vector3(0, floor_y, 0), r[1], false)
+	# Jungle along the cliff rims (wall tops) and spilling over the gorge mouth.
+	for i in 26:
+		var side := -1.0 if i % 2 == 0 else 1.0
+		var rz := rng.randf_range(-86.0, -60.5)
+		var rim := Vector3(side * rng.randf_range(10.4, 12.6), 14.5, rz)
+		if i % 5 == 0:
+			_kenney(g, ["tree_palmDetailedTall", "tree_palmBend"][rng.randi() % 2], rim, rng.randf_range(5.0, 7.5), false)
+		else:
+			_kenney(g, ["plant_bushLarge", "plant_bushDetailed", "grass_leafsLarge", "plant_flatTall"][rng.randi() % 4], rim, rng.randf_range(4, 7), false)
+	for i in 10:
+		_kenney(g, ["plant_bushLarge", "plant_bushDetailed", "tree_palmDetailedShort"][rng.randi() % 3], Vector3(rng.randf_range(-12, 12), 16.5, rng.randf_range(-87.5, -85.5)), rng.randf_range(4, 7), false)
 	for i in 8:
-		_kenney(g, ["plant_bushDetailed", "grass_leafsLarge", "plant_flatTall"][rng.randi() % 3], Vector3(rng.randf_range(-12, 12), rng.randf_range(6, 12), -59.0), rng.randf_range(4, 7), false)
+		_kenney(g, ["plant_bushDetailed", "grass_leafsLarge", "plant_flatTall"][rng.randi() % 3], Vector3(rng.randf_range(-12, -4) if i % 2 == 0 else rng.randf_range(4, 12), 12.5, -60.5), rng.randf_range(4, 7), false)
 	# Lush cave floor: ferns, grass and flowers, clear of the pad, pool and east door.
 	var keep_clear := [Vector2(0, -71), Vector2(0, -81), Vector2(0, -66), Vector2(9, -66)]
 	for i in 70:
@@ -352,6 +373,19 @@ static func _grotto(out: Node3D) -> void:
 		if not _clear_of(Vector2(gx, gz), keep_clear, 3.2) or abs(gx) < 2.0:
 			continue
 		_kenney(g, ["grass_large", "grass_leafsLarge", "plant_flatTall", "plant_bushDetailed", "flower_yellowA", "grass_leafs"][rng.randi() % 6], Vector3(gx, floor_y, gz), rng.randf_range(3.0, 5.5), false)
+	for i in 8:
+		var bx := (-1.0 if i % 2 == 0 else 1.0) * rng.randf_range(8.0, 9.8)
+		var bz := rng.randf_range(-85.0, -72.0) if bx > 0.0 else rng.randf_range(-85.0, -62.0)
+		_kenney(g, ["tree_palmDetailedShort", "plant_bushLarge"][rng.randi() % 2], Vector3(bx, floor_y, bz), rng.randf_range(4.5, 6.5), false)
+	# Greenery clinging to the cliff faces at every height.
+	for i in 34:
+		var side := -1.0 if i % 2 == 0 else 1.0
+		var cz := rng.randf_range(-85.0, -61.5)
+		if side > 0.0 and cz > -70.0 and cz < -62.0:
+			cz -= 8.0
+		_kenney(g, ["plant_bushDetailed", "grass_leafsLarge", "plant_bushLarge", "plant_flatTall"][rng.randi() % 4], Vector3(side * 9.9, rng.randf_range(1.5, 13.0), cz), rng.randf_range(3.0, 5.5), false)
+	for i in 12:
+		_kenney(g, ["plant_bushDetailed", "grass_leafsLarge", "plant_bushLarge"][rng.randi() % 3], Vector3(rng.randf_range(-9, 9), rng.randf_range(2.0, 14.0), -84.9), rng.randf_range(3.0, 5.0), false)
 	# Mossy rocks and ferns along the walls.
 	for i in 14:
 		var side := -1.0 if i % 2 == 0 else 1.0
@@ -362,11 +396,40 @@ static func _grotto(out: Node3D) -> void:
 		_kenney(g, ["rock_tallA", "rock_tallB", "rock_largeD", "rock_largeF"][rng.randi() % 4], Vector3(x, floor_y, z), rng.randf_range(2.0, 3.5), false)
 		_kenney(g, ["plant_bushDetailed", "plant_flatTall", "grass_leafsLarge"][rng.randi() % 3], Vector3(x - side * 1.5, floor_y, z + 1), rng.randf_range(3, 5), false)
 
-static func _pad(parent: Node3D, name: String, pos: Vector3) -> Node3D:
+## tiers > 0 raises the pad on stepped, walkable truncated-cone tiers (0.25 m each).
+static func _pad(parent: Node3D, name: String, pos: Vector3, tiers := 0) -> Node3D:
 	var pad := Node3D.new()
 	pad.name = name
 	pad.position = pos
 	parent.add_child(pad)
+	var lift := 0.0
+	for t in tiers:
+		var tier := SceneUtil.box_body(Vector3(1, 1, 1), Vector3.ZERO, null, "Tier%d" % t)
+		var tc := CylinderMesh.new()
+		tc.bottom_radius = 3.2 - t * 0.55
+		tc.top_radius = tc.bottom_radius - 0.38
+		tc.height = 0.25
+		tc.radial_segments = 8
+		tc.rings = 1
+		tc.material = stone_mat
+		(tier.get_node("Mesh") as MeshInstance3D).mesh = tc
+		(tier.get_node("Col") as CollisionShape3D).shape = tc.create_convex_shape()
+		tier.position.y = lift + 0.125
+		tier.rotation.y = PI / 8.0
+		pad.add_child(tier)
+		var edge := MeshInstance3D.new()
+		var em := TorusMesh.new()
+		em.inner_radius = tc.top_radius - 0.06
+		em.outer_radius = tc.top_radius + 0.02
+		em.rings = 8
+		em.ring_segments = 4
+		em.material = glow_mat
+		edge.mesh = em
+		edge.scale = Vector3(1, 0.25, 1)
+		edge.rotation.y = PI / 8.0
+		edge.position.y = lift + 0.25
+		pad.add_child(edge)
+		lift += 0.25
 	var base := SceneUtil.box_body(Vector3(1, 1, 1), Vector3.ZERO, null, "Base")
 	var cyl := CylinderMesh.new()
 	cyl.top_radius = 1.7
@@ -377,7 +440,7 @@ static func _pad(parent: Node3D, name: String, pos: Vector3) -> Node3D:
 	(base.get_node("Mesh") as MeshInstance3D).mesh = cyl
 	# Convex hull keeps the bevelled rim walkable (no hard step).
 	(base.get_node("Col") as CollisionShape3D).shape = cyl.create_convex_shape()
-	base.position.y = 0.08
+	base.position.y = lift + 0.08
 	pad.add_child(base)
 	var ring := MeshInstance3D.new()
 	ring.name = "Ring"
@@ -388,9 +451,34 @@ static func _pad(parent: Node3D, name: String, pos: Vector3) -> Node3D:
 	tm.ring_segments = 6
 	tm.material = glow_mat
 	ring.mesh = tm
-	ring.position.y = 0.17
+	ring.position.y = lift + 0.17
 	ring.scale = Vector3(1, 0.3, 1)
 	pad.add_child(ring)
+	if tiers > 0:
+		# Raised halo ring on four short posts (video f01-02).
+		var halo := MeshInstance3D.new()
+		halo.name = "Halo"
+		var hm := TorusMesh.new()
+		hm.inner_radius = 1.6
+		hm.outer_radius = 1.75
+		hm.rings = 40
+		hm.ring_segments = 8
+		hm.material = glow_mat
+		halo.mesh = hm
+		halo.position.y = lift + 0.75
+		pad.add_child(halo)
+		for k in 4:
+			var post := MeshInstance3D.new()
+			var pm := CylinderMesh.new()
+			pm.top_radius = 0.07
+			pm.bottom_radius = 0.1
+			pm.height = 0.6
+			pm.radial_segments = 6
+			pm.material = stone_mat
+			post.mesh = pm
+			var ang := PI / 4.0 + k * PI / 2.0
+			post.position = Vector3(cos(ang) * 1.68, lift + 0.45, sin(ang) * 1.68)
+			pad.add_child(post)
 	var core := MeshInstance3D.new()
 	core.name = "Core"
 	var disc := CylinderMesh.new()
@@ -399,7 +487,7 @@ static func _pad(parent: Node3D, name: String, pos: Vector3) -> Node3D:
 	disc.height = 0.02
 	disc.material = glow_mat
 	core.mesh = disc
-	core.position.y = 0.17
+	core.position.y = lift + 0.17
 	pad.add_child(core)
 	var light := OmniLight3D.new()
 	light.name = "Glow"
@@ -472,7 +560,7 @@ static func _pad(parent: Node3D, name: String, pos: Vector3) -> Node3D:
 	spark.material = glow_mat
 	burst.draw_pass_1 = spark
 	pad.add_child(burst)
-	var arrival := SceneUtil.marker(pad, "Arrival", Vector3(0, 0.25, 2.6))
+	var arrival := SceneUtil.marker(pad, "Arrival", Vector3(0, 0.25, 2.6) if tiers == 0 else Vector3(0, 0.1, 3.9))
 	arrival.rotation.y = PI  # face away from the pad
 	return pad
 
