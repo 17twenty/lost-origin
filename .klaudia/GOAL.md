@@ -216,7 +216,7 @@ All tests report PASS (exit code 0), there are at least 6 screenshots, there are
 - **Grotto:** pad moved to (4, -73) (`Zone_GrottoPad` + keep-clear updated); own blue pool water + brighter bed; elevated `Shot_Ref_Grotto`.
 - **Aqueduct:** `DECK_Y` 3.3 → 4.3 (taller piers, sky under the arches; ramps about 31°, still walkable).
 - **Lagoon:** `Shot_Ref_Lagoon` stands in the shallows.
-- **Status:** 45/45 tests; benchmark ≥ 50 (capped 60). **Quality-gap criterion and Phase 13b ticked.**
+- **Status:** 45/45 tests. **Quality-gap criterion and Phase 13b ticked.** Benchmark caveat: the post-part-3 runs read avg 24 / min 18 on two runs, because **the user's Godot editor was open and running the game embedded at the same time** (pids 49543/49567: GPU contention). The last uncontended run, after part 2, read capped 60 on every shot. **Re-run `tools/benchmark.gd` with the editor's game closed before relying on the performance tick (also part of Phase 20).**
 
 **Single best next step:** Phase 13 part 2, the **summoning intro**:
 1. **Summoning ring:** in `outdoor.gd` at the spawn (0, h, 10): a stone circle (CSG torus/cylinder ring, mossy stone) + a glowing glyph disc (emissive shader with rotating runes) + a light.
