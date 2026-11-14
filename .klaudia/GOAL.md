@@ -29,7 +29,7 @@ Build a small playable Godot 4.7 (`/Applications/Godot.app`) proof of concept ba
 - [x] **Open-air grotto like the video:** the main grotto basin is open to the sky (no solid roof over the pool and pad), ringed by cliff walls with dense jungle and hanging vines, with light shafts streaming in. The waterfall pours from the cliff lip into the pool. The pad gets steps and a raised ring like the video. The seamless door into the facility still works.
 - [x] **Lagoon and sky details:** the water shader adds sun-glint sparkles and caustic shimmer in the shallows, and at least 5 animated birds circle in the sky.
 - [ ] **Secret switch and reveal:** a wall lever or switch in the control room shows an on-screen prompt ("E — Pull") when the player is within about 2 m and facing it. Pressing **E** plays the lever animation, then a short cutscene of 3–5 s: the camera cuts or blends to a view of a sealed door elsewhere in the facility and shows it opening (panels slide or retract, lights flicker on, sparks or dust, a light flood from inside). The camera then blends back to the player's over-the-shoulder camera and control resumes. Player input is ignored during the cutscene. The door's collision is removed once it's open, and the switch can't be re-triggered. Behind the door is a **small secret room** that isn't on the main route: a Forerunner relic chamber with a glowing artefact on a pedestal, cyan light and a window or skylight onto the ocean. Tests cover: E out of range does nothing; E in range starts the cutscene (cutscene camera current, movement input ignored); the door opens; the camera returns to the player within 6 s; the player can walk into the secret room; and a second E press does nothing. `Shot_Secret` frames the room.
-- [ ] **Water is never lethal (wade and swim):** jumping or falling into any water (chasm/inlet, lagoon shallows, plunge pool, grotto pool) never respawns the player. Water is an Area3D volume (`water` group). Shallow water (below chest height) means wading: speed is reduced by about 30% and splash particles play at the waterline. Deep water means swimming: buoyancy holds the player at the surface with the head above water, there's a slower swim speed, Space strokes or kicks up, a `swim` animation clip is added to the Wayfinder rig and AnimationTree, and you can climb out where banks are walkable (slopes ≤ 40°, or added steps). The chasm becomes a wadeable/swimmable inlet with a way back up to the path. Kill zones remain only for true out-of-world falls (WorldKill). Tests cover: jumping off the bridge lands in water with no respawn; the player is swimming or wading within 2 s; scripted input can get back onto the path within 15 s; wading is slower than running; deep water keeps the head above the surface; and the out-of-world kill floor still works.
+- [ ] **Water is never lethal (wade and swim):** jumping or falling into any water (chasm/inlet, lagoon shallows, plunge pool, grotto pool) never respawns the player. Water is an Area3D volume (`water` group). Shallow water (below chest height) means wading: speed is reduced by about 30% and splash particles play at the waterline. Deep water means swimming: buoyancy holds the player at the surface with the head above water, there's a slower swim speed, Space strokes or kicks up, a `swim` animation clip is added to the player rig (now the Wicker Man) and AnimationTree, and you can climb out where banks are walkable (slopes ≤ 40°, or added steps). The chasm becomes a wadeable/swimmable inlet with a way back up to the path. Kill zones remain only for true out-of-world falls (WorldKill). Tests cover: jumping off the bridge lands in water with no respawn; the player is swimming or wading within 2 s; scripted input can get back onto the path within 15 s; wading is slower than running; deep water keeps the head above the surface; and the out-of-world kill floor still works.
 - [ ] **Assisted camera, playable without a mouse:** the camera must work well with **no mouse at all** (keyboard only), and the mouse stays optional. Required:
   - (a) Keyboard camera control: the arrow keys orbit and pitch the camera (and are removed from movement), and a recenter key (e.g. **R**, or **Tab**) snaps the camera behind the character smoothly.
   - (b) Auto-recenter behind the movement direction, on by default. It kicks in about 0.6 s after the last manual camera input when the camera input is keyboard-only or absent, and about 2.5 s after mouse look. It only applies while moving forward or sideways (no swinging round when running at the camera), with damped yaw and pitch returning to a default angle.
@@ -100,7 +100,7 @@ Build a small playable Godot 4.7 (`/Applications/Godot.app`) proof of concept ba
   - **Reuse:** a short (about 1 s) re-weave plays on respawn and when arriving by teleporter.
   - **Tests:** `weave_progress` goes from 0 to 1 within 7 s of a new game; input is ignored during the intro; skipping jumps to 1 and hands over control; and respawn triggers a short re-weave.
   - `Shot_Summon` captures mid-weave.
-- [ ] **Performance:** `tools/benchmark.gd` (non-headless) visits every `Shot_Ref_*` and reports an average FPS of at least 50 at 1280×720 on this Mac, printed as `BENCH avg_fps=<n>`.
+- [x] **Performance:** `tools/benchmark.gd` (non-headless) visits every `Shot_Ref_*` and reports an average FPS of at least 50 at 1280×720 on this Mac, printed as `BENCH avg_fps=<n>`.
 - [ ] **Fidelity review:** all 7 `art/compare/*.png` pairs have been reviewed, with a short per-composition note in `art/compare/NOTES.md` saying what matches and any deliberate differences. Every round-1 and round-2 test passes headless.
 
 ## Verify
@@ -140,6 +140,42 @@ All tests report PASS (exit code 0), there are at least 6 screenshots, there are
 - [ ] Phase 18 — Web export: Compatibility renderer path and quality presets, WebGL2-safe shaders, export preset and HTML shell, templates (user approval), `tools/export_web.sh`, `tools/web_smoke.sh`, size budget, web FPS of at least 30
 - [ ] Phase 19 — Deploy: Caddy site block for lost-origin.curiola.com (user approval), reload, local and public curl checks, public smoke test
 - [ ] Phase 20 — Fidelity review & performance: compare all 7 pairs (desktop **and** web renders), write `art/compare/NOTES.md`, desktop FPS at least 50 and web at least 30, full Verify green
+
+### Status summary (written when the goal loop paused, after commit `c858c20`)
+**Verified state:** the working tree is clean, and `./tools/validate.sh` passes 40/40 tests on the last run (commit `c858c20`). Ticked: all 12 round-1 criteria; round 2: reference harness, garden, sea life, glass onto the ocean, vines, aqueduct, open-air grotto, lagoon/sky, the asset fidelity pass, and **performance** (latest `tools/benchmark.gd`: avg 60.0 / min 59.9, macOS-capped; ≥ 50 holds on every `Shot_Ref_*`; re-verify in Phase 20). Phases 1–12 are done.
+
+**Accomplished this run (round 2, commits `9de574f`…`c858c20`):**
+- **Phase 7:** reference frames, `Shot_Ref_*` cameras, `compare_shots.sh`, benchmark.
+- **Phase 8/8b:** the garden room on the route.
+- **Phase 9:** shared ocean with fish/kelp/coral, atrium glass ceiling + portholes, control panorama.
+- **Phase 10:** the chasm became a shallow inlet with a pier aqueduct (no water death); open-air grotto with a stepped pad; Blender vines; mesh light shafts; lagoon glints/caustics; birds.
+- **Phase 11:** own Blender vegetation replacing Kenney plants; tall monolith totems; facility kit (arch frames, lighter panels, pale floor, sunken pools, console pods, grates); `art/compare/NOTES.md`.
+- **Phase 12:** the Wicker Man model (Blender, 24-bone rig, 5 clips, procedural weave + straw shaders, `weave_progress` dissolve) replaces the Wayfinder.
+
+**Remaining (unticked):**
+- The Wicker Man criterion: needs the full clip set (fall, land, swim, interact, look_around, summon) and thumb bones.
+- Summoning intro.
+- Water wade/swim (only "never lethal" is partly done: the inlet is shallow and the chasm kill zone is gone).
+- Assisted no-mouse camera.
+- Secret switch + reveal + relic room.
+- Start page/menus.
+- Web export.
+- Deploy at lost-origin.curiola.com.
+- Final fidelity review.
+
+**Blockers / approvals needed:**
+- **(1) Web export templates:** Godot 4.7.2 export templates aren't installed. Installing them writes to `~/Library/Application Support/Godot/export_templates/`, which needs user approval via RequestHostChange (Phase 18).
+- **(2) Deploy:** editing `~/Sites/Caddyfile` and reloading Caddy is a host change, which also needs approval (Phase 19).
+- **(3) Benchmark cap:** the benchmark reads a macOS compositor cap of 60 FPS when the display is asleep/occluded, so relative perf comparisons need a visible, unlocked display.
+- **(4) Blender MCP:** works when Blender is open with the addon server started (it was connected all run); headless Blender is the fallback.
+
+**Known quality gaps (not blockers):**
+- The Wicker Man is blockier than the turnaround (no muscle definition, head slightly small, mane dark in shade).
+- Aqueduct piers are square and dark versus the video's mossy round ones.
+- The atrium column base glow is hot.
+- The control glass is a flat panel, not a curved wall.
+
+**Single best next step:** Phase 13 part 1. Extend `tools/blender/build_wicker.py` (run via the Blender MCP) with `thumb.L/R` bones and the clips `fall`, `land`, `swim`, `interact`, `look_around` and `summon`. Add `walk`/`fall`/`land`/`look_around` to the AnimationTree in `tools/build_player.gd`, and update `player.gd` `_update_anim`, keeping 40/40 green. Then tick the Wicker Man criterion and move on to the summoning intro (the detailed plan is in the Phase 12 note below).
 
 ### Notes (resume here)
 - **Phase 1 (done):** `project.godot` (Forward+, autoload `InputSetup` registers WASD/Space/Shift/E/Esc in code). `tools/build_level.gd` → `scenes/main.tscn` (helpers `tools/scene_util.gd`: `box_body`, `mat`, `marker`, `save`). Conventions: `Main/Markers/Spawn`, `Main/Player`, `Main/Shots/Shot_*` markers (optional meta `player_pos`) → `tools/capture_screenshot.gd` writes `art/screens/<snake>.png` (non-headless; PNGs gitignored; `-- Shot_Name` for one). Tests: `tests/test_*.gd` extend `TestCase` (`load_main`, `seconds`, `physics_frames`, `ground_below`, `check`); filter `-- <substr>`. `./tools/validate.sh` = import → build_player → build_level → import → tests (`SHOTS=1` capture, `REBUILD_ASSETS=1` reruns Blender).
