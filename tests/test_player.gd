@@ -150,3 +150,14 @@ func test_secondary_motion_and_body_language() -> void:
 			squashed = true
 			break
 	check(squashed, "landing squash")
+
+func test_breathing_does_not_grow_the_body() -> void:
+	await _fixture()
+	var sk: Skeleton3D = player.model.find_children("*", "Skeleton3D", true, false)[0]
+	var chest := sk.find_bone("chest")
+	await seconds(6.0)
+	var sc := sk.get_bone_pose_scale(chest)
+	check(sc.x < 1.05 and sc.y < 1.05 and sc.z < 1.05, "chest breathing stays subtle after 6 s (scale %s)" % sc)
+	var head := sk.find_bone("head")
+	var hp := (sk.global_transform * sk.get_bone_global_pose(head)).origin
+	check(hp.y - player.global_position.y < 2.4, "head stays at body height (%.2f m)" % (hp.y - player.global_position.y))

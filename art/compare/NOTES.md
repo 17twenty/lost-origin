@@ -98,3 +98,15 @@ Pairs: `art/compare/<name>.png` (desktop) and `art/compare/web_<name>.png` (web)
 - **Player character:** the Wicker Man (an original design, not in the video).
 - **Performance (desktop, uncontended):** `tools/benchmark.gd` avg 98–101 / min 94 FPS on every `Shot_Ref_*`.
 - **Performance (web):** headless Chrome on the M2 (ANGLE Metal) avg 47–57 / min 35 FPS while playing.
+
+## Wicker Man fidelity round 2 (post-launch)
+- **Found via the play-through:** chest "breathing" multiplied the bone scale every frame (the clips don't key scale), so the Wicker Man grew without limit during long sessions (giant in the control room). Now absolute + regression test `test_breathing_does_not_grow_the_body`.
+- **Model:**
+  - Braided bands (3 twisted strands) at the wrists/knees/ankles/belt, a woven band round the ribcage, a sternum ridge, and woven boot rims.
+  - Layered leaf-shaped lames + a ridge on the pauldrons.
+  - Jaw, nose bridge and eye-socket rims on the face; a fuller beard (260 cards).
+  - Extra anatomy blobs (knee caps, quad sweep, inner-thigh gap, diamond calves, serratus, shoulder caps).
+  - Triangle budget kept at 23k (diamond-section braid strands).
+- **Shader:** finer weave (density 64 / bands 90); muted khaki rattan like the turnaround (was orange); less backlight.
+- **Turnaround shots:** moved to neutral beach daylight (the ring's warm light was tinting him).
+- **Still different:** arm silhouette is more tubular than the sculpted design; the mane reads as a spiky crown rather than a full round halo; the back view sits in shade.

@@ -4,8 +4,8 @@ shader_type spatial;
 // albedo variation, dark gaps, a weave-derived normal and a slight sheen.
 // weave_progress + UV2.x (0 feet -> 1 crown) drive the weave-in dissolve.
 
-uniform vec3 strand_light : source_color = vec3(0.74, 0.56, 0.32);
-uniform vec3 strand_dark : source_color = vec3(0.42, 0.29, 0.15);
+uniform vec3 strand_light : source_color = vec3(0.70, 0.58, 0.40);   // muted rattan/khaki like the turnaround
+uniform vec3 strand_dark : source_color = vec3(0.40, 0.31, 0.19);
 uniform vec3 gap_color : source_color = vec3(0.09, 0.06, 0.03);
 uniform float density = 42.0;          // strands per metre
 uniform float herring = 6.0;           // columns per chevron arm
@@ -53,7 +53,7 @@ void fragment() {
 	AO = mix(0.4, 1.0, gap);
 	AO_LIGHT_AFFECT = 0.5;
 	// Warm light bleeding through the thin rattan + a soft rim so he reads against foliage.
-	BACKLIGHT = vec3(0.45, 0.28, 0.1) * gap;
+	BACKLIGHT = vec3(0.22, 0.15, 0.07) * gap;
 	RIM = 0.35;
 	RIM_TINT = 0.7;
 	float edge = 1.0 - smoothstep(0.0, edge_width, weave_progress - order);

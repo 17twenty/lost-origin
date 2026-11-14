@@ -287,6 +287,55 @@ def apply_all(ob):
         bpy.ops.object.modifier_apply(modifier=m.name)
 
 
+def braid(name, centre, rx, ry, strand_r, strands=3, twists=10, tilt=(0.0, 0.0, 0.0), segs=48):
+    """Braided band: `strands` thin tubes twisting around an elliptical ring."""
+    bmb = bmesh.new()
+    sides = 4   # diamond-section strands: braid reads the same, a third of the triangles
+    for k in range(strands):
+        ph = k / strands * math.tau
+        rings = []
+        for i in range(segs):
+            t = i / segs * math.tau
+            # ring centre-line point + local frame
+            c = Vector((math.cos(t) * rx, math.sin(t) * ry, 0.0))
+            tan = Vector((-math.sin(t) * rx, math.cos(t) * ry, 0.0)).normalized()
+            out = Vector((math.cos(t) * ry, math.sin(t) * rx, 0.0)).normalized()
+            up = Vector((0, 0, 1))
+            a = t * twists + ph
+            off = (out * math.cos(a) + up * math.sin(a)) * strand_r * 1.15
+            p = c + off
+            n1 = (out * math.cos(a) + up * math.sin(a)).normalized()
+            n2 = tan.cross(n1).normalized()
+            rings.append([bmb.verts.new(p + (n1 * math.cos(j / sides * math.tau) + n2 * math.sin(j / sides * math.tau)) * strand_r) for j in range(sides)])
+        for i in range(segs):
+            r0, r1 = rings[i], rings[(i + 1) % segs]
+            for j in range(sides):
+                bmb.faces.new((r0[j], r0[(j + 1) % sides], r1[(j + 1) % sides], r1[j]))
+    me_b = bpy.data.meshes.new(name)
+    bmb.to_mesh(me_b)
+    bmb.free()
+    ob = bpy.data.objects.new(name, me_b)
+    col.objects.link(ob)
+    ob.location = centre
+    ob.rotation_euler = tilt
+    apply_all(ob)
+    for poly in ob.data.polygons:
+        poly.use_smooth = True
+    return ob
+
+
+def blob(name, loc, scale, rot=(0, 0, 0), segs=16, rings=10):
+    bpy.ops.mesh.primitive_uv_sphere_add(segments=segs, ring_count=rings, radius=1.0, location=loc)
+    ob = bpy.context.active_object
+    ob.name = name
+    ob.scale = scale
+    ob.rotation_euler = rot
+    apply_all(ob)
+    for poly in ob.data.polygons:
+        poly.use_smooth = True
+    return ob
+
+
 for s, sx in (("L", L), ("R", R)):
     # Domed woven pauldron.
     bpy.ops.mesh.primitive_uv_sphere_add(segments=20, ring_count=10, radius=1.0, location=(sx * 0.4, 0.01, 1.72))
@@ -302,23 +351,31 @@ for s, sx in (("L", L), ("R", R)):
     so.thickness = 0.12
     apply_all(pd)
     rigid(pd, f"clavicle.{s}", "Band")
+    # Layered leaf-shaped lames overlapping down the upper arm + a centre ridge (turnaround).
+    for k, (dz, sc) in enumerate(((-0.07, 0.86), (-0.13, 0.72))):
+        lame = blob(f"Lame{s}{k}", (sx * (0.4 + 0.015 * k), 0.01, 1.71 + dz), (0.16 * sc, 0.17 * sc, 0.055), (0, sx * (0.6 + 0.12 * k), 0))
+        rigid(lame, f"clavicle.{s}", "Band")
+    ridge = blob(f"Ridge{s}", (sx * 0.4, 0.01, 1.8), (0.16, 0.025, 0.03), (0, sx * 0.45, 0), 12, 6)
+    rigid(ridge, f"clavicle.{s}", "Band")
     # Braided bands: wrist, knee, ankle.
     for loc, maj, mino, bone, tilt in (
         (J[f"wrist.{s}"], 0.062, 0.018, f"forearm.{s}", 0.35),
         ((sx * 0.15, -0.025, 0.6), 0.1, 0.026, f"shin.{s}", 0.0),
         ((sx * 0.155, 0.02, 0.17), 0.078, 0.022, f"shin.{s}", 0.0),
     ):
-        bpy.ops.mesh.primitive_torus_add(major_radius=maj, minor_radius=mino, major_segments=20, minor_segments=6, location=loc)
-        t = bpy.context.active_object
-        t.rotation_euler = (0, sx * tilt, 0)
-        apply_all(t)
+        t = braid(f"Braid{s}{bone}", Vector(loc), maj, maj, mino * 0.55, 3, 9, (0, sx * tilt, 0))
         rigid(t, bone, "Band")
+    # Woven boot rim / sole edge.
+    sole = braid(f"Sole{s}", Vector((sx * 0.16, -0.07, 0.03)), 0.075, 0.15, 0.012, 3, 14)
+    rigid(sole, f"foot.{s}", "Band")
 # Waist belt (oval) and woven codpiece.
-bpy.ops.mesh.primitive_torus_add(major_radius=1.0, minor_radius=0.035, major_segments=28, minor_segments=6, location=(0, 0.012, 1.12))
-belt = bpy.context.active_object
-belt.scale = (0.235, 0.17, 1.0)
-apply_all(belt)
+belt = braid("Belt", Vector((0, 0.012, 1.12)), 0.235, 0.17, 0.02, 3, 16)
 rigid(belt, "hips", "Band")
+# Woven band around the ribcage under the pecs (turnaround), and a sternum ridge.
+rib = braid("RibBand", Vector((0, 0.005, 1.4)), 0.3, 0.2, 0.013, 3, 22)
+rigid(rib, "chest", "Band")
+stern = blob("Sternum", (0, -0.2, 1.5), (0.025, 0.02, 0.1), (0, 0, 0), 10, 6)
+rigid(stern, "chest", "Band")
 bpy.ops.mesh.primitive_uv_sphere_add(segments=12, ring_count=8, radius=1.0, location=(0, -0.12, 0.98))
 cod = bpy.context.active_object
 cod.scale = (0.075, 0.05, 0.095)
@@ -343,12 +400,21 @@ for sx in (L, R):
     eye = bpy.context.active_object
     apply_all(eye)
     rigid(eye, "head", "Eye")
+    # Eye-socket rims (shadowed hollows read from a distance).
+    sock = blob(f"Socket{sx}", (sx * 0.047, -0.118, 1.997), (0.03, 0.012, 0.022), (0, 0, 0), 10, 6)
+    rigid(sock, "head", "Band")
     # Woven cheekbones.
     bpy.ops.mesh.primitive_uv_sphere_add(segments=10, ring_count=6, radius=1.0, location=(sx * 0.07, -0.118, 1.955))
     cheek = bpy.context.active_object
     cheek.scale = (0.035, 0.022, 0.025)
     apply_all(cheek)
     rigid(cheek, "head", "Wicker")
+
+# Strong woven jaw + chin under the beard, and a nose bridge up to the brow.
+jaw = blob("Jaw", (0, -0.085, 1.905), (0.095, 0.06, 0.05))
+rigid(jaw, "head", "Wicker")
+bridge = blob("Bridge", (0, -0.142, 1.99), (0.016, 0.02, 0.04), (math.radians(-15), 0, 0), 10, 6)
+rigid(bridge, "head", "Wicker")
 
 # ------------------------------------------------------------- straw cards
 hb = bmesh.new()
@@ -402,12 +468,12 @@ hb = bmesh.new()
 hcol = hb.loops.layers.color.new("Col")
 huv = hb.loops.layers.uv.new("UVMap")
 # Beard and moustache: jaw and lower face, hanging down.
-for i in range(170):
-    th = random.uniform(-1.3, 1.3)
+for i in range(260):
+    th = random.uniform(-1.4, 1.4)
     zr = random.uniform(-0.09, -0.02)
     base = Vector((math.sin(th) * 0.106, -math.cos(th) * 0.118, 1.955 + zr))
     d = Vector((math.sin(th) * 0.3, -0.35, -1.0)) + Vector((random.uniform(-0.2, 0.2), random.uniform(-0.15, 0.15), 0))
-    strand(base, d, random.uniform(0.09, 0.2), random.uniform(0.045, 0.075))
+    strand(base, d, random.uniform(0.1, 0.24), random.uniform(0.05, 0.085))
 for sx in (L, R):
     for i in range(10):
         base = Vector((sx * random.uniform(0.0, 0.04), -0.143, 1.94))

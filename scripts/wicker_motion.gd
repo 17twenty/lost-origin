@@ -65,4 +65,6 @@ func _step(delta: float) -> void:
 	if _chest >= 0 and body:
 		var calm := 1.0 - clampf(Vector2(body.velocity.x, body.velocity.z).length() / 4.0, 0.0, 1.0)
 		var b := sin(_t * 1.6) * 0.5 + 0.5
-		sk.set_bone_pose_scale(_chest, sk.get_bone_pose_scale(_chest) * Vector3(1.0 + 0.012 * b * calm, 1.0 + 0.02 * b * calm, 1.0 + 0.025 * b * calm))
+		# Absolute, not multiplied: the clips don't key scale, so a multiply here
+		# compounded every frame and the chest (and everything above it) grew forever.
+		sk.set_bone_pose_scale(_chest, Vector3(1.0 + 0.012 * b * calm, 1.0 + 0.02 * b * calm, 1.0 + 0.025 * b * calm))

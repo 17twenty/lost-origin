@@ -16,13 +16,15 @@ static func build() -> void:
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(DIR))
 	var wicker := ShaderMaterial.new()
 	wicker.shader = load("res://shaders/wicker.gdshader")
+	wicker.set_shader_parameter("density", 64.0)   # finer strands, like the turnaround
+	wicker.set_shader_parameter("herring", 5.0)
 	ResourceSaver.save(wicker, DIR + "/wicker.tres")
 	var band := ShaderMaterial.new()
 	band.shader = wicker.shader
-	band.set_shader_parameter("density", 60.0)
+	band.set_shader_parameter("density", 90.0)
 	band.set_shader_parameter("herring", 3.0)
-	band.set_shader_parameter("strand_light", Color(0.62, 0.45, 0.24))
-	band.set_shader_parameter("strand_dark", Color(0.34, 0.22, 0.1))
+	band.set_shader_parameter("strand_light", Color(0.6, 0.48, 0.3))
+	band.set_shader_parameter("strand_dark", Color(0.32, 0.24, 0.13))
 	ResourceSaver.save(band, DIR + "/band.tres")
 	var straw := ShaderMaterial.new()
 	straw.shader = load("res://shaders/straw.gdshader")
