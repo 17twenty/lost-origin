@@ -675,7 +675,7 @@ static func _bounds(out: Node3D) -> void:
 		[Vector3(1, 80, 170), Vector3(-52, 20, -15)],
 		[Vector3(1, 80, 108), Vector3(52, 20, -8)],      # east, outdoor stretch
 		[Vector3(1, 60, 40), Vector3(52, 40, -81)],      # east above the buried facility
-		[Vector3(120, 80, 1), Vector3(0, 20, -99)],
+		[Vector3(120, 60, 1), Vector3(0, 40, -99)],      # south, above the buried facility/garden
 	]:
 		var body := StaticBody3D.new()
 		body.name = "Wall"

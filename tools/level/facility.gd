@@ -127,10 +127,14 @@ static func _corridor(fac: Node3D) -> void:
 	var windows_x := [24.0, 30.0, 36.0]
 	for wx in windows_x:
 		for wz in [-83.7, -92.3]:
+			if wx == 24.0 and wz < -90.0:
+				continue  # garden door goes here (see garden.gd)
 			_box(shell, Vector3(4.2, 2.8, 1.4), Vector3(wx, F + 2.6, wz), metal, CSGShape3D.OPERATION_SUBTRACTION)
 	# Glass panes (collision so nobody walks into the sea).
 	for wx in windows_x:
 		for wz in [-83.9, -92.1]:
+			if wx == 24.0 and wz < -90.0:
+				continue
 			var pane := SceneUtil.box_body(Vector3(4.2, 2.8, 0.06), Vector3(wx, F + 2.6, wz), glass, "Glass")
 			c.add_child(pane)
 			# Glowing frame.
@@ -150,7 +154,7 @@ static func _corridor(fac: Node3D) -> void:
 	O._fog_volume(c, "CorridorHaze", Vector3(22, 5, 8), Vector3(28.5, F + 2.5, -88), 0.012, Color(0.7, 0.92, 1.0))
 	# Ocean backdrops behind both window rows.
 	# South box runs past the terrain edge (hidden behind the cliff from outdoors).
-	_ocean(c, "OceanSouth", Vector3(28.5, F + 4, -111.0), Vector3(23, 22, 37))
+	_ocean(c, "OceanSouth", Vector3(34.0, F + 4, -111.0), Vector3(12, 22, 37))  # x 28..40, clear of the garden
 	_ocean(c, "OceanNorth", Vector3(30.5, F + 4, -75.0), Vector3(19, 22, 17))
 
 static func _pool(parent: Node3D, pos: Vector3) -> void:

@@ -30,10 +30,12 @@ static func build(level: Node3D, markers: Node3D, shots: Node3D) -> void:
 	var top := TOP_Y + H
 	# --- A: flat tunnel from the grotto door; B+C: one tall shaft with a ramp body.
 	_box(shell, Vector3(17.5 - 9.8 + T, H + 2 * T, 4 + 2 * T), Vector3((17.5 + 9.8) * 0.5, TOP_Y + H * 0.5, -66), O.rock_mat)
-	_box(shell, Vector3(w + 2 * T, top - F + 2 * T, 22.6 + 2 * T), Vector3(xc, (top + F) * 0.5, -79.2), FAC.metal)
+	# Shaft runs from z -67.9 down to the garden's north wall (z -93).
+	_box(shell, Vector3(w + 2 * T, top - F + 2 * T, 25.6), Vector3(xc, (top + F) * 0.5, -80.2), FAC.metal)
 	_box(shell, Vector3(17.0 - 9.5, H, 4.0), Vector3((17.0 + 9.5) * 0.5, TOP_Y + H * 0.5, -66), O.rock_mat, sub)
-	_box(shell, Vector3(w, top - F, 22.6), Vector3(xc, (top + F) * 0.5, -79.2), FAC.metal_dark, sub)
-	_box(shell, Vector3(1.4, 3.0, 4.0), Vector3(17.0, F + 1.5, -88), FAC.metal_dark, sub)
+	_box(shell, Vector3(w, top - F, 26.1), Vector3(xc, (top + F) * 0.5, -80.95), FAC.metal_dark, sub)
+	# Cap the shaft's south end above the garden ceiling (y 2.6+).
+	_box(shell, Vector3(w + 2 * T, top + T - 2.6, 2.2), Vector3(xc, (top + T + 2.6) * 0.5, -93.4), FAC.metal)
 	# Ramp: top surface runs from (z -68, y 0.32) to (z -84, y F).
 	var ramp := SceneUtil.box_body(Vector3(w, 0.3, slope), Vector3(xc, (TOP_Y + F) * 0.5 - 0.15 / cos(ang), -76), FAC.metal, "Ramp")
 	ramp.rotation.x = -ang
@@ -61,8 +63,6 @@ static func build(level: Node3D, markers: Node3D, shots: Node3D) -> void:
 	# Doors through the neighbouring shells.
 	var grotto_shell: CSGCombiner3D = level.get_node("Outdoor/Grotto/Shell")
 	_box(grotto_shell, Vector3(4.0, H, 4.0), Vector3(11.5, TOP_Y + H * 0.5, -66), O.rock_mat, sub)
-	var corridor_shell: CSGCombiner3D = level.get_node("Facility/AquariumCorridor/Shell")
-	_box(corridor_shell, Vector3(1.8, 3.0, 4.0), Vector3(16.8, F + 1.5, -88), FAC.metal_dark, sub)
 
 	# Forerunner door frame on the grotto side + trim/lights down the tunnel.
 	for y in [TOP_Y + H - 0.05]:
@@ -73,9 +73,9 @@ static func build(level: Node3D, markers: Node3D, shots: Node3D) -> void:
 	for x in [X0 + 0.05, X1 - 0.05]:
 		var s := FAC._strip(c, Vector3(0.08, 0.06, slope), Vector3(x, (TOP_Y + F) * 0.5 + 0.05, -76))
 		s.rotation.x = -ang
-		FAC._strip(c, Vector3(0.08, 0.06, 6.5), Vector3(x, F + 0.05, -87.25))
+		FAC._strip(c, Vector3(0.08, 0.06, 9.0), Vector3(x, F + 0.05, -88.5))
 	FAC._hex_floor(c, Vector2(7.0, 4.0), Vector3(13.5, TOP_Y, -66))
-	FAC._hex_floor(c, Vector2(w, 6.5), Vector3(xc, F, -87.25))
+	FAC._hex_floor(c, Vector2(w, 9.0), Vector3(xc, F, -88.5))
 	FAC._light(c, Vector3(12.0, TOP_Y + H - 0.4, -66), Color(0.5, 0.9, 1.0), 1.2, 7.0)
 	FAC._light(c, Vector3(xc, TOP_Y - 1.0 + H - 0.6, -72), Color(0.5, 0.9, 1.0), 1.0, 7.0)
 	FAC._light(c, Vector3(xc, F + 2.0 + H - 0.6, -80), Color(0.5, 0.9, 1.0), 1.0, 7.0)

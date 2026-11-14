@@ -12,8 +12,7 @@ static func refs() -> Dictionary:
 	return {
 		"grotto": [Vector3(5.0, 1.8, -63.0), Vector3(-2.0, 2.6, -80.0), 75.0],
 		"lagoon": [Vector3(-1.0, 1.0, 27.5), Vector3(28.0, 3.0, 17.0), 70.0],
-		# Placeholder until Phase 8 builds the garden room.
-		"garden": [Vector3(18.0, F + 1.8, -86.0), Vector3(30.0, F + 2.0, -90.0), 75.0],
+		"garden": [Vector3(25.2, F + 2.3, -94.4), Vector3(18.6, F + 3.4, -102.5), 78.0],
 		"corridor": [Vector3(19.2, F + 1.9, -87.0), Vector3(36.0, F + 1.0, -89.5), 75.0],
 		"aqueduct": [Vector3(8.0, -5.0, -9.0), Vector3(-1.0, -2.5, -26.0), 70.0],
 		"atrium": [Vector3(40.6, R + 3.2, -88.0), Vector3(50.0, F + 2.5, -88.0), 80.0],

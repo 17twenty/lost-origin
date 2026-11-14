@@ -1,7 +1,7 @@
 extends TestCase
 ## Seamless grotto -> facility walk and the two-way teleporter pair.
 
-const DESCENT := ["Zone_GrottoDoor", "Zone_TunnelTop", "Zone_RampMid", "Zone_TunnelBottom", "Zone_Vestibule", "Zone_Corridor", "Zone_CorridorEnd", "Zone_Atrium"]
+const DESCENT := ["Zone_GrottoDoor", "Zone_TunnelTop", "Zone_RampMid", "Zone_TunnelBottom", "Zone_GardenEntry", "Zone_Garden", "Zone_GardenExit", "Zone_CorridorSouthDoor", "Zone_Corridor", "Zone_CorridorEnd", "Zone_Atrium"]
 
 func test_ground_under_tunnel() -> void:
 	await load_main()
