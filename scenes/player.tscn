@@ -72,36 +72,38 @@ transitions = ["idle", "run", SubResource("AnimationNodeStateMachineTransition_u
 [sub_resource type="SphereShape3D" id="SphereShape3D_4ni07"]
 radius = 0.25
 
-[node name="Player" type="CharacterBody3D" unique_id=1787018944]
+[node name="Player" type="CharacterBody3D" unique_id=84722023]
 collision_layer = 2
+collision_mask = 5
 floor_max_angle = 0.87266463
 floor_snap_length = 0.3
 script = ExtResource("1_g2els")
 
-[node name="Collision" type="CollisionShape3D" parent="." unique_id=720500079]
+[node name="Collision" type="CollisionShape3D" parent="." unique_id=1233812957]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
 shape = SubResource("CapsuleShape3D_dqkch")
 
-[node name="Model" type="Node3D" parent="." unique_id=2028238916]
+[node name="Model" type="Node3D" parent="." unique_id=505022104]
 
 [node name="Explorer" type="Node3D" parent="Model" unique_id=1317151393 instance=ExtResource("2_qhqgy")]
 
-[node name="AnimationTree" type="AnimationTree" parent="." unique_id=1493574467]
+[node name="AnimationTree" type="AnimationTree" parent="." unique_id=319925509]
 tree_root = SubResource("AnimationNodeStateMachine_a38lo")
 anim_player = NodePath("../Model/Explorer/AnimationPlayer")
 
-[node name="CameraYaw" type="Node3D" parent="." unique_id=1123758838]
+[node name="CameraYaw" type="Node3D" parent="." unique_id=1532992322]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.55, 0)
 
-[node name="CameraPitch" type="Node3D" parent="CameraYaw" unique_id=1070877511]
+[node name="CameraPitch" type="Node3D" parent="CameraYaw" unique_id=1453484762]
 transform = Transform3D(1, 0, 0, 0, 0.9838437, 0.17902958, 0, -0.17902958, 0.9838437, 0, 0, 0)
 
-[node name="SpringArm3D" type="SpringArm3D" parent="CameraYaw/CameraPitch" unique_id=502310012]
+[node name="SpringArm3D" type="SpringArm3D" parent="CameraYaw/CameraPitch" unique_id=8411043]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.55, 0, 0)
+collision_mask = 5
 shape = SubResource("SphereShape3D_4ni07")
 spring_length = 3.6
 margin = 0.15
 
-[node name="Camera3D" type="Camera3D" parent="CameraYaw/CameraPitch/SpringArm3D" unique_id=706548087]
+[node name="Camera3D" type="Camera3D" parent="CameraYaw/CameraPitch/SpringArm3D" unique_id=1053178750]
 fov = 70.0
 far = 1500.0

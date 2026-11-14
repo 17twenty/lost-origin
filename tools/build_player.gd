@@ -11,7 +11,7 @@ func _initialize() -> void:
 	p.name = "Player"
 	p.set_script(load("res://scripts/player.gd"))
 	p.collision_layer = 2
-	p.collision_mask = 1
+	p.collision_mask = 1 | (1 << 2)  # world + terrain
 	p.floor_max_angle = deg_to_rad(50)
 	p.floor_snap_length = 0.3
 
@@ -65,7 +65,7 @@ func _initialize() -> void:
 	arm.name = "SpringArm3D"
 	arm.spring_length = 3.6
 	arm.margin = 0.15
-	arm.collision_mask = 1
+	arm.collision_mask = 1 | (1 << 2)
 	var sphere := SphereShape3D.new()
 	sphere.radius = 0.25
 	arm.shape = sphere

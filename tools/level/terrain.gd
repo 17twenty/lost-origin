@@ -98,6 +98,8 @@ static func build(parent: Node3D, out_dir: String, material: Material) -> Static
 
 	var body := StaticBody3D.new()
 	body.name = "Terrain"
+	# Own layer (3) so tunnels can opt out of it (see scripts/terrain_passthrough.gd).
+	body.collision_layer = 1 << 2
 	parent.add_child(body)
 	var mi := MeshInstance3D.new()
 	mi.name = "Mesh"

@@ -306,6 +306,8 @@ static func _grotto(out: Node3D) -> void:
 	for i in 14:
 		var side := -1.0 if i % 2 == 0 else 1.0
 		var z := rng.randf_range(-84, -63)
+		if side > 0.0 and z > -71.0:
+			z -= 9.0  # keep the east door (z -64..-68) clear
 		var x := side * rng.randf_range(7.5, 9.5)
 		_kenney(g, ["rock_tallA", "rock_tallB", "rock_largeD", "rock_largeF"][rng.randi() % 4], Vector3(x, floor_y, z), rng.randf_range(2.0, 3.5), false)
 		_kenney(g, ["plant_bushDetailed", "plant_flatTall", "grass_leafsLarge"][rng.randi() % 3], Vector3(x - side * 1.5, floor_y, z + 1), rng.randf_range(3, 5), false)
@@ -356,6 +358,70 @@ static func _pad(parent: Node3D, name: String, pos: Vector3) -> Node3D:
 	light.light_energy = 2.0
 	light.light_color = Color(0.3, 0.9, 1.0)
 	pad.add_child(light)
+	var trig := Area3D.new()
+	trig.name = "Trigger"
+	trig.set_script(load("res://scripts/teleporter.gd"))
+	trig.collision_layer = 0
+	trig.collision_mask = 2
+	var tcs := CollisionShape3D.new()
+	tcs.name = "Col"
+	var tshape := CylinderShape3D.new()
+	tshape.radius = 1.1
+	tshape.height = 2.0
+	tcs.shape = tshape
+	tcs.position.y = 1.0
+	trig.add_child(tcs)
+	pad.add_child(trig)
+	var beam := MeshInstance3D.new()
+	beam.name = "Beam"
+	var bm := CylinderMesh.new()
+	bm.top_radius = 1.0
+	bm.bottom_radius = 1.4
+	bm.height = 5.0
+	bm.cap_top = false
+	bm.cap_bottom = false
+	var bmat := StandardMaterial3D.new()
+	bmat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	bmat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	bmat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	bmat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	bmat.albedo_color = Color(0.3, 0.95, 1.0, 0.8)
+	bm.material = bmat
+	beam.mesh = bm
+	beam.position.y = 2.5
+	beam.visible = false
+	beam.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	pad.add_child(beam)
+	var burst := GPUParticles3D.new()
+	burst.name = "Burst"
+	burst.emitting = false
+	burst.one_shot = true
+	burst.amount = 80
+	burst.lifetime = 1.2
+	burst.explosiveness = 0.85
+	burst.position.y = 0.2
+	var ppm := ParticleProcessMaterial.new()
+	ppm.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_RING
+	ppm.emission_ring_radius = 1.3
+	ppm.emission_ring_inner_radius = 1.1
+	ppm.emission_ring_height = 0.1
+	ppm.emission_ring_axis = Vector3.UP
+	ppm.direction = Vector3.UP
+	ppm.spread = 8.0
+	ppm.initial_velocity_min = 2.5
+	ppm.initial_velocity_max = 5.0
+	ppm.gravity = Vector3(0, -0.5, 0)
+	ppm.scale_min = 0.6
+	ppm.scale_max = 1.2
+	burst.process_material = ppm
+	var spark := SphereMesh.new()
+	spark.radius = 0.05
+	spark.height = 0.1
+	spark.radial_segments = 6
+	spark.rings = 3
+	spark.material = glow_mat
+	burst.draw_pass_1 = spark
+	pad.add_child(burst)
 	var arrival := SceneUtil.marker(pad, "Arrival", Vector3(0, 0.25, 2.6))
 	arrival.rotation.y = PI  # face away from the pad
 	return pad
@@ -530,6 +596,7 @@ static func _markers(markers: Node3D, shots: Node3D) -> void:
 		"Zone_Plateau": Vector2(0, -44),
 		"Zone_GrottoEntrance": Vector2(0, -57),
 		"Zone_GrottoPad": Vector2(0, -71),
+		"Zone_GrottoInside": Vector2(0, -66),
 	}
 	for n in zones:
 		var p: Vector2 = zones[n]

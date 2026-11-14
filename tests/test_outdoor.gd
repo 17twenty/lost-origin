@@ -1,7 +1,7 @@
 extends TestCase
 ## Outdoor island: route walk, collision under every zone, kill zones, bounds.
 
-const ROUTE := ["Zone_BridgeSouth", "Zone_BridgeMid", "Zone_BridgeNorth", "Zone_Plateau", "Zone_GrottoEntrance", "Zone_GrottoPad"]
+const ROUTE := ["Zone_BridgeSouth", "Zone_BridgeMid", "Zone_BridgeNorth", "Zone_Plateau", "Zone_GrottoEntrance", "Zone_GrottoInside"]
 const ZONES := ["Spawn", "Zone_Beach", "Zone_BridgeSouth", "Zone_BridgeMid", "Zone_BridgeNorth", "Zone_Plateau", "Zone_GrottoEntrance", "Zone_GrottoPad"]
 
 func test_player_spawns_on_beach_ground() -> void:

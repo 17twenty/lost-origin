@@ -57,7 +57,12 @@ func walk_to(target: Vector3, timeout := 20.0, sprint := false, reach := 1.0) ->
 		Input.action_press("sprint")
 	var frames := int(timeout * Engine.physics_ticks_per_second)
 	var ok := false
+	var prev := p.global_position
 	for i in frames:
+		if p.global_position.distance_to(prev) > 4.0:
+			ok = true  # teleported mid-walk: stop steering toward the old target
+			break
+		prev = p.global_position
 		var d := target - p.global_position
 		d.y = 0
 		if d.length() < reach:

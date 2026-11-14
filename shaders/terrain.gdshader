@@ -10,6 +10,9 @@ uniform vec3 rock_dark : source_color = vec3(0.30, 0.29, 0.27);
 uniform float water_level = -0.35;
 uniform float plateau_z = -26.0;
 uniform sampler2D noise_tex : repeat_enable, filter_linear_mipmap;
+// Box where a tunnel pierces the terrain sheet; fragments inside are discarded.
+uniform vec3 hole_min = vec3(0.0);
+uniform vec3 hole_max = vec3(0.0);
 
 varying vec3 wpos;
 varying vec3 wnorm;
@@ -20,6 +23,9 @@ void vertex() {
 }
 
 void fragment() {
+	if (all(greaterThan(wpos, hole_min)) && all(lessThan(wpos, hole_max))) {
+		discard;
+	}
 	float n = texture(noise_tex, wpos.xz * 0.04).r;
 	float n2 = texture(noise_tex, wpos.xz * 0.37).r;
 	vec3 sand = mix(sand_color, sand_color * 0.9, n2);
