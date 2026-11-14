@@ -16,7 +16,7 @@ static func refs() -> Dictionary:
 		"corridor": [Vector3(19.2, F + 1.9, -87.0), Vector3(36.0, F + 1.0, -89.5), 75.0],
 		"aqueduct": [Vector3(13.0, 0.2, -6.5), Vector3(-1.0, 2.2, -25.0), 72.0],
 		"atrium": [Vector3(52.5, R + 2.4, -79.6), Vector3(50.0, F + 3.6, -97.5), 84.0],
-		"control": [Vector3(68.6, R + 1.9, -88.0), Vector3(80.0, R + 1.2, -88.0), 80.0],
+		"control": [Vector3(63.8, R + 2.3, -88.0), Vector3(80.0, R + 1.0, -88.0), 80.0],
 	}
 
 static func build(shots: Node3D) -> void:

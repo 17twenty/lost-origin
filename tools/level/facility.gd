@@ -25,14 +25,19 @@ static var hex_mat: ShaderMaterial
 static var glass: StandardMaterial3D
 static var trim: StandardMaterial3D
 static var trim_soft: StandardMaterial3D
+static var trim_violet: StandardMaterial3D
+static var grate_mat: ShaderMaterial
 static var pool_mat: StandardMaterial3D
 
 static func _materials() -> void:
 	metal = ShaderMaterial.new()
 	metal.shader = load("res://shaders/facility_metal.gdshader")
 	metal.set_shader_parameter("noise_tex", O.noise_tex)
+	# Lighter blue-grey panelling like the video (f11-23).
+	metal.set_shader_parameter("base_color", Color(0.55, 0.62, 0.72))
+	metal.set_shader_parameter("groove_color", Color(0.2, 0.24, 0.3))
 	metal_dark = metal.duplicate()
-	metal_dark.set_shader_parameter("base_color", Color(0.17, 0.2, 0.25))
+	metal_dark.set_shader_parameter("base_color", Color(0.36, 0.42, 0.52))
 	metal_dark.set_shader_parameter("panel_size", Vector2(1.0, 0.5))
 	hex_mat = ShaderMaterial.new()
 	hex_mat.shader = load("res://shaders/hex_floor.gdshader")
@@ -42,8 +47,11 @@ static func _materials() -> void:
 	glass.roughness = 0.03
 	glass.metallic_specular = 0.9
 	glass.cull_mode = BaseMaterial3D.CULL_DISABLED
-	trim = SceneUtil.mat(Color(0.2, 0.95, 1.0), 0.2, 0.0, Color(0.2, 0.95, 1.0), 6.0)
+	trim = SceneUtil.mat(Color(0.2, 0.95, 1.0), 0.2, 0.0, Color(0.2, 0.95, 1.0), 3.5)
 	trim_soft = SceneUtil.mat(Color(0.2, 0.85, 1.0), 0.2, 0.0, Color(0.2, 0.85, 1.0), 2.2)
+	trim_violet = SceneUtil.mat(Color(0.55, 0.4, 1.0), 0.2, 0.0, Color(0.5, 0.35, 1.0), 2.6)
+	grate_mat = ShaderMaterial.new()
+	grate_mat.shader = load("res://shaders/grate.gdshader")
 	pool_mat = SceneUtil.mat(Color(0.1, 0.75, 0.95), 0.05, 0.0, Color(0.1, 0.7, 1.0), 2.5)
 	pool_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	pool_mat.albedo_color.a = 0.75
@@ -147,7 +155,10 @@ static func _corridor(fac: Node3D) -> void:
 	for z in [-84.05, -91.95]:
 		_strip(c, Vector3(x1 - x0, 0.06, 0.08), Vector3(xc, F + 0.05, z))
 		_strip(c, Vector3(x1 - x0, 0.06, 0.08), Vector3(xc, F + 4.9, z))
-	_strip(c, Vector3(x1 - x0, 0.04, 0.5), Vector3(xc, F + 4.97, -88))
+	_strip(c, Vector3(x1 - x0, 0.04, 0.3), Vector3(xc, F + 4.97, -88), trim_soft)
+	# Octagonal arch frames with cyan/violet light strips (video f11-13).
+	for i in 4:
+		_arch_frame(c, [21.0, 27.0, 33.0, 38.6][i], trim if i % 2 == 0 else trim_violet)
 	# Octagonal pools down the centre line.
 	for i in 3:
 		_pool(c, Vector3(25.0 + i * 5.5, F, -88))
@@ -159,6 +170,39 @@ static func _corridor(fac: Node3D) -> void:
 	_ocean(c, "OceanSouth", Vector3(34.0, F + 4, -111.0), Vector3(12, 22, 37))  # x 28..40, clear of the garden
 	_ocean(c, "OceanNorth", Vector3(30.5, F + 4, -75.0), Vector3(19, 22, 17))
 
+## A chamfered octagonal frame standing proud of the corridor walls/ceiling at x.
+static func _arch_frame(parent: Node3D, x: float, strip_mat: Material) -> void:
+	var fr := CSGCombiner3D.new()
+	fr.name = "ArchFrame"
+	fr.use_collision = true
+	parent.add_child(fr)
+	var sub := CSGShape3D.OPERATION_SUBTRACTION
+	_box(fr, Vector3(0.55, 5.0, 8.0), Vector3(x, F + 2.5, -88), metal)
+	_oct_x(fr, x, 0.8, 4.4, 7.2, metal_dark, sub)
+	_box(fr, Vector3(0.8, 1.6, 7.2), Vector3(x, F + 0.8, -88), metal_dark, sub)  # no sill across the floor
+	var glow := CSGCombiner3D.new()
+	glow.name = "ArchGlow"
+	parent.add_child(glow)
+	_oct_x(glow, x - 0.29, 0.06, 4.55, 7.35, strip_mat)
+	_oct_x(glow, x - 0.29, 0.1, 4.3, 7.1, strip_mat, sub)
+	_box(glow, Vector3(0.2, 1.4, 7.6), Vector3(x - 0.29, F + 0.7, -88), strip_mat, sub)
+	_oct_x(glow, x + 0.29, 0.06, 4.55, 7.35, strip_mat)
+	_oct_x(glow, x + 0.29, 0.1, 4.3, 7.1, strip_mat, sub)
+	_box(glow, Vector3(0.2, 1.4, 7.6), Vector3(x + 0.29, F + 0.7, -88), strip_mat, sub)
+
+## Octagonal prism along X, flat sides up/down/left/right, sized to height h x width w.
+static func _oct_x(parent: Node, x: float, thickness: float, h: float, w: float, mat: Material, op := CSGShape3D.OPERATION_UNION) -> void:
+	var c := CSGCylinder3D.new()
+	c.sides = 8
+	c.radius = 1.0
+	c.height = thickness
+	c.operation = op
+	c.material = mat
+	var ap := cos(PI / 8.0)
+	var b := Basis(Vector3(0, 0, 1), PI / 2.0) * Basis.from_scale(Vector3(h * 0.5 / ap, 1.0, w * 0.5 / ap)) * Basis(Vector3.UP, PI / 8.0)
+	c.transform = Transform3D(b, Vector3(x, F + h * 0.5 + 0.05, -88))
+	parent.add_child(c)
+
 static func _pool(parent: Node3D, pos: Vector3) -> void:
 	var p := Node3D.new()
 	p.name = "OctPool"
@@ -168,22 +212,37 @@ static func _pool(parent: Node3D, pos: Vector3) -> void:
 	rim.name = "Rim"
 	rim.use_collision = true
 	p.add_child(rim)
-	_oct(rim, 1.75, 0.5, Vector3(0, 0.25, 0), metal)
-	_oct(rim, 1.45, 0.6, Vector3(0, 0.4, 0), metal_dark, CSGShape3D.OPERATION_SUBTRACTION)
+	# Low flush rim like the video's sunken pools (f12): water sits just under the lip.
+	_oct(rim, 1.9, 0.2, Vector3(0, 0.1, 0), metal)
+	_oct(rim, 1.5, 0.3, Vector3(0, 0.2, 0), metal_dark, CSGShape3D.OPERATION_SUBTRACTION)
+	var bed := MeshInstance3D.new()
+	bed.name = "Bed"
+	var bm := CylinderMesh.new()
+	bm.radial_segments = 8
+	bm.top_radius = circumradius(1.5)
+	bm.bottom_radius = bm.top_radius
+	bm.height = 0.02
+	bm.material = pool_mat
+	bed.mesh = bm
+	bed.rotation.y = PI / 8.0
+	bed.position.y = 0.02
+	p.add_child(bed)
 	var water := MeshInstance3D.new()
 	water.name = "Water"
-	var cm := CylinderMesh.new()
-	cm.radial_segments = 8
-	cm.top_radius = circumradius(1.45)
-	cm.bottom_radius = cm.top_radius
-	cm.height = 0.02
-	cm.material = pool_mat
-	water.mesh = cm
-	water.rotation.y = PI / 8.0
-	water.position.y = 0.35
+	var wm := PlaneMesh.new()
+	wm.size = Vector2(3.0, 3.0)
+	var wmat: ShaderMaterial = O.water_mat.duplicate()
+	wmat.set_shader_parameter("shallow_color", Color(0.3, 0.95, 1.0))
+	wmat.set_shader_parameter("depth_scale", 0.6)
+	wmat.set_shader_parameter("foam_distance", 0.0)
+	wm.material = wmat
+	water.mesh = wm
+	water.position.y = 0.14
 	p.add_child(water)
-	_strip(p, Vector3(0.08, 0.04, 2.4), Vector3(1.62, 0.52, 0))
-	_strip(p, Vector3(0.08, 0.04, 2.4), Vector3(-1.62, 0.52, 0))
+	var glow := CSGCombiner3D.new()
+	p.add_child(glow)
+	_oct(glow, 1.62, 0.04, Vector3(0, 0.21, 0), trim_soft)
+	_oct(glow, 1.52, 0.08, Vector3(0, 0.21, 0), trim_soft, CSGShape3D.OPERATION_SUBTRACTION)
 	_light(p, Vector3(0, 0.9, 0), Color(0.2, 0.85, 1.0), 1.5, 4.0)
 
 static func _ocean(parent: Node3D, name: String, pos: Vector3, size: Vector3) -> void:
@@ -489,9 +548,19 @@ static func _control(fac: Node3D) -> void:
 	LevelOcean.build(r, "OceanEast", Vector3(87.5, RING_Y + 3.0, -88), Vector3(26, 16, 34), {"floor_y": RING_Y - 0.3, "fish": 3, "kelp": 40, "coral": 24, "rocks": 10})
 	# Row of consoles facing the room, glass beyond (operators' view).
 	var i := 0
-	for cz in [-90.6, -88.0, -85.4]:
-		_console(r, Vector3(71.4, RING_Y, cz), -PI / 2.0, i)
+	for cz in [-91.0, -89.5, -88.0, -86.5, -85.0]:
+		_console(r, Vector3(71.6, RING_Y, cz), -PI / 2.0, i)
 		i += 1
+	# Floor grates either side of the pad (video f20-23).
+	for gx in [62.6, 70.0]:
+		var gm := MeshInstance3D.new()
+		gm.name = "Grate"
+		var gp := PlaneMesh.new()
+		gp.size = Vector2(2.0, 5.2)
+		gp.material = grate_mat
+		gm.mesh = gp
+		gm.position = Vector3(gx, RING_Y + 0.015, -88)
+		r.add_child(gm)
 	# Teleporter pad in the middle of the room; arrival point faces back west.
 	var pad := O._pad(r, "TeleporterFacility", Vector3(66.8, RING_Y, -88))
 	pad.rotation.y = -PI / 2.0
@@ -512,35 +581,63 @@ static func _control(fac: Node3D) -> void:
 	_light(r, Vector3(xc, RING_Y + 5.0, -88), Color(0.8, 0.92, 1.0), 1.4, 12.0)
 	_light(r, Vector3(x1 - 1.5, RING_Y + 3.0, -88), Color(0.3, 0.75, 1.0), 2.0, 9.0)
 
+## Rounded console pod (video f20-23): cylindrical pedestal, angled top, holo screen.
 static func _console(parent: Node3D, pos: Vector3, yaw: float, idx: int) -> void:
-	var c := Node3D.new()
+	var c := StaticBody3D.new()
 	c.name = "Console%d" % idx
 	c.position = pos
 	c.rotation.y = yaw  # local +Z (screen side) points along yaw
 	parent.add_child(c)
-	var body := SceneUtil.box_body(Vector3(2.4, 1.0, 0.9), Vector3(0, 0.5, 0), metal, "Desk")
-	c.add_child(body)
+	var cs := CollisionShape3D.new()
+	var cyl := CylinderShape3D.new()
+	cyl.radius = 0.55
+	cyl.height = 1.1
+	cs.shape = cyl
+	cs.position.y = 0.55
+	c.add_child(cs)
+	var ped := MeshInstance3D.new()
+	var pm := CylinderMesh.new()
+	pm.top_radius = 0.42
+	pm.bottom_radius = 0.55
+	pm.height = 0.95
+	pm.radial_segments = 16
+	pm.material = metal
+	ped.mesh = pm
+	ped.position.y = 0.475
+	c.add_child(ped)
 	var top := MeshInstance3D.new()
-	var bm := BoxMesh.new()
-	bm.size = Vector3(2.4, 0.08, 1.0)
-	bm.material = metal_dark
-	top.mesh = bm
-	top.position = Vector3(0, 1.02, 0.05)
-	top.rotation.x = deg_to_rad(-15)
+	var tm := CylinderMesh.new()
+	tm.top_radius = 0.5
+	tm.bottom_radius = 0.5
+	tm.height = 0.1
+	tm.radial_segments = 16
+	tm.material = metal_dark
+	top.mesh = tm
+	top.position = Vector3(0, 1.0, 0.0)
+	top.rotation.x = deg_to_rad(-22)
 	c.add_child(top)
+	var ring := MeshInstance3D.new()
+	var rm := TorusMesh.new()
+	rm.inner_radius = 0.5
+	rm.outer_radius = 0.56
+	rm.rings = 24
+	rm.ring_segments = 6
+	rm.material = trim_soft
+	ring.mesh = rm
+	ring.position.y = 0.08
+	c.add_child(ring)
 	var screen := MeshInstance3D.new()
 	var q := QuadMesh.new()
-	q.size = Vector2(1.5, 0.6)
+	q.size = Vector2(0.7, 0.45)
 	var sm := ShaderMaterial.new()
 	sm.shader = load("res://shaders/holo_screen.gdshader")
 	sm.set_shader_parameter("seed", float(idx))
 	sm.set_shader_parameter("intensity", 0.9)
 	q.material = sm
 	screen.mesh = q
-	screen.position = Vector3(0, 1.32, -0.15)
-	screen.rotation.x = deg_to_rad(-35)
+	screen.position = Vector3(0, 1.33, -0.12)
+	screen.rotation.x = deg_to_rad(-30)
 	c.add_child(screen)
-	_strip(c, Vector3(2.4, 0.05, 0.05), Vector3(0, 0.05, 0.46))
 
 # --------------------------------------------------------------------- markers
 static func _markers(markers: Node3D, shots: Node3D) -> void:

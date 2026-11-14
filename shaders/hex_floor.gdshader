@@ -1,12 +1,12 @@
 shader_type spatial;
 // Hexagonal floor tiles with dark seams and occasional softly glowing cyan seams.
 
-uniform vec3 tile_a : source_color = vec3(0.36, 0.40, 0.46);
-uniform vec3 tile_b : source_color = vec3(0.26, 0.30, 0.36);
-uniform vec3 seam_color : source_color = vec3(0.05, 0.06, 0.08);
+uniform vec3 tile_a : source_color = vec3(0.70, 0.75, 0.82);
+uniform vec3 tile_b : source_color = vec3(0.58, 0.64, 0.72);
+uniform vec3 seam_color : source_color = vec3(0.22, 0.27, 0.34);
 uniform vec3 glow_color : source_color = vec3(0.2, 0.9, 1.0);
 uniform float hex_size = 0.9;
-uniform float glow_strength = 2.5;
+uniform float glow_strength = 1.6;
 
 varying vec3 wpos;
 
@@ -31,8 +31,8 @@ void fragment() {
 	float seam = smoothstep(0.015, 0.04, h.x);
 	vec3 tile = mix(tile_b, tile_a, h.y);
 	ALBEDO = mix(seam_color, tile, seam);
-	float glow = (1.0 - seam) * step(0.86, h.y) * (0.6 + 0.4 * sin(TIME * 1.5 + h.y * 30.0));
+	float glow = (1.0 - seam) * step(0.93, h.y) * (0.6 + 0.4 * sin(TIME * 1.5 + h.y * 30.0));
 	EMISSION = glow_color * glow * glow_strength;
 	METALLIC = 0.5;
-	ROUGHNESS = mix(0.8, 0.3, seam);
+	ROUGHNESS = mix(0.6, 0.14, seam);
 }

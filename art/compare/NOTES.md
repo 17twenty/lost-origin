@@ -16,5 +16,27 @@ Pairs: `./tools/compare_shots.sh` → `art/compare/<name>.png` (video left, game
 ### Totems — done
 - **Before:** squat 4.35 m carved block with a finned crown; read as a stocky idol, not the video's tall shoreline monoliths.
 - **After:** 7.6 m slender monolith (`build_totem.py`): tapered shaft with a carved band and glowing glyph channel, a heavy-browed carved head high up with glowing eye/mouth slits, a cap stone and crest; mossy weathered stone shader and hanging vines from the crown. Scales 0.75–1.15 so the shoreline row varies like the video.
-### Facility kit (arches, panels, consoles, grates) — to do
-### Water bodies — partly (glints/caustics done in Phase 10; sunken corridor pools to do)
+### Garden tree — done (Phase 8b)
+- **Before:** green blob canopy hiding the trunk. **After:** tall leaning mossy trunk with roots, high canopy, willow strands; reads left of the pool like f08.
+
+### Facility kit — done
+- **Before:** dark navy panels, near-black hex floor with many glowing seams, plain box corridor, raised pool tubs, flat box consoles, very hot cyan trim bloom.
+- **After:** lighter blue-grey panelling (`facility_metal` base 0.55/0.62/0.72), pale reflective hex floor with rare glow seams, chamfered octagonal **arch frames** down the corridor with alternating cyan/violet light strips (f11–13), low flush-rim octagonal pools with a glowing bed and caustic water just under the lip (f12), round **console pods** with angled tops and holo screens in a row facing the panorama, **floor grates** either side of the pad (f20–23), softer trim emission (6 → 3.5).
+- **Deliberate differences:** the control-room glass is a large flat panel rather than the video's curved full-height wall; ceilings keep the panel grid rather than the video's deep coffers.
+
+### Water bodies — done
+- Lagoon sun glints + caustic shimmer (Phase 10), turquoise shallow inlet, bluer waterfalls (darker blue body, white streaks), glowing sunken pools (grotto, garden, corridor).
+
+### Lighting per composition — done
+- Grotto: open sky + mesh sun shafts, toned-down haze; garden: skylight shafts; facility: lighter materials so rooms read bright like the video; ocean views: bluer gradient with distance haze.
+- **Still different:** the video is more saturated and contrasty overall (painterly bloom); we keep a cleaner look to stay readable and web-friendly.
+
+## Composition review (after the asset pass)
+- **Grotto (f02):** open basin, waterfall from the lip, stepped glowing pad, jungle — matches; the pool is partly hidden by the pad from this camera.
+- **Lagoon (f05):** tall mossy monolith row on a curved beach with sparkling turquoise shallows and gulls — matches; the beach is wider/flatter than the video's.
+- **Garden (f08):** tree left, twin falls from the hex skylight, glowing octagonal pool — matches.
+- **Corridor (f12):** octagonal arch frames with cyan/violet strips, windows with fish/kelp, sunken pools — matches.
+- **Aqueduct (f15):** a long row of arched piers striding through shallow turquoise water with vines — matches; the piers are squarer and darker than the video's mossy round ones.
+- **Atrium (f18):** glass column with fish, portholes onto the sea, glass ceiling, tube rail on the ring — matches; the column base glow is still hot.
+- **Control (f21):** glass panorama onto kelp/coral/fish, a row of console pods, floor grates — matches.
+
