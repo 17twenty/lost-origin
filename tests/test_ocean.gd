@@ -50,3 +50,22 @@ func test_control_panorama_glass_is_solid() -> void:
 	p.global_position = Vector3(73.0, -2.45, -84.8)
 	await walk_to(Vector3(95, -2.5, -84.8), 3.0)
 	check(p.global_position.x < 74.2, "panorama glass stops the player (x=%.2f)" % p.global_position.x)
+
+func test_atrium_portholes_and_ceiling_glass() -> void:
+	await load_main()
+	var space := (scene as Node3D).get_world_3d().direct_space_state
+	var hits := 0
+	for gl: Node3D in scene.get_node("Level/Facility/Atrium/Portholes").get_children():
+		if not String(gl.name).begins_with("PortholeGlass"):
+			continue
+		var c := Vector3(50, gl.global_position.y, -88)
+		var dir := (gl.global_position - c)
+		dir.y = 0
+		var from := c + dir.normalized() * 8.0
+		var hit := space.intersect_ray(PhysicsRayQueryParameters3D.create(from, gl.global_position + dir.normalized() * 0.5))
+		if not hit.is_empty() and hit.collider == gl:
+			hits += 1
+	check(hits >= 12, "porthole glass collides (%d/12)" % hits)
+	var up := space.intersect_ray(PhysicsRayQueryParameters3D.create(Vector3(54.5, -2.0, -88), Vector3(54.5, 12.0, -88)))
+	check(not up.is_empty() and String((up.collider as Node).get_path()).contains("CeilingGlass"), "glass ceiling above the atrium")
+	check(scene.get_node_or_null("Level/Facility/Atrium/OceanAbove") != null, "sea visible above the ceiling")

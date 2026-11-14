@@ -8,10 +8,14 @@ const GEN := "res://scenes/generated"
 
 static var _kelp_mesh: ArrayMesh
 
-## opts: fish (int schools), kelp (int), coral (int clusters), rocks (int), floor_y (float)
+## opts: fish (int schools), kelp (int), coral (int clusters), rocks (int),
+## floor_y (world float, or null for no floor), yaw (radians; local +Z faces this way), haze (bool)
+## Everything is built in the node's local space so the box can be rotated.
 static func build(parent: Node3D, name: String, pos: Vector3, size: Vector3, opts := {}) -> Node3D:
 	var o := Node3D.new()
 	o.name = name
+	o.position = pos
+	o.rotation.y = float(opts.get("yaw", 0.0))
 	parent.add_child(o)
 	var mi := MeshInstance3D.new()
 	mi.name = "Backdrop"
@@ -24,24 +28,25 @@ static func build(parent: Node3D, name: String, pos: Vector3, size: Vector3, opt
 	m.set_shader_parameter("bottom_y", pos.y - size.y * 0.5)
 	bm.material = m
 	mi.mesh = bm
-	mi.position = pos
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	o.add_child(mi)
-	var floor_y: float = opts.get("floor_y", pos.y - size.y * 0.5 + 0.5)
-	var sand := MeshInstance3D.new()
-	sand.name = "SeaFloor"
-	var pm := PlaneMesh.new()
-	pm.size = Vector2(size.x, size.z)
-	pm.material = SceneUtil.mat(Color(0.32, 0.55, 0.6), 1.0)
-	sand.mesh = pm
-	sand.position = Vector3(pos.x, floor_y, pos.z)
-	o.add_child(sand)
+	var floor_world = opts.get("floor_y", pos.y - size.y * 0.5 + 0.5)
+	var fy: float = (floor_world - pos.y) if floor_world != null else -size.y * 0.5 + 0.5
+	if floor_world != null:
+		var sand := MeshInstance3D.new()
+		sand.name = "SeaFloor"
+		var pm := PlaneMesh.new()
+		pm.size = Vector2(size.x, size.z)
+		pm.material = SceneUtil.mat(Color(0.32, 0.55, 0.6), 1.0)
+		sand.mesh = pm
+		sand.position = Vector3(0, fy, 0)
+		o.add_child(sand)
 	var half := Vector2(size.x * 0.45, size.z * 0.45)
 	for i in int(opts.get("rocks", 8)):
-		var rp := Vector3(pos.x + O.rng.randf_range(-half.x, half.x), floor_y, pos.z + O.rng.randf_range(-half.y, half.y))
+		var rp := Vector3(O.rng.randf_range(-half.x, half.x), fy, O.rng.randf_range(-half.y, half.y))
 		O._kenney(o, ["rock_tallA", "rock_tallC", "rock_largeB", "rock_largeD"][O.rng.randi() % 4], rp, O.rng.randf_range(2.5, 6), false)
-	_coral(o, pos, half, floor_y, int(opts.get("coral", 10)))
-	_kelp(o, pos, half, floor_y, int(opts.get("kelp", 24)), size.y)
+	_coral(o, half, fy, int(opts.get("coral", 10)))
+	_kelp(o, half, fy, int(opts.get("kelp", 24)), size.y)
 	var schools := int(opts.get("fish", 2))
 	var palette := [
 		PackedColorArray([Color(1.0, 0.78, 0.15), Color(1.0, 0.55, 0.1)]),
@@ -52,18 +57,18 @@ static func build(parent: Node3D, name: String, pos: Vector3, size: Vector3, opt
 		var fs := MultiMeshInstance3D.new()
 		fs.name = "FishSchool%d" % k
 		fs.set_script(load("res://scripts/fish_school.gd"))
-		fs.position = Vector3(pos.x, floor_y + 1.6 + k * 0.9, pos.z)
+		fs.position = Vector3(0, fy + 1.6 + k * 0.9, 0)
 		fs.set("extents", Vector3(size.x * 0.35, 0.8, size.z * 0.3))
-		fs.set("count", 14 + k * 4)
+		fs.set("count", int(opts.get("fish_count", 14 + k * 4)))
 		fs.set("fish_length", 0.45)
 		fs.set("seed_value", O.rng.randi())
 		fs.set("speed", O.rng.randf_range(0.09, 0.16))
 		fs.set("colors", palette[k % palette.size()])
 		o.add_child(fs)
 	if opts.get("haze", true):
-		O._fog_volume(o, "WaterHaze", size - Vector3(0.5, 0.5, 0.5), pos, 0.025, Color(0.05, 0.3, 0.55))
+		O._fog_volume(o, "WaterHaze", size - Vector3(0.5, 0.5, 0.5), Vector3.ZERO, 0.025, Color(0.05, 0.3, 0.55))
 	var l := OmniLight3D.new()
-	l.position = Vector3(pos.x, pos.y + size.y * 0.25, pos.z)
+	l.position = Vector3(0, size.y * 0.25, 0)
 	l.light_color = Color(0.3, 0.7, 1.0)
 	l.light_energy = 1.6
 	l.light_volumetric_fog_energy = 0.0
@@ -71,7 +76,7 @@ static func build(parent: Node3D, name: String, pos: Vector3, size: Vector3, opt
 	o.add_child(l)
 	return o
 
-static func _kelp(o: Node3D, pos: Vector3, half: Vector2, floor_y: float, n: int, depth: float) -> void:
+static func _kelp(o: Node3D, half: Vector2, floor_y: float, n: int, depth: float) -> void:
 	if n <= 0:
 		return
 	if _kelp_mesh == null:
@@ -100,7 +105,7 @@ static func _kelp(o: Node3D, pos: Vector3, half: Vector2, floor_y: float, n: int
 	mmi.set("mesh", _kelp_mesh)
 	var xforms: Array[Transform3D] = []
 	for i in n:
-		var p := Vector3(pos.x + O.rng.randf_range(-half.x, half.x), floor_y, pos.z + O.rng.randf_range(-half.y, half.y))
+		var p := Vector3(O.rng.randf_range(-half.x, half.x), floor_y, O.rng.randf_range(-half.y, half.y))
 		var hgt := O.rng.randf_range(depth * 0.3, depth * 0.65)
 		var b := Basis(Vector3.UP, O.rng.randf() * TAU).scaled(Vector3(O.rng.randf_range(0.8, 1.4), hgt, 1.0))
 		xforms.append(Transform3D(b, p))
@@ -111,12 +116,12 @@ static func _kelp(o: Node3D, pos: Vector3, half: Vector2, floor_y: float, n: int
 	mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	o.add_child(mmi)
 
-static func _coral(o: Node3D, pos: Vector3, half: Vector2, floor_y: float, n: int) -> void:
+static func _coral(o: Node3D, half: Vector2, floor_y: float, n: int) -> void:
 	var cols := [Color(1.0, 0.45, 0.55), Color(1.0, 0.6, 0.2), Color(0.7, 0.4, 1.0), Color(0.3, 0.9, 0.8), Color(1.0, 0.85, 0.4)]
 	for i in n:
 		var c := Node3D.new()
 		c.name = "Coral%d" % i
-		c.position = Vector3(pos.x + O.rng.randf_range(-half.x, half.x), floor_y, pos.z + O.rng.randf_range(-half.y, half.y))
+		c.position = Vector3(O.rng.randf_range(-half.x, half.x), floor_y, O.rng.randf_range(-half.y, half.y))
 		o.add_child(c)
 		var col: Color = cols[O.rng.randi() % cols.size()]
 		var mat := SceneUtil.mat(col, 0.6, 0.0, col, 0.35)

@@ -15,7 +15,7 @@ static func refs() -> Dictionary:
 		"garden": [Vector3(25.2, F + 2.3, -94.4), Vector3(18.6, F + 3.4, -102.5), 78.0],
 		"corridor": [Vector3(19.2, F + 1.9, -87.0), Vector3(36.0, F + 1.0, -89.5), 75.0],
 		"aqueduct": [Vector3(8.0, -5.0, -9.0), Vector3(-1.0, -2.5, -26.0), 70.0],
-		"atrium": [Vector3(40.6, R + 3.2, -88.0), Vector3(50.0, F + 2.5, -88.0), 80.0],
+		"atrium": [Vector3(52.5, R + 2.4, -79.6), Vector3(50.0, F + 3.6, -97.5), 84.0],
 		"control": [Vector3(68.6, R + 1.9, -88.0), Vector3(80.0, R + 1.2, -88.0), 80.0],
 	}
 

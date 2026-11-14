@@ -24,6 +24,7 @@ static var metal_dark: ShaderMaterial
 static var hex_mat: ShaderMaterial
 static var glass: StandardMaterial3D
 static var trim: StandardMaterial3D
+static var trim_soft: StandardMaterial3D
 static var pool_mat: StandardMaterial3D
 
 static func _materials() -> void:
@@ -42,6 +43,7 @@ static func _materials() -> void:
 	glass.metallic_specular = 0.9
 	glass.cull_mode = BaseMaterial3D.CULL_DISABLED
 	trim = SceneUtil.mat(Color(0.2, 0.95, 1.0), 0.2, 0.0, Color(0.2, 0.95, 1.0), 6.0)
+	trim_soft = SceneUtil.mat(Color(0.2, 0.85, 1.0), 0.2, 0.0, Color(0.2, 0.85, 1.0), 2.2)
 	pool_mat = SceneUtil.mat(Color(0.1, 0.75, 0.95), 0.05, 0.0, Color(0.1, 0.7, 1.0), 2.5)
 	pool_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	pool_mat.albedo_color.a = 0.75
@@ -221,19 +223,22 @@ static func _atrium(fac: Node3D) -> void:
 	var ry := RING_Y - ATRIUM.y
 	_oct(ring, APOTHEM + 0.1, 0.3, ATRIUM + Vector3(0, ry - 0.15, 0), metal)
 	_oct(ring, RING_IN, 0.4, ATRIUM + Vector3(0, ry - 0.15, 0), metal, CSGShape3D.OPERATION_SUBTRACTION)
-	_oct(ring, RING_IN + 0.15, 1.0, ATRIUM + Vector3(0, ry + 0.5, 0), metal_dark)
-	_oct(ring, RING_IN, 1.2, ATRIUM + Vector3(0, ry + 0.5, 0), metal_dark, CSGShape3D.OPERATION_SUBTRACTION)
+	# Kick plate only; the railing itself is tubes (see _ring_rails).
+	_oct(ring, RING_IN + 0.15, 0.25, ATRIUM + Vector3(0, ry + 0.125, 0), metal_dark)
+	_oct(ring, RING_IN, 0.4, ATRIUM + Vector3(0, ry + 0.125, 0), metal_dark, CSGShape3D.OPERATION_SUBTRACTION)
 	_box(ring, Vector3(3.0, 1.4, 1.0), Vector3(ATRIUM.x + RAMP_X - 4.4, RING_Y + 0.5, ATRIUM.z + RING_IN), metal, CSGShape3D.OPERATION_SUBTRACTION)
 	# Glowing edge on the ring.
 	var glow_ring := CSGCombiner3D.new()
 	glow_ring.name = "RingGlow"
 	a.add_child(glow_ring)
-	_oct(glow_ring, RING_IN + 0.17, 0.06, ATRIUM + Vector3(0, ry + 1.0, 0), trim)
-	_oct(glow_ring, RING_IN - 0.02, 0.1, ATRIUM + Vector3(0, ry + 1.0, 0), trim, CSGShape3D.OPERATION_SUBTRACTION)
 	_oct(glow_ring, APOTHEM - 0.02, 0.08, ATRIUM + Vector3(0, 0.05, 0), trim)
 	_oct(glow_ring, APOTHEM - 0.14, 0.1, ATRIUM + Vector3(0, 0.05, 0), trim, CSGShape3D.OPERATION_SUBTRACTION)
 	_oct(glow_ring, APOTHEM - 0.02, 0.08, ATRIUM + Vector3(0, h - 0.1, 0), trim)
 	_oct(glow_ring, APOTHEM - 0.3, 0.1, ATRIUM + Vector3(0, h - 0.1, 0), trim, CSGShape3D.OPERATION_SUBTRACTION)
+
+	_ring_rails(a)
+	_portholes(a, shell)
+	_glass_ceiling(a, shell, h)
 
 	# Ramp: inner south side, rising westward from the floor to the ring.
 	var rise := RING_Y - F
@@ -308,6 +313,155 @@ static func _atrium(fac: Node3D) -> void:
 	for i in 4:
 		var ang2 := PI / 4.0 + i * PI / 2.0
 		_light(a, ATRIUM + Vector3(cos(ang2) * 8.5, 3.0, sin(ang2) * 8.5), Color(0.4, 0.85, 1.0), 1.0, 7.0)
+
+## Porthole faces (octagon face angles; E = control door, W = corridor door).
+const PORTHOLE_FACES := [45.0, 90.0, 135.0, 225.0, 270.0, 315.0]
+const WIDE := 1.35  # portholes are wide octagons (rounded-rect feel, like the video)
+
+static func _face_n(deg: float) -> Vector3:
+	return Vector3(cos(deg_to_rad(deg)), 0, sin(deg_to_rad(deg)))
+
+static func _corner(apothem: float, deg: float) -> Vector3:
+	var r := apothem / cos(PI / 8.0)
+	return ATRIUM + Vector3(cos(deg_to_rad(deg)) * r, 0, sin(deg_to_rad(deg)) * r)
+
+static func _ring_rails(a: Node3D) -> void:
+	var rails := SceneUtil.add(a, Node3D.new(), "RingRails")
+	var ap := RING_IN + 0.07
+	for i in 8:
+		var deg := i * 45.0
+		var p0 := _corner(ap, deg - 22.5)
+		var p1 := _corner(ap, deg + 22.5)
+		# Opening where the ramp landing meets the ring (south, x 46.1..49.1).
+		if is_equal_approx(deg, 90.0):
+			p1 = p1.lerp(p0, (49.1 - p1.x) / (p0.x - p1.x))
+		elif is_equal_approx(deg, 135.0):
+			p0 = p0.lerp(p1, 0.25)
+		_rail_segment(rails, p0 + Vector3(0, RING_Y, 0), p1 + Vector3(0, RING_Y, 0), i)
+
+static func _rail_segment(parent: Node3D, p0: Vector3, p1: Vector3, idx: int) -> void:
+	var d := (p1 - p0)
+	var length := d.length()
+	d = d / length
+	var piv := StaticBody3D.new()
+	piv.name = "Rail%d" % idx
+	piv.transform = Transform3D(Basis(d, Vector3.UP, d.cross(Vector3.UP)), (p0 + p1) * 0.5)
+	parent.add_child(piv)
+	var cs := CollisionShape3D.new()
+	var bs := BoxShape3D.new()
+	bs.size = Vector3(length, 1.1, 0.12)
+	cs.shape = bs
+	cs.position.y = 0.55
+	piv.add_child(cs)
+	for spec in [[1.0, 0.07, metal], [0.55, 0.045, metal], [1.0, 0.055, trim_soft]]:
+		var t := MeshInstance3D.new()
+		var cm := CylinderMesh.new()
+		cm.top_radius = spec[1]
+		cm.bottom_radius = spec[1]
+		cm.height = length + 0.1
+		cm.radial_segments = 10
+		cm.rings = 1
+		cm.material = spec[2]
+		t.mesh = cm
+		t.rotation.z = PI / 2.0
+		t.position = Vector3(0, spec[0] + (0.1 if spec[2] == trim_soft else 0.0), 0)
+		t.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		piv.add_child(t)
+	for px in [-length * 0.5, length * 0.5]:
+		var post := MeshInstance3D.new()
+		var pc := CylinderMesh.new()
+		pc.top_radius = 0.05
+		pc.bottom_radius = 0.06
+		pc.height = 1.0
+		pc.radial_segments = 8
+		pc.material = metal
+		post.mesh = pc
+		post.position = Vector3(px, 0.5, 0)
+		piv.add_child(post)
+
+static func _portholes(a: Node3D, shell: CSGCombiner3D) -> void:
+	var g := SceneUtil.add(a, Node3D.new(), "Portholes")
+	var k := 0
+	for deg in PORTHOLE_FACES:
+		var n := _face_n(deg)
+		var yaw := atan2(n.x, n.z)
+		for row in [[RING_Y + 3.0, 1.45], [F + 1.6, 0.95]]:
+			var y: float = row[0]
+			var r: float = row[1]
+			var cut := CSGCylinder3D.new()
+			cut.sides = 8
+			cut.radius = r
+			cut.height = 2.2
+			cut.operation = CSGShape3D.OPERATION_SUBTRACTION
+			cut.material = metal
+			cut.position = ATRIUM + n * (APOTHEM + WALL * 0.5) + Vector3(0, y - F, 0)
+			cut.rotation = Vector3(PI / 2.0, yaw, 0)
+			cut.scale = Vector3(WIDE, 1, 1)
+			shell.add_child(cut)
+			var frame := CSGCombiner3D.new()
+			frame.name = "Frame%d" % k
+			g.add_child(frame)
+			var fo := CSGCylinder3D.new()
+			fo.sides = 8
+			fo.radius = r + 0.1
+			fo.height = 0.08
+			fo.material = trim_soft
+			frame.add_child(fo)
+			var fi := CSGCylinder3D.new()
+			fi.sides = 8
+			fi.radius = r
+			fi.height = 0.2
+			fi.operation = CSGShape3D.OPERATION_SUBTRACTION
+			frame.add_child(fi)
+			frame.position = ATRIUM + n * (APOTHEM - 0.03) + Vector3(0, y - F, 0)
+			frame.rotation = Vector3(PI / 2.0, yaw, 0)
+			frame.scale = Vector3(WIDE, 1, 1)
+			var gl := StaticBody3D.new()
+			gl.name = "PortholeGlass%d" % k
+			gl.position = ATRIUM + n * (APOTHEM + 0.3) + Vector3(0, y - F, 0)
+			gl.rotation.y = yaw
+			var gm := MeshInstance3D.new()
+			var gq := QuadMesh.new()
+			gq.size = Vector2(r * 2.0 * WIDE, r * 2.0)
+			gq.material = glass
+			gm.mesh = gq
+			gl.add_child(gm)
+			var gcs := CollisionShape3D.new()
+			var gb := BoxShape3D.new()
+			gb.size = Vector3(r * 2.0 * WIDE, r * 2.0, 0.1)
+			gcs.shape = gb
+			gl.add_child(gcs)
+			g.add_child(gl)
+			k += 1
+		# Ocean niche behind both portholes on this face.
+		LevelOcean.build(a, "OceanPort%d" % int(deg), ATRIUM + n * (APOTHEM + WALL + 4.5) + Vector3(0, 6.0, 0), Vector3(7, 14, 9),
+			{"yaw": yaw, "floor_y": F + 0.4, "fish": 1, "fish_count": 8, "kelp": 8, "coral": 3, "rocks": 2, "haze": false})
+
+static func _glass_ceiling(a: Node3D, shell: CSGCombiner3D, h: float) -> void:
+	var sub := CSGShape3D.OPERATION_SUBTRACTION
+	_oct(shell, 6.5, 1.2, ATRIUM + Vector3(0, h + 0.2, 0), metal, sub)
+	var cg := CSGCombiner3D.new()
+	cg.name = "CeilingGlass"
+	cg.use_collision = true
+	a.add_child(cg)
+	_oct(cg, 6.5, 0.05, ATRIUM + Vector3(0, h + 0.15, 0), glass)
+	var hole := CSGCylinder3D.new()
+	hole.radius = 2.9
+	hole.height = 0.3
+	hole.sides = 16
+	hole.operation = sub
+	hole.position = ATRIUM + Vector3(0, h + 0.15, 0)
+	cg.add_child(hole)
+	var fr := CSGCombiner3D.new()
+	fr.name = "CeilingFrame"
+	a.add_child(fr)
+	_oct(fr, 6.7, 0.1, ATRIUM + Vector3(0, h - 0.02, 0), trim)
+	_oct(fr, 6.45, 0.2, ATRIUM + Vector3(0, h - 0.02, 0), trim, sub)
+	for i in 8:
+		var rib := _strip(a, Vector3(3.7, 0.15, 0.15), ATRIUM + _face_n(i * 45.0 + 22.5) * 4.7 + Vector3(0, h + 0.05, 0), metal)
+		rib.rotation.y = -deg_to_rad(i * 45.0 + 22.5)
+	LevelOcean.build(a, "OceanAbove", ATRIUM + Vector3(0, h + 5.2, 0), Vector3(17, 10, 17),
+		{"floor_y": null, "fish": 1, "fish_count": 12, "kelp": 0, "coral": 0, "rocks": 0, "haze": false})
 
 # --------------------------------------------------------------------- control
 static func _control(fac: Node3D) -> void:
