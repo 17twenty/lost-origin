@@ -95,6 +95,7 @@ var look_input := Vector2.ZERO
 
 
 func _ready() -> void:
+	add_to_group("player")
 	WickerSkin.apply(model)
 	for mi: MeshInstance3D in model.find_children("*", "MeshInstance3D", true, false):
 		for i in mi.mesh.get_surface_count():

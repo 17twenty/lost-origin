@@ -537,6 +537,7 @@ static func _control(fac: Node3D) -> void:
 	_box(shell, Vector3(x1 - x0 + 0.6, 6.6, 9.2), Vector3(xc + 0.3, RING_Y + 3.0, -88), metal)
 	_box(shell, Vector3(x1 - x0 + 0.2, 6.0, 8.0), Vector3(xc - 0.1, RING_Y + 3.0, -88), metal_dark, CSGShape3D.OPERATION_SUBTRACTION)
 	_hex_floor(r, Vector2(x1 - x0, 8.0), Vector3(xc, RING_Y, -88))
+	_secret(r, shell)
 	for z in [-84.05, -91.95]:
 		_strip(r, Vector3(x1 - x0, 0.06, 0.08), Vector3(xc, RING_Y + 0.05, z))
 		_strip(r, Vector3(x1 - x0, 0.06, 0.08), Vector3(xc, RING_Y + 5.9, z))
@@ -620,6 +621,202 @@ static func _glass_bay(r: Node3D, x1: float) -> void:
 	# Light from the sea pouring in.
 	_light(bay, c + Vector3(BAY_R - 1.0, 4.5, 0), Color(0.35, 0.75, 1.0), 2.0, 10.0)
 
+# ------------------------------------------------------------------ secret
+const SECRET_DOOR_X := 69.0
+const SECRET := Vector3(70.0, 0, -96.8)   # relic room centre (x 66.8..73.2, z -93..-100.6)
+
+## Wall lever in the control room, a sealed Forerunner door in the north wall,
+## and the relic chamber behind it (window onto the ocean, glowing artefact).
+static func _secret(r: Node3D, shell: CSGCombiner3D) -> void:
+	var sub := CSGShape3D.OPERATION_SUBTRACTION
+	var R := RING_Y
+	# Doorway through the control room's north wall.
+	_box(shell, Vector3(2.6, 3.0, 1.6), Vector3(SECRET_DOOR_X, R + 1.5, -92.3), metal_dark, sub)
+	# Relic chamber shell.
+	var room := CSGCombiner3D.new()
+	room.name = "SecretRoom"
+	room.use_collision = true
+	r.add_child(room)
+	_box(room, Vector3(7.6, 5.0, 8.4), Vector3(SECRET.x, R + 2.2, SECRET.z), metal)
+	_box(room, Vector3(6.4, 4.2, 7.6), Vector3(SECRET.x, R + 2.1, SECRET.z), metal_dark, sub)
+	_box(room, Vector3(2.6, 3.0, 1.2), Vector3(SECRET_DOOR_X, R + 1.5, -92.9), metal_dark, sub)
+	_box(room, Vector3(1.4, 2.4, 3.6), Vector3(SECRET.x + 3.3, R + 1.9, SECRET.z), metal_dark, sub)  # ocean window
+	_hex_floor(r, Vector2(6.4, 7.6), Vector3(SECRET.x, R, SECRET.z))
+	var win := SceneUtil.box_body(Vector3(0.06, 2.4, 3.6), Vector3(SECRET.x + 3.25, R + 1.9, SECRET.z), glass, "SecretWindow")
+	r.add_child(win)
+	for y in [R + 0.7, R + 3.1]:
+		_strip(r, Vector3(0.12, 0.08, 3.8), Vector3(SECRET.x + 3.2, y, SECRET.z), trim_violet)
+	LevelOcean.build(r, "OceanSecret", Vector3(SECRET.x + 8.0, R + 2.0, SECRET.z), Vector3(8, 10, 10),
+		{"floor_y": R - 0.6, "fish": 1, "fish_count": 10, "kelp": 10, "coral": 6, "rocks": 2, "haze": false})
+	# Pedestal + floating artefact.
+	var ped := SceneUtil.box_body(Vector3(1, 1, 1), Vector3(SECRET.x - 0.6, R, SECRET.z - 0.8), null, "Pedestal")
+	var pc := CylinderMesh.new()
+	pc.top_radius = 0.45
+	pc.bottom_radius = 0.7
+	pc.height = 1.1
+	pc.radial_segments = 8
+	pc.material = metal
+	(ped.get_node("Mesh") as MeshInstance3D).mesh = pc
+	(ped.get_node("Mesh") as MeshInstance3D).position.y = 0.55
+	var pcs := CylinderShape3D.new()
+	pcs.radius = 0.7
+	pcs.height = 1.1
+	(ped.get_node("Col") as CollisionShape3D).shape = pcs
+	(ped.get_node("Col") as CollisionShape3D).position.y = 0.55
+	r.add_child(ped)
+	var art := MeshInstance3D.new()
+	art.name = "Artefact"
+	var am := SphereMesh.new()
+	am.radius = 0.32
+	am.height = 0.9
+	am.radial_segments = 4   # faceted octahedral crystal
+	am.rings = 2
+	var amat := SceneUtil.mat(Color(0.3, 0.95, 1.0), 0.1, 0.4, Color(0.3, 0.95, 1.0), 7.0)
+	am.material = amat
+	art.mesh = am
+	art.position = Vector3(SECRET.x - 0.6, R + 1.75, SECRET.z - 0.8)
+	art.set_script(load("res://scripts/hover_spin.gd"))
+	r.add_child(art)
+	_light(r, Vector3(SECRET.x - 0.6, R + 2.0, SECRET.z - 0.8), Color(0.3, 0.9, 1.0), 3.0, 8.0)
+	for y in [R + 0.05, R + 4.15]:
+		_strip(r, Vector3(6.4, 0.06, 0.08), Vector3(SECRET.x, y, SECRET.z - 3.75), trim)
+	# Sealed door: two panels with a glowing seam; Col blocks until opened.
+	var door := StaticBody3D.new()
+	door.name = "SecretDoor"
+	door.position = Vector3(SECRET_DOOR_X, R, -92.15)
+	r.add_child(door)
+	var dcs := CollisionShape3D.new()
+	dcs.name = "Col"
+	var dbs := BoxShape3D.new()
+	dbs.size = Vector3(2.6, 3.0, 0.3)
+	dcs.shape = dbs
+	dcs.position.y = 1.5
+	door.add_child(dcs)
+	for side in [-1.0, 1.0]:
+		var panel := MeshInstance3D.new()
+		panel.name = "PanelL" if side < 0 else "PanelR"
+		var bm := BoxMesh.new()
+		bm.size = Vector3(1.28, 3.0, 0.22)
+		bm.material = metal
+		panel.mesh = bm
+		panel.position = Vector3(side * 0.65, 1.5, 0)
+		door.add_child(panel)
+		var seam := MeshInstance3D.new()
+		var sm := BoxMesh.new()
+		sm.size = Vector3(0.05, 2.7, 0.05)
+		sm.material = trim_violet
+		seam.mesh = sm
+		seam.position = Vector3(-side * 0.6, 0, 0.12)
+		panel.add_child(seam)
+		var chev := MeshInstance3D.new()
+		var cm := BoxMesh.new()
+		cm.size = Vector3(0.9, 0.08, 0.04)
+		cm.material = trim_soft
+		chev.mesh = cm
+		chev.position = Vector3(0, 0.6, 0.12)
+		chev.rotation.z = side * 0.5
+		panel.add_child(chev)
+	var inside := OmniLight3D.new()
+	inside.name = "Inside"
+	inside.position = Vector3(0, 2.0, -3.0)
+	inside.light_color = Color(0.4, 0.95, 1.0)
+	inside.light_energy = 0.0
+	inside.omni_range = 7.0
+	inside.visible = false
+	door.add_child(inside)
+	var flood := SpotLight3D.new()
+	flood.name = "Flood"
+	flood.position = Vector3(0, 1.6, -1.2)
+	flood.rotation_degrees = Vector3(0, 180, 0)   # shine out into the control room (+Z)
+	flood.light_color = Color(0.5, 0.95, 1.0)
+	flood.light_energy = 0.0
+	flood.spot_range = 9.0
+	flood.spot_angle = 40.0
+	door.add_child(flood)
+	var sparks := GPUParticles3D.new()
+	sparks.name = "Sparks"
+	sparks.amount = 90
+	sparks.lifetime = 0.9
+	sparks.one_shot = true
+	sparks.explosiveness = 0.7
+	sparks.emitting = false
+	sparks.position = Vector3(0, 1.5, 0.2)
+	var spm := ParticleProcessMaterial.new()
+	spm.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
+	spm.emission_box_extents = Vector3(0.05, 1.3, 0.05)
+	spm.direction = Vector3(0, 0.3, 1)
+	spm.spread = 70.0
+	spm.initial_velocity_min = 2.0
+	spm.initial_velocity_max = 5.0
+	spm.gravity = Vector3(0, -9.8, 0)
+	sparks.process_material = spm
+	var sq := QuadMesh.new()
+	sq.size = Vector2(0.04, 0.04)
+	var sqm := StandardMaterial3D.new()
+	sqm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	sqm.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
+	sqm.albedo_color = Color(1.0, 0.85, 0.5)
+	sqm.emission_enabled = true
+	sqm.emission = Color(1.0, 0.7, 0.3)
+	sqm.emission_energy_multiplier = 4.0
+	sq.material = sqm
+	sparks.draw_pass_1 = sq
+	door.add_child(sparks)
+	# Reveal cutscene: view from the room's centre toward the door.
+	var reveal := Node3D.new()
+	reveal.name = "RevealCutscene"
+	reveal.set_script(load("res://scripts/reveal_cutscene.gd"))
+	r.add_child(reveal)
+	reveal.set("door_path", reveal.get_path_to(door))
+	reveal.set("view_from", Vector3(66.0, R + 2.0, -86.0))
+	reveal.set("view_at", Vector3(SECRET_DOOR_X, R + 1.4, -92.0))
+	# Lever on the north wall, west of the door.
+	var lever := Node3D.new()
+	lever.name = "SecretLever"
+	lever.set_script(load("res://scripts/secret_switch.gd"))
+	lever.position = Vector3(63.6, R + 1.25, -91.85)
+	r.add_child(lever)
+	var plate := MeshInstance3D.new()
+	var pbm := BoxMesh.new()
+	pbm.size = Vector3(0.5, 0.7, 0.1)
+	pbm.material = metal_dark
+	plate.mesh = pbm
+	lever.add_child(plate)
+	var pivot := Node3D.new()
+	pivot.name = "Pivot"
+	pivot.position = Vector3(0, 0.15, 0.08)
+	pivot.rotation.x = deg_to_rad(-40.0)
+	lever.add_child(pivot)
+	var arm := MeshInstance3D.new()
+	var lam := CylinderMesh.new()
+	lam.top_radius = 0.035
+	lam.bottom_radius = 0.045
+	lam.height = 0.45
+	lam.material = metal
+	arm.mesh = lam
+	arm.position.y = 0.22
+	pivot.add_child(arm)
+	var grip := MeshInstance3D.new()
+	var gm := SphereMesh.new()
+	gm.radius = 0.07
+	gm.height = 0.14
+	gm.material = SceneUtil.mat(Color(1.0, 0.6, 0.2), 0.3, 0.0, Color(1.0, 0.55, 0.15), 3.0)
+	grip.mesh = gm
+	grip.position.y = 0.46
+	pivot.add_child(grip)
+	var prompt := Label3D.new()
+	prompt.name = "Prompt"
+	prompt.text = "E — Pull"
+	prompt.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	prompt.position = Vector3(0, 0.75, 0.2)
+	prompt.font_size = 48
+	prompt.outline_size = 10
+	prompt.modulate = Color(1.0, 0.9, 0.6)
+	prompt.no_depth_test = true
+	lever.add_child(prompt)
+	lever.set("reveal_path", lever.get_path_to(reveal))
+	O.camera_zone(r, "CamSecret", Vector3(6.4, 4.2, 7.6), Vector3(SECRET.x, R + 2.1, SECRET.z), 2.8, -0.2, Vector3(SECRET.x - 0.6, R + 1.5, SECRET.z - 0.8))
+
 ## Rounded console pod (video f20-23): cylindrical pedestal, angled top, holo screen.
 static func _console(parent: Node3D, pos: Vector3, yaw: float, idx: int) -> void:
 	var c := StaticBody3D.new()
@@ -692,6 +889,9 @@ static func _markers(markers: Node3D, shots: Node3D) -> void:
 		"Zone_RingSE": Vector3(ATRIUM.x + ring_mid * 0.7, RING_Y, ATRIUM.z + ring_mid * 0.7),
 		"Zone_RingEast": Vector3(ATRIUM.x + ring_mid, RING_Y, ATRIUM.z),
 		"Zone_Control": Vector3(63.2, RING_Y, -86.0),
+		"Zone_LeverFront": Vector3(63.6, RING_Y, -90.5),
+		"Zone_SecretDoor": Vector3(SECRET_DOOR_X, RING_Y, -90.8),
+		"Zone_Secret": Vector3(SECRET.x + 0.8, RING_Y, SECRET.z + 0.6),
 	}
 	for n in zones:
 		SceneUtil.marker(markers, n, zones[n] + Vector3(0, 0.05, 0))
@@ -704,5 +904,7 @@ static func _markers(markers: Node3D, shots: Node3D) -> void:
 	s1.set_meta("player_pos", Vector3(23.5, F + 0.05, -86.0))
 	var s2 := SceneUtil.marker(shots, "Shot_Atrium", Vector3(42.5, F + 2.0, -85.0), Vector3(52, F + 5.0, -89))
 	s2.set_meta("player_pos", Vector3(45.0, F + 0.05, -86.5))
+	var ss := SceneUtil.marker(shots, "Shot_Secret", Vector3(SECRET.x + 2.4, RING_Y + 2.2, SECRET.z + 3.0), Vector3(SECRET.x - 0.6, RING_Y + 1.2, SECRET.z - 0.8))
+	ss.set_meta("hide_player", true)
 	var s3 := SceneUtil.marker(shots, "Shot_Control", Vector3(62.0, RING_Y + 2.4, -86.0), Vector3(78, RING_Y + 1.5, -88.5))
 	s3.set_meta("player_pos", Vector3(69.0, RING_Y + 0.05, -86.0))
