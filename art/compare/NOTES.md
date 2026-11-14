@@ -78,3 +78,23 @@ Pairs: `./tools/compare_shots.sh` → `art/compare/<name>.png` (video left, game
 - **Lagoon (f05):**
   - **Before:** viewed from the sand with a wide flat beach in the foreground.
   - **After:** `Shot_Ref_Lagoon` stands in the sparkling shallows with the totem row receding along the curving beach.
+
+## Final fidelity review (Phase 20) — desktop (Forward+) and web (WebGL2 / Compatibility)
+
+Pairs: `art/compare/<name>.png` (desktop) and `art/compare/web_<name>.png` (web), via `WEB=1 ./tools/compare_shots.sh`.
+
+| Composition | Matches the video | Deliberate / known differences | Web vs desktop |
+|---|---|---|---|
+| **Grotto (f01–03)** | Open basin under the sky, waterfall off the cliff lip, glowing blue pool, stepped pad with halo, jungle and vines, slanting sun shafts | Floor is mossy turf, not the video's dense fern carpet; cliffs are lighter grey-green | No volumetric haze; mesh shafts carry the look (toned ×0.45); a little brighter |
+| **Lagoon (f04–06)** | Tall mossy monolith row receding along a curved white beach, sparkling turquoise shallows, gulls, saturated sky | Beach is wider and flatter; the island hill is closer and bigger | Very close (depth-NDC fix keeps the turquoise gradient) |
+| **Garden (f07–10)** | Mossy tree left of twin falls from the hex skylight, glowing octagonal pool, ferns, light shafts | Panelling is plainer than the video's detailed bulkheads; one large hex skylight rather than a lattice of panes | Close; skylight shafts read stronger |
+| **Corridor (f11–13)** | Octagonal cyan/violet arch frames, aquarium windows with fish/kelp/coral, sunken glowing pools, pale hex floor | Window frames are rectangular rather than the video's rounded octagonal portals | Close |
+| **Aqueduct (f14–16)** | Long row of round, moss-stained piers with hanging vines striding through shallow turquoise water | Far side of the arches reads dark against the shaded bank; no white sandbars | Close; slightly less sparkle |
+| **Atrium (f17–19)** | Glass water column with fish, portholes onto the sea, glass ceiling, tube-rail ring walkway | Column base glow still stronger than the video; portholes are wide octagons rather than rounded rectangles | Column toned ×0.6 on web (it clipped to white) |
+| **Control (f20–23)** | Curved multi-panel glass bay onto kelp/coral/fish, row of console pods, floor grates | Glass bay is narrower than the video's full-height wraparound; ceiling coffers simpler | Close |
+
+**Cross-cutting:**
+- **Style:** the video's look is painterly and very saturated with heavy bloom. We stay cleaner and stylised (CC0/own low-poly + procedural shaders) so it stays readable and runs on WebGL2.
+- **Player character:** the Wicker Man (an original design, not in the video).
+- **Performance (desktop, uncontended):** `tools/benchmark.gd` avg 98–101 / min 94 FPS on every `Shot_Ref_*`.
+- **Performance (web):** headless Chrome on the M2 (ANGLE Metal) avg 47–57 / min 35 FPS while playing.

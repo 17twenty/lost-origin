@@ -14,5 +14,8 @@ void fragment() {
 	float fres = pow(1.0 - abs(dot(NORMAL, VIEW)), 2.0);
 	float base_fade = smoothstep(0.0, 0.25, UV.y) * smoothstep(1.0, 0.75, UV.y);
 	ALBEDO = (color * (0.6 + fres * 1.1) + vec3(0.8, 1.0, 1.0) * b) * mix(0.55, 1.0, base_fade);
+#if CURRENT_RENDERER == RENDERER_COMPATIBILITY
+	ALBEDO *= 0.6;   // LDR path clips the column to white otherwise
+#endif
 	ALPHA = clamp(0.14 + fres * 0.5 + b * 0.35, 0.0, 0.9);
 }

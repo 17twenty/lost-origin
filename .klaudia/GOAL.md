@@ -130,8 +130,8 @@ Build a small playable Godot 4.7 (`/Applications/Godot.app`) proof of concept ba
   - **Reuse:** a short (about 1 s) re-weave plays on respawn and when arriving by teleporter.
   - **Tests:** `weave_progress` goes from 0 to 1 within 7 s of a new game; input is ignored during the intro; skipping jumps to 1 and hands over control; and respawn triggers a short re-weave.
   - `Shot_Summon` captures mid-weave.
-- [ ] **Performance:** `tools/benchmark.gd` (non-headless) visits every `Shot_Ref_*` and reports an average FPS of at least 50 at 1280×720 on this Mac, printed as `BENCH avg_fps=<n>`.
-- [ ] **Fidelity review:** all 7 `art/compare/*.png` pairs have been reviewed, with a short per-composition note in `art/compare/NOTES.md` saying what matches and any deliberate differences. Every round-1 and round-2 test passes headless.
+- [x] **Performance:** `tools/benchmark.gd` (non-headless) visits every `Shot_Ref_*` and reports an average FPS of at least 50 at 1280×720 on this Mac, printed as `BENCH avg_fps=<n>`.
+- [x] **Fidelity review:** all 7 `art/compare/*.png` pairs have been reviewed, with a short per-composition note in `art/compare/NOTES.md` saying what matches and any deliberate differences. Every round-1 and round-2 test passes headless.
 
 ## Verify
 ```sh
@@ -224,13 +224,21 @@ All tests report PASS (exit code 0), there are at least 6 screenshots, there are
 - **Compat renders:** `capture_screenshot.gd` prefixes `web_` when run with `--rendering-method gl_compatibility` (`art/screens/web_ref_*.png`), reviewed: close to desktop.
 - **Tests:** 74/74.
 
-**Single best next step:** Phase 19, the **deploy**. The user configures Caddy for `lost-origin.curiola.com` pointing at `/Users/nickglynn/Projects/lost-origin/build/web/`.
-1. Check `~/Sites/Caddyfile` (read-only) for the block.
-2. `curl -sI -H 'Host: lost-origin.curiola.com' http://127.0.0.1/` → 200, plus `index.wasm` served as `application/wasm` (gzip when requested).
-3. `curl -sI https://lost-origin.curiola.com/` → 200 via Cloudflare.
-4. `./tools/web_smoke.sh https://lost-origin.curiola.com`.
-5. If the block is missing, ask the user (don't edit the Caddyfile ourselves); the suggested block is in the deploy criterion.
-6. Then Phase 20: re-run the benchmark with the editor's game closed; final compare/NOTES for desktop + web; the full Verify command.
+**Phase 20 work done ahead of the deploy (deploy is blocked on the user's Caddy config):**
+- **Benchmark (uncontended, editor closed):** avg 98.3 / 101.0, min 94.2 / 95.2 → **performance criterion ticked**.
+- **Compares:** `WEB=1 ./tools/compare_shots.sh` adds `art/compare/web_<name>.png` (Compatibility renders). The final desktop + web review table is in `art/compare/NOTES.md` → **fidelity-review criterion ticked**.
+- **Web fix:** web column glow ×0.6 (`water_column.gdshader` compat branch).
+- **`validate.sh`:** now fails if the test log contains any `SCRIPT ERROR`/`SHADER ERROR`, closing the "runtime error but PASS" gap.
+- **Status:** 74/74; web export + smoke OK again.
+
+**Blocker:** `lost-origin.curiola.com` currently returns Caddy's default 404 (locally and via Cloudflare). There's no `lost-origin` block in `~/Sites/Caddyfile` yet. **The user said they'd configure Caddy**; we must not edit it ourselves.
+
+**Single best next step (Phase 19 + close-out):** once the user's Caddy block exists:
+1. `curl -sI -H 'Host: lost-origin.curiola.com' http://127.0.0.1/` → 200; check `index.wasm` is served as `application/wasm` (and gzip with `Accept-Encoding: gzip`).
+2. `curl -sI https://lost-origin.curiola.com/` → 200.
+3. `./tools/web_smoke.sh https://lost-origin.curiola.com`.
+4. Run the full spec Verify command, then tick Deploy and Phases 19–20.
+5. If the block is still missing, ask the user. The suggested block is in the deploy criterion; `root` must be `/Users/nickglynn/Projects/lost-origin/build/web/` (re-run `tools/export_web.sh` after any change).
 
 ### Status summary (earlier pause, after commit `c858c20`; historical)
 **Verified state:** the working tree is clean, and `./tools/validate.sh` passes 40/40 tests on the last run (commit `c858c20`). Ticked: all 12 round-1 criteria; round 2: reference harness, garden, sea life, glass onto the ocean, vines, aqueduct, open-air grotto, lagoon/sky, the asset fidelity pass, and **performance** (latest `tools/benchmark.gd`: avg 60.0 / min 59.9, macOS-capped; ≥ 50 holds on every `Shot_Ref_*`; re-verify in Phase 20). Phases 1–12 are done.
