@@ -725,6 +725,9 @@ const PALETTE := {
 static func _kenney_mesh(model: String) -> Mesh:
 	if _kenney_cache.has(model):
 		return _kenney_cache[model]
+	if LevelPlants.has(model):
+		_kenney_cache[model] = LevelPlants.mesh_for(model)
+		return _kenney_cache[model]
 	var path := GEN + "/kenney/" + model + ".res"
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(GEN + "/kenney"))
 	var src: Node3D = (load(KENNEY + model + ".glb") as PackedScene).instantiate()
@@ -741,6 +744,8 @@ static func _kenney_mesh(model: String) -> Mesh:
 			st.append_from(mi.mesh, i, xf)
 			var m: Material = mi.mesh.surface_get_material(i)
 			var key := m.resource_name if m else "_default"
+			if model.begins_with("rock_") or model.begins_with("stone_"):
+				key = "stone"  # all rock surfaces -> our mossy rock shader (no pastel brown)
 			if not mats.has(key):
 				if key == "stone":
 					mats[key] = rock_mat
