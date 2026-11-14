@@ -1,7 +1,7 @@
 shader_type spatial;
 // Island terrain: sand / wet sand / grass / rock blended by height, region and slope.
 
-uniform vec3 sand_color : source_color = vec3(0.95, 0.88, 0.68);
+uniform vec3 sand_color : source_color = vec3(0.86, 0.79, 0.60);
 uniform vec3 wet_sand_color : source_color = vec3(0.70, 0.62, 0.45);
 uniform vec3 grass_color : source_color = vec3(0.30, 0.60, 0.16);
 uniform vec3 grass_dark : source_color = vec3(0.14, 0.40, 0.10);

@@ -83,6 +83,7 @@ static func build(level: Node3D, markers: Node3D, shots: Node3D) -> void:
 	_grotto(out)
 	_outdoor_waterfall(out)
 	_foliage(out)
+	_horizon(out)
 	_bounds(out)
 	_markers(markers, shots)
 
@@ -225,6 +226,9 @@ static func _totems(out: Node3D) -> void:
 	# Beach crescent facing the spawn.
 	for p in [Vector2(-13, 3), Vector2(13, 1), Vector2(-19, 11), Vector2(20, 9), Vector2(-9, -3), Vector2(10, -4)]:
 		_totem(g, mesh, p.x, p.y, centre, rng.randf_range(1.0, 1.3))
+	# Shoreline row standing in the shallows, gazing out to sea (as in the video).
+	for p in [Vector2(9, 22.5), Vector2(14, 24.0), Vector2(19.5, 23.0), Vector2(25, 21.5), Vector2(-12, 23.0), Vector2(-18, 21.5)]:
+		_totem(g, mesh, p.x, p.y, Vector2(p.x * 1.2, 200), rng.randf_range(1.1, 1.5))
 	# Gateways: bridge head and grotto entrance.
 	for sx in [-1.0, 1.0]:
 		_totem(g, mesh, sx * 4.2, -5.5, Vector2(sx * 4.2, 10), 1.15)
@@ -284,17 +288,27 @@ static func _grotto(out: Node3D) -> void:
 	shaft.rotation_degrees = Vector3(-80, 0, 0)
 	shaft.spot_range = 20
 	shaft.spot_angle = 30
-	shaft.light_energy = 6
-	shaft.light_color = Color(1.0, 0.95, 0.8)
+	shaft.light_energy = 10
+	shaft.light_volumetric_fog_energy = 4.0
+	shaft.light_color = Color(1.0, 0.94, 0.78)
 	shaft.shadow_enabled = true
 	g.add_child(shaft)
 	var fill := OmniLight3D.new()
 	fill.name = "CaveFill"
 	fill.position = Vector3(0, 6, -66)
-	fill.omni_range = 18
-	fill.light_energy = 0.8
-	fill.light_color = Color(0.6, 0.85, 1.0)
+	fill.omni_range = 20
+	fill.light_energy = 3.0
+	fill.light_color = Color(0.85, 1.0, 0.85)
 	g.add_child(fill)
+	var fill2 := OmniLight3D.new()
+	fill2.name = "CaveFillBack"
+	fill2.position = Vector3(0, 5, -78)
+	fill2.omni_range = 14
+	fill2.light_energy = 2.2
+	fill2.light_color = Color(1.0, 0.92, 0.8)
+	g.add_child(fill2)
+	_fog_volume(g, "CaveHaze", Vector3(19, 9, 25), Vector3(0, 4.8, -73), 0.035, Color(0.9, 0.97, 1.0))
+	_mist(g, "PoolMist", Vector3(0, floor_y + 0.6, -81.2), 3.0)
 	# Rocky facade so the entrance reads as a cave mouth, not a wall.
 	for r in [[Vector3(-7.5, 0, -58.8), 6.0], [Vector3(7.8, 0, -58.6), 6.5], [Vector3(-11.5, 4, -59.2), 8.0],
 			[Vector3(11.5, 4, -59.0), 8.0], [Vector3(-4.5, 9.5, -59.5), 6.0], [Vector3(4.0, 10.0, -59.4), 6.5], [Vector3(0, 11.5, -59.8), 5.0]]:
@@ -302,6 +316,14 @@ static func _grotto(out: Node3D) -> void:
 		_kenney(g, ["rock_tallA", "rock_tallB", "rock_largeD", "rock_largeF"][rng.randi() % 4], rp + Vector3(0, floor_y, 0), r[1], false)
 	for i in 8:
 		_kenney(g, ["plant_bushDetailed", "grass_leafsLarge", "plant_flatTall"][rng.randi() % 3], Vector3(rng.randf_range(-12, 12), rng.randf_range(6, 12), -59.0), rng.randf_range(4, 7), false)
+	# Lush cave floor: ferns, grass and flowers, clear of the pad, pool and east door.
+	var keep_clear := [Vector2(0, -71), Vector2(0, -81), Vector2(0, -66), Vector2(9, -66)]
+	for i in 70:
+		var gx := rng.randf_range(-9.2, 9.2)
+		var gz := rng.randf_range(-84.5, -62.5)
+		if not _clear_of(Vector2(gx, gz), keep_clear, 3.2) or abs(gx) < 2.0:
+			continue
+		_kenney(g, ["grass_large", "grass_leafsLarge", "plant_flatTall", "plant_bushDetailed", "flower_yellowA", "grass_leafs"][rng.randi() % 6], Vector3(gx, floor_y, gz), rng.randf_range(3.0, 5.5), false)
 	# Mossy rocks and ferns along the walls.
 	for i in 14:
 		var side := -1.0 if i % 2 == 0 else 1.0
@@ -448,6 +470,86 @@ static func _outdoor_waterfall(out: Node3D) -> void:
 	var x := T.POOL_POS.x
 	_fall(g, "Fall", Vector3(x, h(x, -66.5) + 0.5, -66.5), Vector3(x, -0.1, T.POOL_POS.y - 2.5), 4.5)
 	_fall(g, "FallThin", Vector3(x + 2.8, h(x + 2.8, -65.5) + 0.3, -65.5), Vector3(x + 2.8, -0.1, T.POOL_POS.y - 2.0), 1.5)
+	_mist(g, "Mist", Vector3(x + 0.8, 0.2, T.POOL_POS.y - 1.8), 5.0)
+
+static func _fog_volume(parent: Node3D, name: String, size: Vector3, pos: Vector3, density: float, albedo: Color) -> FogVolume:
+	var fv := FogVolume.new()
+	fv.name = name
+	fv.size = size
+	fv.position = pos
+	var fm := FogMaterial.new()
+	fm.density = density
+	fm.albedo = albedo
+	fm.edge_fade = 0.3
+	fv.material = fm
+	parent.add_child(fv)
+	return fv
+
+static func _mist(parent: Node3D, name: String, pos: Vector3, width: float) -> GPUParticles3D:
+	var p := GPUParticles3D.new()
+	p.name = name
+	p.position = pos
+	p.amount = 40
+	p.lifetime = 2.5
+	p.preprocess = 2.5
+	p.visibility_aabb = AABB(Vector3(-width * 2, -1, -width * 2), Vector3(width * 4, 6, width * 4))
+	var ppm := ParticleProcessMaterial.new()
+	ppm.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
+	ppm.emission_box_extents = Vector3(width * 0.5, 0.2, 0.6)
+	ppm.direction = Vector3(0, 1, 0.4)
+	ppm.spread = 50.0
+	ppm.initial_velocity_min = 0.4
+	ppm.initial_velocity_max = 1.2
+	ppm.gravity = Vector3(0, 0.15, 0)
+	ppm.scale_min = 1.5
+	ppm.scale_max = 3.0
+	var sc := CurveTexture.new()
+	var curve := Curve.new()
+	curve.add_point(Vector2(0, 0.4))
+	curve.add_point(Vector2(1, 1.0))
+	sc.curve = curve
+	ppm.scale_curve = sc
+	var ramp := GradientTexture1D.new()
+	var grad := Gradient.new()
+	grad.set_color(0, Color(1, 1, 1, 0.0))
+	grad.set_color(1, Color(1, 1, 1, 0.0))
+	grad.add_point(0.25, Color(1, 1, 1, 0.35))
+	ramp.gradient = grad
+	ppm.color_ramp = ramp
+	p.process_material = ppm
+	var q := QuadMesh.new()
+	q.size = Vector2(1, 1)
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
+	m.vertex_color_use_as_albedo = true
+	m.albedo_color = Color(0.92, 0.97, 1.0)
+	var puff := GradientTexture2D.new()
+	puff.fill = GradientTexture2D.FILL_RADIAL
+	puff.fill_from = Vector2(0.5, 0.5)
+	puff.fill_to = Vector2(0.5, 0.0)
+	var pg := Gradient.new()
+	pg.set_color(0, Color(1, 1, 1, 1))
+	pg.set_color(1, Color(1, 1, 1, 0))
+	puff.gradient = pg
+	m.albedo_texture = puff
+	q.material = m
+	p.draw_pass_1 = q
+	parent.add_child(p)
+	return p
+
+static func _horizon(out: Node3D) -> void:
+	# Sea stacks hide the terrain edges from the lagoon; far islets dress the horizon.
+	var h := SceneUtil.add(out, Node3D.new(), "Horizon")
+	for st in [[Vector3(-78, -3, 22), 22.0], [Vector3(-90, -3, 45), 30.0], [Vector3(79, -3, 25), 24.0], [Vector3(92, -3, 50), 28.0],
+			[Vector3(-70, -3, 62), 14.0], [Vector3(66, -3, 66), 12.0]]:
+		_kenney(h, ["rock_tallA", "rock_tallB", "rock_tallC", "rock_tallD"][rng.randi() % 4], st[0], st[1], false)
+	for isl in [[Vector3(-260, -6, 380), 60.0], [Vector3(180, -6, 520), 80.0], [Vector3(420, -6, 300), 50.0], [Vector3(-520, -6, 640), 90.0]]:
+		_kenney(h, ["rock_largeA", "rock_largeC", "rock_largeE"][rng.randi() % 3], isl[0], isl[1], false)
+		for k in 4:
+			var ip: Vector3 = isl[0] + Vector3(rng.randf_range(-15, 15), 0, rng.randf_range(-10, 10)) * (isl[1] / 60.0)
+			_kenney(h, "tree_palmTall", ip + Vector3(0, isl[1] * 0.25, 0), isl[1] * 0.25, false)
 
 # -------------------------------------------------------------------- foliage
 ## Kenney's palette is pastel; remap by material name to the lush video palette.
@@ -614,5 +716,7 @@ static func _markers(markers: Node3D, shots: Node3D) -> void:
 	bridge.set_meta("player_pos", Vector3(0, T.PATH_Y + 0.05, -16))
 	var plateau := SceneUtil.marker(shots, "Shot_Plateau", Vector3(-6, 3.0, -36), Vector3(10, 4, -60))
 	plateau.set_meta("player_pos", ground(-1, -44, 0.05))
+	var lagoon := SceneUtil.marker(shots, "Shot_Lagoon", Vector3(-2.5, 2.3, 13), Vector3(12, 1.2, 30))
+	lagoon.set_meta("player_pos", ground(1.5, 17, 0.05))
 	var grotto := SceneUtil.marker(shots, "Shot_Grotto", Vector3(3.5, 2.6, -63.5), Vector3(-0.5, 1.5, -78))
 	grotto.set_meta("player_pos", Vector3(0.8, T.PATH_Y + 0.1, -67.5))

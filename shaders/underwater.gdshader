@@ -27,5 +27,8 @@ void fragment() {
 	col += vec3(0.4, 0.9, 1.0) * caustic(wpos.xz + wpos.y * 0.3) * (0.08 + t * 0.22);
 	float shafts = texture(noise_tex, vec2(wpos.x * 0.05 + wpos.y * 0.03 + TIME * 0.01, 0.5)).r;
 	col += vec3(0.3, 0.7, 0.9) * smoothstep(0.55, 0.8, shafts) * t * 0.35;
+	// Distance haze: far walls dissolve into deep water so the box reads as open sea.
+	float dist = length(VERTEX);
+	col = mix(col, mix(deep_color, shallow_color, 0.35 + t * 0.3), 1.0 - exp(-dist * 0.07));
 	ALBEDO = col;
 }

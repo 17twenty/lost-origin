@@ -147,9 +147,11 @@ static func _corridor(fac: Node3D) -> void:
 		_pool(c, Vector3(25.0 + i * 5.5, F, -88))
 	for x in [22.0, 30.0, 38.0]:
 		_light(c, Vector3(x, F + 4.2, -88), Color(0.75, 0.9, 1.0), 1.2, 9.0)
+	O._fog_volume(c, "CorridorHaze", Vector3(22, 5, 8), Vector3(28.5, F + 2.5, -88), 0.012, Color(0.7, 0.92, 1.0))
 	# Ocean backdrops behind both window rows.
-	_ocean(c, "OceanSouth", Vector3(28.5, F + 4, -97.0), Vector3(23, 22, 9))
-	_ocean(c, "OceanNorth", Vector3(30.5, F + 4, -79.5), Vector3(19, 22, 8))
+	# South box runs past the terrain edge (hidden behind the cliff from outdoors).
+	_ocean(c, "OceanSouth", Vector3(28.5, F + 4, -111.0), Vector3(23, 22, 37))
+	_ocean(c, "OceanNorth", Vector3(30.5, F + 4, -75.0), Vector3(19, 22, 17))
 
 static func _pool(parent: Node3D, pos: Vector3) -> void:
 	var p := Node3D.new()
@@ -205,10 +207,11 @@ static func _ocean(parent: Node3D, name: String, pos: Vector3, size: Vector3) ->
 	sand.mesh = pm
 	sand.position = Vector3(pos.x, floor_y, pos.z)
 	o.add_child(sand)
-	for i in 10:
-		var rp := Vector3(pos.x + O.rng.randf_range(-size.x * 0.45, size.x * 0.45), floor_y, pos.z + O.rng.randf_range(-size.z * 0.3, size.z * 0.3))
+	for i in int(size.z):
+		var rp := Vector3(pos.x + O.rng.randf_range(-size.x * 0.45, size.x * 0.45), floor_y, pos.z + O.rng.randf_range(-size.z * 0.45, size.z * 0.45))
 		O._kenney(o, ["rock_tallA", "rock_tallC", "rock_largeB", "plant_flatTall", "grass_leafsLarge"][O.rng.randi() % 5], rp, O.rng.randf_range(3, 7), false)
-	var l := _light(o, Vector3(pos.x, pos.y + 4, pos.z), Color(0.3, 0.7, 1.0), 2.5, 22.0)
+	O._fog_volume(o, "WaterHaze", size - Vector3(0.5, 0.5, 0.5), pos, 0.06, Color(0.2, 0.6, 0.9))
+	var l := _light(o, Vector3(pos.x, pos.y + 4, pos.z), Color(0.3, 0.7, 1.0), 2.5, 30.0)
 	l.shadow_enabled = false
 
 # ---------------------------------------------------------------------- atrium
@@ -316,6 +319,7 @@ static func _atrium(fac: Node3D) -> void:
 	var cl := _light(col, Vector3(0, 4, 0), Color(0.2, 0.8, 1.0), 4.0, 14.0)
 	cl.shadow_enabled = false
 	_light(a, ATRIUM + Vector3(0, h - 1.5, 0), Color(0.85, 0.95, 1.0), 2.0, 18.0)
+	O._fog_volume(a, "AtriumHaze", Vector3(19, 11, 19), ATRIUM + Vector3(0, 6, 0), 0.02, Color(0.6, 0.9, 1.0))
 	for i in 4:
 		var ang2 := PI / 4.0 + i * PI / 2.0
 		_light(a, ATRIUM + Vector3(cos(ang2) * 8.5, 3.0, sin(ang2) * 8.5), Color(0.4, 0.85, 1.0), 1.0, 7.0)

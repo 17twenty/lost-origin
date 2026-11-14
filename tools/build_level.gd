@@ -34,24 +34,58 @@ func _build_environment(root: Node3D) -> void:
 	var env := Environment.new()
 	env.background_mode = Environment.BG_SKY
 	var sky := Sky.new()
-	var sm := ProceduralSkyMaterial.new()
-	sm.sky_top_color = Color(0.18, 0.45, 0.95)
-	sm.sky_horizon_color = Color(0.65, 0.85, 1.0)
+	var sm := ShaderMaterial.new()
+	sm.shader = load("res://shaders/sky.gdshader")
+	var clouds := NoiseTexture2D.new()
+	clouds.seamless = true
+	clouds.width = 512
+	clouds.height = 512
+	var cn := FastNoiseLite.new()
+	cn.frequency = 0.008
+	cn.fractal_octaves = 5
+	cn.seed = 21
+	clouds.noise = cn
+	sm.set_shader_parameter("cloud_noise", clouds)
 	sky.sky_material = sm
+	sky.radiance_size = Sky.RADIANCE_SIZE_128
 	env.sky = sky
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
 	env.ambient_light_sky_contribution = 0.55
-	env.tonemap_mode = Environment.TONE_MAPPER_AGX
+	env.reflected_light_source = Environment.REFLECTION_SOURCE_SKY
+	env.tonemap_mode = Environment.TONE_MAPPER_ACES
 	env.tonemap_exposure = 0.95
 	env.ssao_enabled = true
+	env.ssao_intensity = 1.5
+	# Bloom: only genuinely bright things (trim, pads, sun glints) glow.
 	env.glow_enabled = true
+	env.glow_intensity = 0.7
+	env.glow_bloom = 0.03
+	env.glow_hdr_threshold = 1.1
+	env.glow_blend_mode = Environment.GLOW_BLEND_MODE_SCREEN
+	# Aerial perspective: distant hills/sea fade into the horizon colour.
+	env.fog_enabled = true
+	env.fog_light_color = Color(0.45, 0.72, 1.0)
+	env.fog_density = 0.0015
+	env.fog_aerial_perspective = 0.5
+	env.fog_sky_affect = 0.0
+	# Volumetric haze: light shafts in the grotto, halos round facility lights.
+	env.volumetric_fog_enabled = true
+	env.volumetric_fog_density = 0.004
+	env.volumetric_fog_albedo = Color(0.85, 0.93, 1.0)
+	env.volumetric_fog_anisotropy = 0.5
+	env.volumetric_fog_length = 96.0
+	env.volumetric_fog_sky_affect = 0.0
+	env.adjustment_enabled = true
+	env.adjustment_saturation = 1.2
+	env.adjustment_contrast = 1.05
 	we.environment = env
 	root.add_child(we)
 	var sun := DirectionalLight3D.new()
 	sun.name = "Sun"
 	sun.shadow_enabled = true
 	sun.rotation_degrees = Vector3(-50, -35, 0)
-	sun.light_energy = 1.1
+	sun.light_energy = 1.2
 	sun.light_color = Color(1.0, 0.96, 0.88)
-	sun.directional_shadow_max_distance = 120.0
+	sun.light_volumetric_fog_energy = 0.6
+	sun.directional_shadow_max_distance = 140.0
 	root.add_child(sun)
