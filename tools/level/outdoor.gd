@@ -84,6 +84,7 @@ static func build(level: Node3D, markers: Node3D, shots: Node3D) -> void:
 	_outdoor_waterfall(out)
 	_foliage(out)
 	_horizon(out)
+	_birds(out)
 	_bounds(out)
 	_markers(markers, shots)
 
@@ -684,6 +685,20 @@ static func _mist(parent: Node3D, name: String, pos: Vector3, width: float) -> G
 	p.draw_pass_1 = q
 	parent.add_child(p)
 	return p
+
+static func _birds(out: Node3D) -> void:
+	for f in [[Vector3(26, 0, 32), 9, 5], [Vector3(-20, 0, -10), 6, 11]]:
+		var b := MultiMeshInstance3D.new()
+		b.name = "Birds"
+		b.set_script(load("res://scripts/birds.gd"))
+		b.position = f[0]
+		b.set("count", f[1])
+		b.set("seed_value", f[2])
+		b.set("height_min", 16.0)
+		b.set("height_max", 26.0)
+		b.set("radius_min", 10.0)
+		b.set("radius_max", 24.0)
+		out.add_child(b, true)
 
 static func _horizon(out: Node3D) -> void:
 	# Sea stacks hide the terrain edges from the lagoon; far islets dress the horizon.
