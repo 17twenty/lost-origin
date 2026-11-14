@@ -9,16 +9,18 @@ func _initialize() -> void:
 	root.name = "Main"
 	_build_environment(root)
 	var level := SceneUtil.add(root, Node3D.new(), "Level")
-	_build_placeholder_ground(level)
 	var markers := SceneUtil.add(root, Node3D.new(), "Markers")
-	SceneUtil.marker(markers, "Spawn", Vector3(0, 0.05, 0))
+	var shots := SceneUtil.add(root, Node3D.new(), "Shots")
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://scenes/generated"))
+	LevelOutdoor.build(level, markers, shots)
+	var spawn_pos := LevelOutdoor.ground(0, 10, 0.05)
+	SceneUtil.marker(markers, "Spawn", spawn_pos)
 	var player: Node3D = (load("res://scenes/player.tscn") as PackedScene).instantiate()
 	player.name = "Player"
 	root.add_child(player)
-	player.position = Vector3(0, 0.05, 0)
-	var shots := SceneUtil.add(root, Node3D.new(), "Shots")
-	SceneUtil.marker(shots, "Shot_Overview", Vector3(12, 8, 12), Vector3.ZERO)
-	SceneUtil.marker(shots, "Shot_Character", Vector3(2.2, 1.6, 3.2), Vector3(0, 1.0, 0))
+	player.position = spawn_pos
+	var ch := SceneUtil.marker(shots, "Shot_Character", spawn_pos + Vector3(2.2, 1.6, 3.2), spawn_pos + Vector3(0, 1.0, 0))
+	ch.set_meta("player_pos", spawn_pos)
 	var err := SceneUtil.save(root, OUT)
 	root.free()
 	print("build_level: saved %s (err=%d)" % [OUT, err])
@@ -36,7 +38,10 @@ func _build_environment(root: Node3D) -> void:
 	sky.sky_material = sm
 	env.sky = sky
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
-	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
+	env.ambient_light_sky_contribution = 0.55
+	env.tonemap_mode = Environment.TONE_MAPPER_AGX
+	env.tonemap_exposure = 0.95
+	env.ssao_enabled = true
 	env.glow_enabled = true
 	we.environment = env
 	root.add_child(we)
@@ -44,8 +49,7 @@ func _build_environment(root: Node3D) -> void:
 	sun.name = "Sun"
 	sun.shadow_enabled = true
 	sun.rotation_degrees = Vector3(-50, -35, 0)
+	sun.light_energy = 1.1
+	sun.light_color = Color(1.0, 0.96, 0.88)
+	sun.directional_shadow_max_distance = 120.0
 	root.add_child(sun)
-
-func _build_placeholder_ground(level: Node3D) -> void:
-	var sand := SceneUtil.mat(Color(0.93, 0.88, 0.72))
-	level.add_child(SceneUtil.box_body(Vector3(60, 1, 60), Vector3(0, -0.5, 0), sand, "Ground"))
