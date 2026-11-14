@@ -130,7 +130,7 @@ Build a small playable Godot 4.7 (`/Applications/Godot.app`) proof of concept ba
   - **Reuse:** a short (about 1 s) re-weave plays on respawn and when arriving by teleporter.
   - **Tests:** `weave_progress` goes from 0 to 1 within 7 s of a new game; input is ignored during the intro; skipping jumps to 1 and hands over control; and respawn triggers a short re-weave.
   - `Shot_Summon` captures mid-weave.
-- [x] **Performance:** `tools/benchmark.gd` (non-headless) visits every `Shot_Ref_*` and reports an average FPS of at least 50 at 1280×720 on this Mac, printed as `BENCH avg_fps=<n>`.
+- [ ] **Performance:** `tools/benchmark.gd` (non-headless) visits every `Shot_Ref_*` and reports an average FPS of at least 50 at 1280×720 on this Mac, printed as `BENCH avg_fps=<n>`.
 - [ ] **Fidelity review:** all 7 `art/compare/*.png` pairs have been reviewed, with a short per-composition note in `art/compare/NOTES.md` saying what matches and any deliberate differences. Every round-1 and round-2 test passes headless.
 
 ## Verify
@@ -170,10 +170,50 @@ All tests report PASS (exit code 0), there are at least 6 screenshots, there are
 - [x] Phase 16 — Secret switch: control-room lever with E prompt, reveal cutscene (camera to door, door opens, back to player), secret relic room, tests
 - [x] Phase 17 — Start page and menus: title scene with live fly-through, keyboard-navigable Start/Controls/Settings/Quit, persisted settings, Esc pause menu, fade transition, tests
 - [ ] Phase 18 — Web export: Compatibility renderer path and quality presets, WebGL2-safe shaders, export preset and HTML shell, templates (user approval), `tools/export_web.sh`, `tools/web_smoke.sh`, size budget, web FPS of at least 30
-- [ ] Phase 19 — Deploy: Caddy site block for lost-origin.curiola.com (user approval), reload, local and public curl checks, public smoke test
+- [ ] Phase 19 — Deploy: Caddy site block for lost-origin.curiola.com (the user configures Caddy; we verify), reload, local and public curl checks, public smoke test
 - [ ] Phase 20 — Fidelity review & performance: compare all 7 pairs (desktop **and** web renders), write `art/compare/NOTES.md`, desktop FPS at least 50 and web at least 30, full Verify green
 
-### Status summary (written when the goal loop paused, after commit `c858c20`)
+### Status summary (written when the goal loop paused, after commit `a854234`)
+**Verified state:** the working tree is clean. Last full run: `./tools/validate.sh` passed 74/74 tests with no SCRIPT/SHADER errors in the log. Phases 1–17 (plus 8b, 13b, 13c) are done.
+- **Unticked criteria:**
+  - Web export.
+  - Deploy at lost-origin.curiola.com.
+  - Performance: **unticked again for honesty**. The last uncontended benchmark (capped 60 FPS on every shot) predates Phases 13b part 3 to 17. The runs after that were contended by the user's Godot editor running the game (avg 24). Re-run with the editor's game closed.
+  - Final fidelity review.
+
+**Accomplished this run (commits `44b5bd4` → `a854234`):**
+- **Wicker Man:**
+  - Full 11-clip set + thumbs, AnimationTree states (walk/fall/land/look_around, one-shots).
+  - Quality pass: muscle displacement, bigger head, fluffy straw mane on spring bones, woven boots, weave chevron/sheen/rim, `WickerMotion` secondary motion, lean/bank/landing squash.
+- **Environment quality gaps:** round mossy aqueduct piers + taller deck, turquoise inlet, tamed atrium glow, curved 6-panel control glass bay, grotto pad/pool recomposed, lagoon ref from the shallows.
+- **Foliage sway bug (user-reported):** the Blender colour attributes weren't active on export, so every vertex had sway weight 1. Fixed in all build scripts, plus an anchor safety net in the shaders and a regression test.
+- **Summoning intro:** ring + glyphs, totem eye flare, feet-to-crown weave-in, fibres, orbit camera, lore card, skip, re-weave on respawn/teleport.
+- **Water:** wade (×0.7 + splashes) / swim (buoyancy, kick, swim pose), with water volumes in every pool, the inlet and the lagoon.
+- **Assisted keyboard-only camera:** smoothed top-level rig, arrow orbit, R recenter, delayed auto-recenter, arm easing, whiskers, zone hints, settings, F1 overlay; a keyboard-only route bot test.
+- **Secret switch:** lever + E prompt, reveal cutscene, relic chamber.
+- **Start page:** live fly-through title, keyboard-first menus, Controls/Settings (persisted), Esc pause menu, fade transitions; title is the main scene.
+
+**Remaining:** Phase 18 (web export), Phase 19 (deploy), Phase 20 (fidelity review desktop + web, desktop FPS ≥ 50, web ≥ 30, full Verify green).
+
+**Blockers / dependencies:**
+- **Export templates:** the user installed the 4.7.2 templates (`~/Library/Application Support/Godot/export_templates/4.7.2.stable/` exists); confirm the `web_*` zips are there.
+- **Caddy:** the user will configure Caddy for lost-origin.curiola.com (no RequestHostChange needed); Phase 19 verifies the local + public responses and runs the smoke test.
+- **Benchmarks:** they need the user's Godot editor *not* running the game (GPU contention) and an awake, visible display (macOS caps at 60).
+- **Test runner gap:** a GDScript runtime error inside a test function aborts it but still prints PASS. Grep the full test log for `SCRIPT ERROR` (it was clean at the last run); making the runner fail on these is a worthwhile improvement.
+
+**Known quality gaps (non-blocking):**
+- The Wicker Man's anatomy is softer and his legs straighter than the sculpted turnaround.
+- The grotto floor is flat turf rather than a fern carpet.
+- The relic room is plain.
+- The aqueduct's far arches read dark.
+
+**Single best next step:** Phase 18, the web export (detailed plan in the Phase 17 note below):
+1. Set the web renderer to `gl_compatibility` and add Compatibility fallbacks.
+2. Add a shader-compile test under `--rendering-method gl_compatibility`.
+3. Create an `export_presets.cfg` Web preset with export filters excluding `wicker-inspo/`, `art/` and `assets/characters/src`, plus the `web/shell.html` loading screen and a `JavaScriptBridge` state hook.
+4. Write `tools/export_web.sh` (with the size budget) and `tools/web_smoke.sh` (headless Chrome: title loads, no console errors, Enter → playing).
+
+### Status summary (earlier pause, after commit `c858c20`; historical)
 **Verified state:** the working tree is clean, and `./tools/validate.sh` passes 40/40 tests on the last run (commit `c858c20`). Ticked: all 12 round-1 criteria; round 2: reference harness, garden, sea life, glass onto the ocean, vines, aqueduct, open-air grotto, lagoon/sky, the asset fidelity pass, and **performance** (latest `tools/benchmark.gd`: avg 60.0 / min 59.9, macOS-capped; ≥ 50 holds on every `Shot_Ref_*`; re-verify in Phase 20). Phases 1–12 are done.
 
 **Accomplished this run (round 2, commits `9de574f`…`c858c20`):**
