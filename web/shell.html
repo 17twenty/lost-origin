@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0">
+<title>$GODOT_PROJECT_NAME</title>
+<style>
+html, body, #canvas { margin: 0; padding: 0; border: 0; }
+body { color: #f6e3b8; background: #02101a; overflow: hidden; touch-action: none;
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif; }
+#canvas { display: block; width: 100vw; height: 100vh; }
+#canvas:focus { outline: none; }
+#status { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; visibility: hidden;
+  background: radial-gradient(ellipse at 50% 70%, #0b4a5e 0%, #03141f 60%, #010a10 100%); }
+#logo { font-size: clamp(40px, 8vw, 96px); letter-spacing: 0.08em; font-weight: 700; color: #ffdb8c;
+  text-shadow: 0 0 24px rgba(255, 140, 40, 0.65), 0 2px 0 #2a1406; }
+#tag { margin-top: 6px; font-size: clamp(14px, 2vw, 22px); color: #bdeefa; opacity: 0.85; }
+#bar { margin-top: 42px; width: min(60vw, 520px); height: 10px; border-radius: 6px; overflow: hidden;
+  background: rgba(120, 200, 230, 0.15); border: 1px solid rgba(120, 220, 255, 0.4); }
+#fill { height: 100%; width: 0%; background: linear-gradient(90deg, #ff9a3c, #ffe0a0, #4fe3ff);
+  box-shadow: 0 0 12px rgba(255, 170, 70, 0.8); transition: width 0.2s; }
+#note { margin-top: 16px; font-size: 15px; color: #9fd8e8; min-height: 1.2em; text-align: center; max-width: 80vw; }
+#note.error { color: #ff9b8a; }
+</style>
+$GODOT_HEAD_INCLUDE
+</head>
+<body>
+<canvas id="canvas">Your browser does not support the HTML5 canvas.</canvas>
+<noscript>JavaScript is required to play Lost Origin.</noscript>
+<div id="status">
+  <div id="logo">LOST ORIGIN</div>
+  <div id="tag">weaving the guardian&hellip;</div>
+  <div id="bar"><div id="fill"></div></div>
+  <div id="note"></div>
+</div>
+<script src="$GODOT_URL"></script>
+<script>
+const GODOT_CONFIG = $GODOT_CONFIG;
+const GODOT_THREADS_ENABLED = $GODOT_THREADS_ENABLED;
+window.__lost_origin = { state: 'loading', fps: 0 };
+const engine = new Engine(GODOT_CONFIG);
+(function () {
+  const status = document.getElementById('status');
+  const fill = document.getElementById('fill');
+  const note = document.getElementById('note');
+  function show(on) { status.style.visibility = on ? 'visible' : 'hidden'; }
+  function fail(err) {
+    const msg = err && err.message ? err.message : String(err);
+    console.error(msg);
+    note.textContent = msg;
+    note.className = 'error';
+    window.__lost_origin = { state: 'error', error: msg };
+    show(true);
+    engine.unload && engine.unload();
+  }
+  const missing = Engine.getMissingFeatures({ threads: GODOT_THREADS_ENABLED });
+  if (missing.length !== 0) {
+    fail('Your browser is missing features Lost Origin needs:\n' + missing.join('\n'));
+    return;
+  }
+  show(true);
+  note.textContent = 'Loading…';
+  engine.startGame({
+    onProgress: function (current, total) {
+      if (total > 0) {
+        fill.style.width = Math.min(100, (current / total) * 100).toFixed(1) + '%';
+        note.textContent = (current / 1048576).toFixed(1) + ' / ' + (total / 1048576).toFixed(1) + ' MB';
+      }
+    },
+  }).then(() => { show(false); }, fail);
+}());
+</script>
+</body>
+</html>

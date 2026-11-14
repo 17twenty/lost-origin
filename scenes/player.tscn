@@ -401,40 +401,40 @@ transitions = ["idle", "walk", SubResource("AnimationNodeStateMachineTransition_
 [sub_resource type="SphereShape3D" id="SphereShape3D_dqoq3"]
 radius = 0.25
 
-[node name="Player" type="CharacterBody3D" unique_id=210882436]
+[node name="Player" type="CharacterBody3D" unique_id=1598378698]
 collision_layer = 2
 collision_mask = 5
 floor_max_angle = 0.87266463
 floor_snap_length = 0.3
 script = ExtResource("1_g2els")
 
-[node name="Collision" type="CollisionShape3D" parent="." unique_id=2047907818]
+[node name="Collision" type="CollisionShape3D" parent="." unique_id=872162969]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.05, 0)
 shape = SubResource("CapsuleShape3D_dqkch")
 
-[node name="Model" type="Node3D" parent="." unique_id=536248276]
+[node name="Model" type="Node3D" parent="." unique_id=755555549]
 
 [node name="Wicker" type="Node3D" parent="Model" unique_id=1627028346 instance=ExtResource("2_qhqgy")]
 
-[node name="AnimationTree" type="AnimationTree" parent="." unique_id=1562833858]
+[node name="AnimationTree" type="AnimationTree" parent="." unique_id=301068899]
 tree_root = SubResource("AnimationNodeStateMachine_2xkbm")
 anim_player = NodePath("../Model/Wicker/AnimationPlayer")
 
-[node name="CameraYaw" type="Node3D" parent="." unique_id=428314193]
+[node name="CameraYaw" type="Node3D" parent="." unique_id=1298067058]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.85, 0)
 top_level = true
 
-[node name="CameraPitch" type="Node3D" parent="CameraYaw" unique_id=1586267510]
+[node name="CameraPitch" type="Node3D" parent="CameraYaw" unique_id=672378807]
 transform = Transform3D(1, 0, 0, 0, 0.9838437, 0.17902958, 0, -0.17902958, 0.9838437, 0, 0, 0)
 
-[node name="SpringArm3D" type="SpringArm3D" parent="CameraYaw/CameraPitch" unique_id=1237085865]
+[node name="SpringArm3D" type="SpringArm3D" parent="CameraYaw/CameraPitch" unique_id=524860082]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.6, 0, 0)
 collision_mask = 5
 shape = SubResource("SphereShape3D_dqoq3")
 spring_length = 4.0
 margin = 0.15
 
-[node name="Camera3D" type="Camera3D" parent="CameraYaw/CameraPitch" unique_id=384380659]
+[node name="Camera3D" type="Camera3D" parent="CameraYaw/CameraPitch" unique_id=535745263]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.6, 0, 4)
 fov = 70.0
 far = 1500.0

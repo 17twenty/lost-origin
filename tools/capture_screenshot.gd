@@ -46,6 +46,8 @@ func _run() -> void:
 		var file := String(m.name).trim_prefix("Shot_").to_snake_case()
 		if m.has_meta("ref"):
 			file = "ref_" + String(m.get_meta("ref"))
+		if RenderingServer.get_current_rendering_method() == "gl_compatibility":
+			file = "web_" + file   # Compatibility (web) renders sit beside the desktop ones
 		var path := "%s/%s.png" % [OUT_DIR, file]
 		img.save_png(path)
 		print("captured ", path, " ", img.get_size())

@@ -42,7 +42,7 @@ Build a small playable Godot 4.7 (`/Applications/Godot.app`) proof of concept ba
   - An on-screen controls hint (toggled with **F1**) lists keyboard and mouse controls.
   - Tests cover: camera height stays within 0.15 m during a normal jump; the arrow keys rotate the camera; recenter doesn't kick in before the delay, then brings the yaw behind the motion within about 1.5 s; no recenter while backpedalling toward the camera; the arm length eases back (not instant) after leaving a doorway; zone hints change the arm length; and the whole beach→atrium route test passes with movement input only (no camera input), relying on auto-recenter.
 - [x] **Start page and menus:** a title scene (`scenes/title.tscn`, the project's main scene) shows a "LOST ORIGIN" logo over a live, slow camera fly-through of the level (e.g. the lagoon and totems), with buttons **Start**, **Controls**, **Settings** and (desktop only) **Quit**. It is fully keyboard-navigable (arrows/WASD + Enter/Space, with a visible focus state) and works with the mouse too. On web, the first click or keypress also satisfies the browser's user-gesture rule for audio and pointer lock. **Controls** shows the keyboard and mouse bindings. **Settings** covers auto-recenter on/off, camera sensitivity, invert-Y, **skip summoning intro** (sets Engine meta `skip_intro`; carried over from the summoning criterion) and a quality preset (Low/Medium/High), and persists to `user://settings.cfg`. In-game, **Esc** opens a pause menu (Resume, Controls, Settings, Quit to title) that pauses the tree; mouse capture is released while it's open and recaptured on resume. A short fade transition plays from title to level. Tests cover: the title scene loads with Start focused; pressing Enter loads the level with the player spawned; Esc pauses and unpauses the tree; Quit to title returns to the title scene; and settings round-trip through the config file.
-- [ ] **Web export:**
+- [x] **Web export:**
   - A committed `export_presets.cfg` has a **Web** preset that exports to `build/web/` (gitignored), using `index.html`, a custom HTML shell with a themed loading screen and progress bar, and the canvas resizing to the window.
   - The web build uses the **Compatibility** renderer (`rendering/renderer/rendering_method.web="gl_compatibility"`) while desktop keeps Forward+.
   - On Compatibility the game degrades gracefully: there are no volumetrics, FogVolumes or SSAO. Instead it uses depth fog, fake light-shaft meshes (additive cones or cards) and baked or vertex-lit hints. A single `scripts/quality.gd` applies the active preset and renderer at runtime. Every custom shader compiles on WebGL2; a test confirms they all load under `--rendering-method gl_compatibility`.
@@ -169,7 +169,7 @@ All tests report PASS (exit code 0), there are at least 6 screenshots, there are
 - [x] Phase 15 — Assisted camera and no-mouse controls: arrow-key orbit, recenter key, delayed auto-recenter, vertical stability, look-ahead, damping, collision ease-out and whiskers, zone hints, settings, F1 controls hint, tests
 - [x] Phase 16 — Secret switch: control-room lever with E prompt, reveal cutscene (camera to door, door opens, back to player), secret relic room, tests
 - [x] Phase 17 — Start page and menus: title scene with live fly-through, keyboard-navigable Start/Controls/Settings/Quit, persisted settings, Esc pause menu, fade transition, tests
-- [ ] Phase 18 — Web export: Compatibility renderer path and quality presets, WebGL2-safe shaders, export preset and HTML shell, templates (user approval), `tools/export_web.sh`, `tools/web_smoke.sh`, size budget, web FPS of at least 30
+- [x] Phase 18 — Web export: Compatibility renderer path and quality presets, WebGL2-safe shaders, export preset and HTML shell, templates (user approval), `tools/export_web.sh`, `tools/web_smoke.sh`, size budget, web FPS of at least 30
 - [ ] Phase 19 — Deploy: Caddy site block for lost-origin.curiola.com (the user configures Caddy; we verify), reload, local and public curl checks, public smoke test
 - [ ] Phase 20 — Fidelity review & performance: compare all 7 pairs (desktop **and** web renders), write `art/compare/NOTES.md`, desktop FPS at least 50 and web at least 30, full Verify green
 
@@ -207,11 +207,30 @@ All tests report PASS (exit code 0), there are at least 6 screenshots, there are
 - The relic room is plain.
 - The aqueduct's far arches read dark.
 
-**Single best next step:** Phase 18, the web export (detailed plan in the Phase 17 note below):
-1. Set the web renderer to `gl_compatibility` and add Compatibility fallbacks.
-2. Add a shader-compile test under `--rendering-method gl_compatibility`.
-3. Create an `export_presets.cfg` Web preset with export filters excluding `wicker-inspo/`, `art/` and `assets/characters/src`, plus the `web/shell.html` loading screen and a `JavaScriptBridge` state hook.
-4. Write `tools/export_web.sh` (with the size budget) and `tools/web_smoke.sh` (headless Chrome: title loads, no console errors, Enter → playing).
+**Phase 18 (done, commit after `caf8368`): web export.**
+- **Renderer:** `project.godot` sets `rendering/renderer/rendering_method.web="gl_compatibility"`.
+- **Compatibility fixes:**
+  - `GameSettings.is_compat()`; `apply_quality()` on compat: no volumetric fog/SSAO, depth fog kept, exposure 0.72, saturation 1.3, contrast 1.1, spot/omni shadows off.
+  - FogVolumes are now `scripts/fog_spot.gd` nodes that spawn their FogVolume only on Forward+ (Compat errors on fog shaders at load).
+  - `water.gdshader` converts depth to NDC per renderer (`#if CURRENT_RENDERER == RENDERER_COMPATIBILITY`); `light_shaft.gdshader` is ×0.45 on compat.
+- **Export setup:**
+  - `scripts/web_bridge.gd` autoload sets `window.__lost_origin = {state: title|playing|paused, fps, renderer}`.
+  - `web/shell.html`: themed loading screen (logo, gradient bar, MB counter, error display).
+  - `export_presets.cfg` Web preset: threads off; excludes wicker-inspo/, art/, tools/, tests/, characters/src, .blend, build/, web/.
+- **Scripts:**
+  - `tools/export_web.sh`: budget check (pck 4.5 MB, wasm 37.7 MB).
+  - `tools/web_smoke.sh [url] [--fps-seconds N]` + `tools/web/smoke.mjs` (playwright-core driving the system Google Chrome, no browser download; `tools/web/package.json`, node_modules gitignored). Checks title + no console errors, then Enter → playing, then FPS.
+- **Results:** SMOKE_OK; headless Chrome on the M2 via ANGLE Metal (hardware GPU) gets **avg 57 / min 35 FPS** while playing, with the user's Godot editor running concurrently.
+- **Compat renders:** `capture_screenshot.gd` prefixes `web_` when run with `--rendering-method gl_compatibility` (`art/screens/web_ref_*.png`), reviewed: close to desktop.
+- **Tests:** 74/74.
+
+**Single best next step:** Phase 19, the **deploy**. The user configures Caddy for `lost-origin.curiola.com` pointing at `/Users/nickglynn/Projects/lost-origin/build/web/`.
+1. Check `~/Sites/Caddyfile` (read-only) for the block.
+2. `curl -sI -H 'Host: lost-origin.curiola.com' http://127.0.0.1/` → 200, plus `index.wasm` served as `application/wasm` (gzip when requested).
+3. `curl -sI https://lost-origin.curiola.com/` → 200 via Cloudflare.
+4. `./tools/web_smoke.sh https://lost-origin.curiola.com`.
+5. If the block is missing, ask the user (don't edit the Caddyfile ourselves); the suggested block is in the deploy criterion.
+6. Then Phase 20: re-run the benchmark with the editor's game closed; final compare/NOTES for desktop + web; the full Verify command.
 
 ### Status summary (earlier pause, after commit `c858c20`; historical)
 **Verified state:** the working tree is clean, and `./tools/validate.sh` passes 40/40 tests on the last run (commit `c858c20`). Ticked: all 12 round-1 criteria; round 2: reference harness, garden, sea life, glass onto the ocean, vines, aqueduct, open-air grotto, lagoon/sky, the asset fidelity pass, and **performance** (latest `tools/benchmark.gd`: avg 60.0 / min 59.9, macOS-capped; ≥ 50 holds on every `Shot_Ref_*`; re-verify in Phase 20). Phases 1–12 are done.

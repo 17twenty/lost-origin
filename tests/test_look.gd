@@ -8,7 +8,12 @@ func test_environment_has_bloom_sky_and_fog() -> void:
 	check(env.background_mode == Environment.BG_SKY and env.sky.sky_material is ShaderMaterial, "custom sky shader")
 	check(env.fog_enabled, "depth fog enabled")
 	check(env.volumetric_fog_enabled, "volumetric fog enabled")
-	check(scene.find_children("*", "FogVolume", true, false).size() >= 3, "fog volumes in grotto/corridor/atrium")
+	check(scene.find_children("*", "FogVolume", true, false).size() >= 3, "fog volumes in grotto/corridor/atrium (Forward+)")
+	var spots := 0
+	for n in scene.find_children("*", "Node3D", true, false):
+		if n.get_script() and String(n.get_script().resource_path).ends_with("fog_spot.gd"):
+			spots += 1
+	check(spots >= 3, "fog spots defined (web build skips their FogVolumes)")
 
 func test_animated_water_shaders_in_use() -> void:
 	await load_main()

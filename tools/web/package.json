@@ -1,0 +1,8 @@
+{
+  "name": "lost-origin-web-smoke",
+  "private": true,
+  "description": "Headless-Chrome smoke test for the Lost Origin web build (uses the system Google Chrome; no browser download).",
+  "dependencies": {
+    "playwright-core": "^1.49.0"
+  }
+}

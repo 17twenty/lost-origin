@@ -700,16 +700,16 @@ static func _outdoor_waterfall(out: Node3D) -> void:
 	_fall(g, "FallThin", Vector3(x + 2.8, h(x + 2.8, -65.5) + 0.3, -65.5), Vector3(x + 2.8, -0.1, T.POOL_POS.y - 2.0), 1.5)
 	_mist(g, "Mist", Vector3(x + 0.8, 0.2, T.POOL_POS.y - 1.8), 5.0)
 
-static func _fog_volume(parent: Node3D, name: String, size: Vector3, pos: Vector3, density: float, albedo: Color) -> FogVolume:
-	var fv := FogVolume.new()
+## Local haze: a scripts/fog_spot.gd node that spawns its FogVolume at runtime
+## on Forward+ only (no fog shaders in the WebGL2 build).
+static func _fog_volume(parent: Node3D, name: String, size: Vector3, pos: Vector3, density: float, albedo: Color) -> Node3D:
+	var fv := Node3D.new()
 	fv.name = name
-	fv.size = size
+	fv.set_script(load("res://scripts/fog_spot.gd"))
+	fv.set("size", size)
+	fv.set("density", density)
+	fv.set("albedo", albedo)
 	fv.position = pos
-	var fm := FogMaterial.new()
-	fm.density = density
-	fm.albedo = albedo
-	fm.edge_fade = 0.3
-	fv.material = fm
 	parent.add_child(fv)
 	return fv
 

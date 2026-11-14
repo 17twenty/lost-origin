@@ -14,5 +14,8 @@ void fragment() {
 	float ends = smoothstep(0.0, 0.25, along) * smoothstep(1.0, 0.85, along);
 	float dust = 0.75 + 0.5 * texture(noise_tex, vec2(UV.x * 3.0, UV.y * 2.0 - TIME * 0.03)).r;
 	float a = intensity * facing * ends * dust;
+#if CURRENT_RENDERER == RENDERER_COMPATIBILITY
+	a *= 0.45;   // additive blending reads much hotter in the LDR Compatibility path
+#endif
 	ALBEDO = color * a;
 }

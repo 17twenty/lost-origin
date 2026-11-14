@@ -7,3 +7,4 @@
 .mcp/
 /art/compare/*.png
 /build/
+/tools/web/node_modules/
