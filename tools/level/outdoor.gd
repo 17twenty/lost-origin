@@ -110,6 +110,9 @@ static func _water(out: Node3D) -> void:
 	var inlet := _water_plane(w, "Inlet", Vector2(110, 26), Vector3(0, T.WATER_Y, T.CHASM_Z), 60)
 	var im: ShaderMaterial = water_mat.duplicate()
 	im.set_shader_parameter("depth_scale", 7.0)  # stays turquoise: it's shallow
+	im.set_shader_parameter("shallow_color", Color(0.3, 0.95, 0.92))
+	im.set_shader_parameter("deep_color", Color(0.05, 0.5, 0.75))
+	im.set_shader_parameter("sparkle", 0.55)
 	(inlet.mesh as PlaneMesh).material = im
 	_water_plane(w, "PlungePool", Vector2(11, 11), Vector3(T.POOL_POS.x, -0.1, T.POOL_POS.y))
 	# The inlet is shallow: falling off the aqueduct is a splash, never a respawn.
@@ -139,6 +142,16 @@ static func _csg_box(parent: Node, size: Vector3, pos: Vector3, op := CSGShape3D
 	b.material = stone_mat
 	parent.add_child(b)
 	return b
+
+static func _csg_cyl(parent: Node, radius: float, height: float, pos: Vector3, mat: Material) -> CSGCylinder3D:
+	var c := CSGCylinder3D.new()
+	c.radius = radius
+	c.height = height
+	c.sides = 16
+	c.position = pos
+	c.material = mat
+	parent.add_child(c)
+	return c
 
 static func _csg_arch(parent: Node, radius: float, length: float, pos: Vector3, axis_x := true) -> void:
 	var c := CSGCylinder3D.new()
@@ -183,13 +196,19 @@ static func _bridge(out: Node3D) -> void:
 	# Deck slab + arcade wall under it.
 	_csg_box(aq, Vector3(4.6, 0.8, length), Vector3(0, top - 0.4, zc))
 	_csg_box(aq, Vector3(2.4, 1.9, length), Vector3(0, top - 1.75, zc))  # arcade wall (arches cut below)
-	# Piers.
+	# Piers: round, moss-wrapped columns like the video (f14-16).
+	var pier_mat: ShaderMaterial = stone_mat.duplicate()
+	pier_mat.set_shader_parameter("moss_amount", 1.0)
+	pier_mat.set_shader_parameter("moss_color", Color(0.3, 0.6, 0.16))
+	pier_mat.set_shader_parameter("stone_color", Color(0.5, 0.56, 0.4))   # moss-stained stone
+	pier_mat.set_shader_parameter("stone_dark", Color(0.24, 0.3, 0.18))
 	var spacing := length / float(AQ_PIERS - 1)
 	for k in AQ_PIERS:
 		var pz := AQ_Z0 - k * spacing
-		_csg_box(aq, Vector3(2.0, top - 0.8 - base, 1.0), Vector3(0, (top - 0.8 + base) * 0.5, pz))
-		_csg_box(aq, Vector3(2.5, 0.3, 1.3), Vector3(0, top - 2.35, pz))   # impost where the arches spring
-		_csg_box(aq, Vector3(2.5, 0.5, 1.5), Vector3(0, -0.9, pz))         # footing at the waterline
+		_csg_cyl(aq, 0.85, top - 0.8 - base, Vector3(0, (top - 0.8 + base) * 0.5, pz), pier_mat)
+		_csg_cyl(aq, 1.05, 0.35, Vector3(0, top - 2.35, pz), pier_mat)     # capital where the arches spring
+		_csg_cyl(aq, 1.15, 0.6, Vector3(0, -0.9, pz), pier_mat)            # flared footing at the waterline
+		_csg_cyl(aq, 0.95, 0.3, Vector3(0, -0.45, pz), pier_mat)
 	# Arches between piers (cut through the arcade wall).
 	for k in AQ_PIERS - 1:
 		var az := AQ_Z0 - (k + 0.5) * spacing
@@ -206,6 +225,10 @@ static func _bridge(out: Node3D) -> void:
 		_csg_box(aq, Vector3(0.6, 1.0, gap[2]), Vector3(gap[0], top + 0.55, gap[1]), CSGShape3D.OPERATION_SUBTRACTION)
 	# Broken bite out of the deck edge (ruin), off the walk line.
 	_csg_box(aq, Vector3(1.2, 1.4, 1.8), Vector3(2.6, top - 0.2, -19.0), CSGShape3D.OPERATION_SUBTRACTION)
+	# The whole aqueduct wears the moss-stained stone (video f14-16).
+	for child in aq.get_children():
+		if child is CSGShape3D and (child as CSGShape3D).get("material") == stone_mat:
+			child.set("material", pier_mat)
 	# Fallen chunks standing in the shallows.
 	var rubble := SceneUtil.add(out, Node3D.new(), "BridgeRubble")
 	for p in [Vector3(4.6, -1.0, -19.5), Vector3(-5.0, -1.2, -14.0), Vector3(6.5, -1.1, -24.0)]:

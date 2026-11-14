@@ -42,8 +42,10 @@ static func build(level: Node3D) -> int:
 		z -= 1.3
 	for k in O.AQ_PIERS:
 		var pz := O.AQ_Z0 - k * ((O.AQ_Z0 - O.AQ_Z1) / float(O.AQ_PIERS - 1))
-		for sx in [-1.0, 1.0]:
-			add.call(Vector3(sx * 1.05, T.DECK_Y - 2.2, pz), Vector3(sx, 0, 0), r.randf_range(0.9, 1.2), "Vine_B")
+		for k2 in 6:
+			var ang := k2 * TAU / 6.0 + r.randf_range(-0.3, 0.3)
+			var out := Vector3(cos(ang), 0, sin(ang))
+			add.call(Vector3(0, T.DECK_Y - 2.2, pz) + out * 1.0, out, r.randf_range(0.9, 1.4), "Vine_B" if k2 % 2 == 0 else "Vine_C")
 
 	# Grotto: curtains over both side rims and the back lip (clear of the falls).
 	z = -61.5

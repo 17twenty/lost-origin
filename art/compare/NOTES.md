@@ -54,3 +54,15 @@ Pairs: `./tools/compare_shots.sh` → `art/compare/<name>.png` (video left, game
   - **Straw:** lighter tones, translucency, rim, and an emission lift so inner cards don't go black.
   - **Motion:** `mane`/`beard` spring bones driven by `WickerMotion` (a SkeletonModifier3D: lag behind head acceleration plus an idle breeze), chest breathing, the body leaning into acceleration and banking into turns, and a landing squash.
 - **Still different:** muscle definition is softer than the sculpted turnaround (a skin-modifier base can't reach that detail without a sculpt/normal bake); legs are straighter; the weave pattern is larger in scale than the design's.
+
+### Environment gaps — part 2 done
+- **Aqueduct:**
+  - **Before:** square, dark blue-grey piers in shade, with a deep-blue inlet.
+  - **After:** round 16-sided piers with flared footings and capitals in a moss-stained stone material (whole aqueduct), 6 vines wrapped around each pier, and a turquoise shallow inlet with reduced sparkle. `Shot_Ref_Aqueduct` now views the sunlit west face like f15.
+  - **Still different:** the arch openings read dark against the shaded east bank.
+- **Atrium column:**
+  - **Before:** blown-out cyan base and cap glow.
+  - **After:** soft trim on the caps, the column light 4.0 → 2.2, and the water-column shader darkened toward its ends.
+- **Control glass:**
+  - **Before:** a flat panel.
+  - **After:** a curved 6-panel glass bay bulging out of the east wall, with mullions, glowing rails, a bay floor and ceiling (walkable), and the ocean box moved out. The facility pad is now machined metal instead of mossy stone. `Shot_Ref_Control` moved closer.

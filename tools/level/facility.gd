@@ -351,8 +351,8 @@ static func _atrium(fac: Node3D) -> void:
 	col.add_child(caps)
 	_oct(caps, 3.0, 0.5, Vector3(0, 0.25, 0), metal)
 	_oct(caps, 3.0, 0.8, Vector3(0, h - 0.4, 0), metal)
-	_oct(caps, 3.1, 0.08, Vector3(0, 0.52, 0), trim)
-	_oct(caps, 3.1, 0.08, Vector3(0, h - 0.82, 0), trim)
+	_oct(caps, 3.1, 0.06, Vector3(0, 0.52, 0), trim_soft)
+	_oct(caps, 3.1, 0.06, Vector3(0, h - 0.82, 0), trim_soft)
 	var fs := MultiMeshInstance3D.new()
 	fs.name = "ColumnFish"
 	fs.set_script(load("res://scripts/fish_school.gd"))
@@ -365,7 +365,7 @@ static func _atrium(fac: Node3D) -> void:
 	fs.set("speed", 0.08)
 	fs.set("colors", PackedColorArray([Color(1.0, 0.8, 0.2), Color(1.0, 0.5, 0.15)]))
 	col.add_child(fs)
-	var cl := _light(col, Vector3(0, 4, 0), Color(0.2, 0.8, 1.0), 4.0, 14.0)
+	var cl := _light(col, Vector3(0, 4, 0), Color(0.2, 0.8, 1.0), 2.2, 12.0)
 	cl.shadow_enabled = false
 	_light(a, ATRIUM + Vector3(0, h - 1.5, 0), Color(0.85, 0.95, 1.0), 2.0, 18.0)
 	O._fog_volume(a, "AtriumHaze", Vector3(19, 11, 19), ATRIUM + Vector3(0, 6, 0), 0.02, Color(0.6, 0.9, 1.0))
@@ -538,14 +538,10 @@ static func _control(fac: Node3D) -> void:
 	for z in [-84.05, -91.95]:
 		_strip(r, Vector3(x1 - x0, 0.06, 0.08), Vector3(xc, RING_Y + 0.05, z))
 		_strip(r, Vector3(x1 - x0, 0.06, 0.08), Vector3(xc, RING_Y + 5.9, z))
-	# Full-width glass panorama on the east wall onto the open ocean (video f20-23).
-	_box(shell, Vector3(1.4, 5.2, 7.6), Vector3(x1, RING_Y + 2.9, -88), metal, CSGShape3D.OPERATION_SUBTRACTION)
-	r.add_child(SceneUtil.box_body(Vector3(0.08, 5.2, 7.6), Vector3(x1 + 0.1, RING_Y + 2.9, -88), glass, "Panorama"))
-	for y in [RING_Y + 0.3, RING_Y + 5.5]:
-		_strip(r, Vector3(0.15, 0.1, 7.8), Vector3(x1 + 0.05, y, -88))
-	for z in [-91.85, -84.15]:
-		_strip(r, Vector3(0.15, 5.3, 0.1), Vector3(x1 + 0.05, RING_Y + 2.9, z))
-	LevelOcean.build(r, "OceanEast", Vector3(87.5, RING_Y + 3.0, -88), Vector3(26, 16, 34), {"floor_y": RING_Y - 0.3, "fish": 3, "kelp": 40, "coral": 24, "rocks": 10})
+	# Curved multi-panel glass bay bulging out of the east wall onto the open ocean (video f20-23).
+	_box(shell, Vector3(1.4, 5.6, 7.8), Vector3(x1, RING_Y + 2.8, -88), metal, CSGShape3D.OPERATION_SUBTRACTION)  # down to floor level: no kerb
+	_glass_bay(r, x1)
+	LevelOcean.build(r, "OceanEast", Vector3(90.0, RING_Y + 3.0, -88), Vector3(26, 16, 34), {"floor_y": RING_Y - 0.3, "fish": 3, "kelp": 40, "coral": 24, "rocks": 10})
 	# Row of consoles facing the room, glass beyond (operators' view).
 	var i := 0
 	for cz in [-91.0, -89.5, -88.0, -86.5, -85.0]:
@@ -565,6 +561,11 @@ static func _control(fac: Node3D) -> void:
 	var pad := O._pad(r, "TeleporterFacility", Vector3(66.8, RING_Y, -88))
 	pad.rotation.y = -PI / 2.0
 	pad.set_meta("zone", "facility")
+	# Facility pad is machined metal, not mossy stone.
+	var pad_mesh := pad.get_node("Base/Mesh") as MeshInstance3D
+	var pm2: CylinderMesh = pad_mesh.mesh.duplicate()
+	pm2.material = metal
+	pad_mesh.mesh = pm2
 	# Small holo display on the north wall.
 	var disp := MeshInstance3D.new()
 	disp.name = "HoloDisplay"
@@ -580,6 +581,41 @@ static func _control(fac: Node3D) -> void:
 	r.add_child(disp)
 	_light(r, Vector3(xc, RING_Y + 5.0, -88), Color(0.8, 0.92, 1.0), 1.4, 12.0)
 	_light(r, Vector3(x1 - 1.5, RING_Y + 3.0, -88), Color(0.3, 0.75, 1.0), 2.0, 9.0)
+
+const BAY_R := 5.3
+const BAY_PANELS := 6
+
+## Arc of glass panels (centre 1.5 m inside the wall) with mullions, a curved
+## floor lip and ceiling cap; every panel collides.
+static func _glass_bay(r: Node3D, x1: float) -> void:
+	var bay := SceneUtil.add(r, Node3D.new(), "GlassBay")
+	var c := Vector3(x1 - 1.5, RING_Y, -88)
+	var half := asin(3.85 / BAY_R)
+	var reach := c.x + BAY_R + 0.2
+	# Floor + ceiling slabs under/over the bay (collide; hex floor on top).
+	bay.add_child(SceneUtil.box_body(Vector3(reach - x1 + 0.2, 0.3, 8.0), Vector3((reach + x1) * 0.5, RING_Y - 0.15, -88), metal, "BayFloor"))
+	bay.add_child(SceneUtil.box_body(Vector3(reach - x1 + 0.2, 0.4, 8.0), Vector3((reach + x1) * 0.5, RING_Y + 5.8, -88), metal, "BayCeiling"))
+	_hex_floor(bay, Vector2(reach - x1, 7.8), Vector3((reach + x1) * 0.5, RING_Y, -88))
+	for k in BAY_PANELS:
+		var a0 := -half + 2.0 * half * k / BAY_PANELS
+		var a1 := -half + 2.0 * half * (k + 1) / BAY_PANELS
+		var p0 := c + Vector3(cos(a0), 0, sin(a0)) * BAY_R
+		var p1 := c + Vector3(cos(a1), 0, sin(a1)) * BAY_R
+		var mid := (p0 + p1) * 0.5
+		var w := p0.distance_to(p1)
+		var yaw := atan2(p1.x - p0.x, p1.z - p0.z)  # panel's long axis along p0 -> p1
+		var pane := SceneUtil.box_body(Vector3(0.06, 5.4, w + 0.02), mid + Vector3(0, 2.75, 0), glass, "Panorama%d" % k)
+		pane.rotation.y = yaw
+		bay.add_child(pane)
+		for y in [0.12, 5.45]:
+			var rail := _strip(bay, Vector3(0.18, 0.1, w + 0.05), mid + Vector3(0, y, 0), trim_soft)
+			rail.rotation.y = yaw
+		var mull := _strip(bay, Vector3(0.14, 5.4, 0.14), p0 + Vector3(0, 2.75, 0), metal)
+		mull.rotation.y = yaw
+	var last := c + Vector3(cos(half), 0, sin(half)) * BAY_R
+	_strip(bay, Vector3(0.14, 5.4, 0.14), last + Vector3(0, 2.75, 0), metal)
+	# Light from the sea pouring in.
+	_light(bay, c + Vector3(BAY_R - 1.0, 4.5, 0), Color(0.35, 0.75, 1.0), 2.0, 10.0)
 
 ## Rounded console pod (video f20-23): cylindrical pedestal, angled top, holo screen.
 static func _console(parent: Node3D, pos: Vector3, yaw: float, idx: int) -> void:

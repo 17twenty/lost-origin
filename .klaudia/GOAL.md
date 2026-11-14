@@ -206,12 +206,17 @@ All tests report PASS (exit code 0), there are at least 6 screenshots, there are
 - **Motion:** `scripts/wicker_motion.gd` (`WickerMotion`, SkeletonModifier3D using `_process_modification_with_delta`: mane/beard springs, breeze, chest breathing) is added by `player.gd` `_ready`. `player.gd` `_body_language()` adds lean/bank and the landing squash on `model`.
 - **Tests:** new test `test_secondary_motion_and_body_language`; 45/45. The turnaround compare was regenerated; NOTES.md updated.
 
-**Single best next step:** Phase 13b part 2, the **environment gaps**:
-1. **Round, moss-wrapped aqueduct piers:** replace the CSG boxes in `outdoor.gd _bridge` with CSGCylinder piers (r ≈ 0.85, 16 sides) with flared footings/capitals, heavier moss (`stone_mat` duplicate with moss_amount 0.9 and moss colour brighter), and more vines on the piers.
-2. **Tame the atrium column-base glow:** lower the `ColumnFish`/column cap trim strips and the base omni energy, and the `water_column` shader fresnel at the base.
-3. **Curved multi-panel control glass:** replace the flat `Panorama` with 5 angled glass panels on an arc, with frame mullions and a deeper/curved ceiling lip like f21.
-4. **Worst offenders:** run `compare_shots.sh` and pick the 2–3 worst remaining items (e.g. pale lagoon sand/beach shape, grotto pool visibility).
-5. **Wrap-up:** write NOTES before/after, check the benchmark is ≥ 50, then tick the quality-gap criterion and do Phase 13 part 2 (the summoning intro).
+**Phase 13b part 2 (done): environment gaps.**
+- **Aqueduct:** round moss-stained piers (`_csg_cyl`, `pier_mat` applied to the whole aqueduct) with 6 vines per pier (`vines.gd`); turquoise inlet (shallow/deep colours, sparkle 0.55); `Shot_Ref_Aqueduct` on the sunlit west side.
+- **Atrium:** the column glow is tamed (soft cap trims, light 2.2, `water_column` end fade).
+- **Control room:** curved 6-panel `GlassBay` (`_glass_bay`, `BAY_R` 5.3; panels `Panorama0..5` collide; walkable bay floor). The shell cut now reaches floor level (a 0.2 m kerb had blocked walking); `OceanEast` moved to x 90; metal facility pad; `Shot_Ref_Control` moved closer. The test now checks the bay walk and ≥ 5 panes.
+- **Status:** 45/45 tests; NOTES.md updated.
+
+**Single best next step:** Phase 13b part 3, finishing the quality gaps:
+1. Run `compare_shots.sh` and fix the 2–3 worst remaining offenders. Candidates: grotto pool hidden behind the pad in `Shot_Ref_Grotto`; aqueduct arch openings reading dark; lagoon beach too wide/flat versus f05.
+2. Re-check the benchmark (≥ 50).
+3. Tick the quality-gap criterion and Phase 13b.
+4. Then Phase 13 part 2, the summoning intro.
 
 ### Notes (resume here)
 - **Phase 1 (done):** `project.godot` (Forward+, autoload `InputSetup` registers WASD/Space/Shift/E/Esc in code). `tools/build_level.gd` → `scenes/main.tscn` (helpers `tools/scene_util.gd`: `box_body`, `mat`, `marker`, `save`). Conventions: `Main/Markers/Spawn`, `Main/Player`, `Main/Shots/Shot_*` markers (optional meta `player_pos`) → `tools/capture_screenshot.gd` writes `art/screens/<snake>.png` (non-headless; PNGs gitignored; `-- Shot_Name` for one). Tests: `tests/test_*.gd` extend `TestCase` (`load_main`, `seconds`, `physics_frames`, `ground_below`, `check`); filter `-- <substr>`. `./tools/validate.sh` = import → build_player → build_level → import → tests (`SHOTS=1` capture, `REBUILD_ASSETS=1` reruns Blender).

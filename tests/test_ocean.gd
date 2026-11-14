@@ -49,7 +49,8 @@ func test_control_panorama_glass_is_solid() -> void:
 	p.warp_to((scene.get_node("Markers/Zone_Control") as Node3D).global_transform)
 	p.global_position = Vector3(73.0, -2.45, -84.8)
 	await walk_to(Vector3(95, -2.5, -84.8), 3.0)
-	check(p.global_position.x < 74.2, "panorama glass stops the player (x=%.2f)" % p.global_position.x)
+	check(p.global_position.x < 77.9 and p.global_position.x > 74.5, "curved glass bay: walk into the bay, glass stops you (x=%.2f)" % p.global_position.x)
+	check(scene.find_children("Panorama*", "StaticBody3D", true, false).size() >= 5, "multi-panel curved glass")
 
 func test_atrium_portholes_and_ceiling_glass() -> void:
 	await load_main()
