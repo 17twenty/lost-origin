@@ -54,9 +54,12 @@ func _initialize() -> void:
 	sm.add_transition("Start", "idle", start)
 	tree.tree_root = sm
 
+	# Camera rig: CameraYaw is top-level and follows a smoothed focus point
+	# (player.gd _update_camera), so jumps don't jolt the view.
 	var yaw := Node3D.new()
 	yaw.name = "CameraYaw"
 	yaw.position.y = 1.85
+	yaw.top_level = true
 	p.add_child(yaw)
 	var pitch := Node3D.new()
 	pitch.name = "CameraPitch"
@@ -72,11 +75,14 @@ func _initialize() -> void:
 	arm.shape = sphere
 	arm.position.x = 0.6  # over the right shoulder
 	pitch.add_child(arm)
+	# The camera is NOT the arm's child: the arm only measures the hit length,
+	# and player.gd eases the camera in fast / out slowly along it.
 	var cam := Camera3D.new()
 	cam.name = "Camera3D"
 	cam.fov = 70
 	cam.far = 1500
-	arm.add_child(cam)
+	cam.position = Vector3(0.6, 0, 4.0)
+	pitch.add_child(cam)
 
 	var err := SceneUtil.save(p, OUT)
 	p.free()

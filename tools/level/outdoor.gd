@@ -138,6 +138,29 @@ static func _water_volume(parent: Node3D, name: String, size: Vector3, pos: Vect
 	parent.add_child(a)
 	return a
 
+## Camera framing hint volume (scripts/camera_zone.gd).
+static func camera_zone(parent: Node3D, name: String, size: Vector3, pos: Vector3, arm: float, pitch := -0.18, hint = null) -> Area3D:
+	var a := Area3D.new()
+	a.name = name
+	a.set_script(load("res://scripts/camera_zone.gd"))
+	a.set("arm_length", arm)
+	a.set("pitch", pitch)
+	if hint != null:
+		a.set("has_hint", true)
+		a.set("hint", hint)
+	a.collision_layer = 0
+	a.collision_mask = 0
+	a.monitoring = false
+	a.position = pos
+	var cs := CollisionShape3D.new()
+	cs.name = "Col"
+	var bs := BoxShape3D.new()
+	bs.size = size
+	cs.shape = bs
+	a.add_child(cs)
+	parent.add_child(a)
+	return a
+
 static func _kill_zone(parent: Node3D, name: String, size: Vector3, pos: Vector3) -> Area3D:
 	var a := Area3D.new()
 	a.name = name
@@ -374,6 +397,7 @@ static func _grotto(out: Node3D) -> void:
 	_fall(g, "GrottoFallVeil", Vector3(1.2, 15.4, -84.8), Vector3(1.6, floor_y + 0.4, -82.8), 1.4)
 	# Stepped teleporter pad (raised tiers + glowing ring, like the video).
 	var pad := _pad(g, "TeleporterGrotto", Vector3(4.0, floor_y, -73.0), 2)  # front-right of the pool, like f01-02
+	camera_zone(g, "CamGrotto", Vector3(20, 14, 26), Vector3(0, 7, -73), 4.6, -0.24, Vector3(4.0, floor_y + 1.0, -73.0))
 	pad.set_meta("zone", "grotto")
 	# Lights: cool pad glow + warm shaft from the skylight.
 	# Sun shafts slanting in over the west rim (volumetric haze makes them visible).

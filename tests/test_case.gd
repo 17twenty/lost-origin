@@ -78,3 +78,39 @@ func walk_to(target: Vector3, timeout := 20.0, sprint := false, reach := 1.0) ->
 
 func marker_pos(name: String) -> Vector3:
 	return (scene.get_node("Markers/" + name) as Node3D).global_position
+
+## Keyboard-only steering: never touches the camera, only WASD relative to the
+## current view (the assisted camera has to keep up on its own).
+func walk_to_keys(target: Vector3, timeout := 25.0, reach := 1.0) -> bool:
+	var p := get_player()
+	var frames := int(timeout * Engine.physics_ticks_per_second)
+	var ok := false
+	var prev := p.global_position
+	for i in frames:
+		if p.global_position.distance_to(prev) > 4.0:
+			ok = true
+			break
+		prev = p.global_position
+		var d := target - p.global_position
+		d.y = 0
+		if d.length() < reach:
+			ok = true
+			break
+		var fwd: Vector3 = -p.cam_yaw.global_basis.z
+		var a: float = Vector2(fwd.x, fwd.z).angle_to(Vector2(d.x, d.z))  # + = target is to the right
+		for act in ["move_forward", "move_back", "move_left", "move_right"]:
+			Input.action_release(act)
+		if absf(a) < 1.2:
+			Input.action_press("move_forward")
+		elif absf(a) > 2.2:
+			Input.action_press("move_back")  # target behind: back up (the camera holds still)
+			a = 0.0
+		if a > 0.3:
+			Input.action_press("move_right")
+		elif a < -0.3:
+			Input.action_press("move_left")
+		min_y_seen = min(min_y_seen, p.global_position.y)
+		await tree.physics_frame
+	for act in ["move_forward", "move_back", "move_left", "move_right"]:
+		Input.action_release(act)
+	return ok

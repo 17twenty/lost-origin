@@ -180,6 +180,7 @@ static func build(level: Node3D, markers: Node3D, shots: Node3D) -> void:
 	O._light_shaft(g, "LightShaft0", Vector3(POOL.x - 1.0, F + H + 0.2, POOL.z + 0.5), Vector3(POOL.x - 3.5, F, POOL.z + 2.5), 1.4, 2.4, 0.07, Color(0.7, 0.93, 1.0))
 	O._light_shaft(g, "LightShaft1", Vector3(POOL.x + 1.2, F + H + 0.2, POOL.z - 0.8), Vector3(POOL.x + 0.5, F, POOL.z + 1.0), 1.0, 1.8, 0.05, Color(0.7, 0.93, 1.0))
 	FAC._light(g, Vector3(15, F + 3, -96), Color(0.5, 0.9, 1.0), 1.0, 8.0)
+	O.camera_zone(g, "CamGarden", Vector3(w, H, d), Vector3(xc, F + H * 0.5, zc), 5.0, -0.3, Vector3(POOL.x, F + 2.0, POOL.z))
 	O._fog_volume(g, "GardenHaze", Vector3(w - 0.4, H - 0.2, d - 0.4), Vector3(xc, F + H * 0.5, zc), 0.025, Color(0.75, 0.95, 1.0))
 	# Wall trim and ceiling light bars like the video.
 	for z in [Z0 - 0.05, Z1 + 0.05]:

@@ -81,6 +81,7 @@ static func build(level: Node3D, markers: Node3D, shots: Node3D) -> void:
 	FAC._light(c, Vector3(xc, F + 2.0 + H - 0.6, -80), Color(0.5, 0.9, 1.0), 1.0, 7.0)
 	FAC._light(c, Vector3(xc, F + H - 0.4, -87.5), Color(0.5, 0.9, 1.0), 1.2, 7.0)
 
+	O.camera_zone(c, "CamTunnel", Vector3(9.0, 12.0, 32.0), Vector3(14.0, -2.5, -78.0), 2.6, -0.1)
 	var zones := {
 		"Zone_GrottoDoor": Vector3(8.0, TOP_Y, -66),
 		"Zone_TunnelTop": Vector3(xc, TOP_Y, -66),

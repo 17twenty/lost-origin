@@ -164,6 +164,7 @@ static func _corridor(fac: Node3D) -> void:
 		_pool(c, Vector3(25.0 + i * 5.5, F, -88))
 	for x in [22.0, 30.0, 38.0]:
 		_light(c, Vector3(x, F + 4.2, -88), Color(0.75, 0.9, 1.0), 1.2, 9.0)
+	O.camera_zone(c, "CamCorridor", Vector3(23.0, 5.0, 8.0), Vector3(28.5, F + 2.5, -88), 3.0, -0.14)
 	O._fog_volume(c, "CorridorHaze", Vector3(22, 5, 8), Vector3(28.5, F + 2.5, -88), 0.012, Color(0.7, 0.92, 1.0))
 	# Ocean backdrops behind both window rows.
 	# South box runs past the terrain edge (hidden behind the cliff from outdoors).
@@ -295,6 +296,7 @@ static func _atrium(fac: Node3D) -> void:
 	_oct(glow_ring, APOTHEM - 0.02, 0.08, ATRIUM + Vector3(0, h - 0.1, 0), trim)
 	_oct(glow_ring, APOTHEM - 0.3, 0.1, ATRIUM + Vector3(0, h - 0.1, 0), trim, CSGShape3D.OPERATION_SUBTRACTION)
 
+	O.camera_zone(a, "CamAtrium", Vector3(19.0, 12.0, 19.0), ATRIUM + Vector3(0, 6.0, 0), 5.6, -0.34, ATRIUM + Vector3(0, 4.0, 0))
 	_ring_rails(a)
 	_portholes(a, shell)
 	_glass_ceiling(a, shell, h)
@@ -561,6 +563,7 @@ static func _control(fac: Node3D) -> void:
 	var pad := O._pad(r, "TeleporterFacility", Vector3(66.8, RING_Y, -88))
 	pad.rotation.y = -PI / 2.0
 	pad.set_meta("zone", "facility")
+	O.camera_zone(r, "CamControl", Vector3(13.0, 6.0, 8.0), Vector3(67.3, RING_Y + 3.0, -88), 3.8, -0.2, Vector3(80.0, RING_Y + 1.5, -88))
 	# Facility pad is machined metal, not mossy stone.
 	var pad_mesh := pad.get_node("Base/Mesh") as MeshInstance3D
 	var pm2: CylinderMesh = pad_mesh.mesh.duplicate()

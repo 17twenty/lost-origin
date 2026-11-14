@@ -28,7 +28,7 @@ const LAND_TIME := 0.28
 @onready var cam_yaw: Node3D = $CameraYaw
 @onready var cam_pitch: Node3D = $CameraYaw/CameraPitch
 @onready var spring_arm: SpringArm3D = $CameraYaw/CameraPitch/SpringArm3D
-@onready var camera: Camera3D = $CameraYaw/CameraPitch/SpringArm3D/Camera3D
+@onready var camera: Camera3D = $CameraYaw/CameraPitch/Camera3D
 @onready var anim_tree: AnimationTree = $AnimationTree
 
 var anim_state := "idle"
@@ -47,6 +47,33 @@ const SWIM_DEPTH := 1.45       # feet this far under the surface -> swim (chest-
 const UNSWIM_DEPTH := 1.25     # hysteresis back to wading
 const SWIM_FLOAT := 1.55       # feet held this far below the surface (head stays above)
 var _splash: GPUParticles3D
+
+# --- Assisted camera -------------------------------------------------------
+const PIVOT_H := 1.85
+const DEFAULT_ARM := 4.0
+const DEFAULT_PITCH := -0.18
+const KEY_YAW_RATE := 2.2        # rad/s with the arrow keys
+const KEY_PITCH_RATE := 1.4
+const RECENTER_DELAY_KEYS := 0.6 # s after keyboard camera input (or none)
+const RECENTER_DELAY_MOUSE := 2.5
+const RECENTER_RATE := 2.4       # exponential rate when auto-recentering
+const LOOK_AHEAD := 2.5
+var camera_focus := Vector3.ZERO
+var _grounded_y := 0.0
+var _look_ahead := Vector3.ZERO
+var _arm_len := DEFAULT_ARM
+var _arm_target := DEFAULT_ARM
+var _pitch_target := DEFAULT_PITCH
+var _since_manual := 0.0
+var _manual_was_mouse := false
+var _recenter_now := false
+var _cam_yaw_written := 0.0
+## Movement basis: follows the camera except while the auto-camera swings, so a
+## held direction keeps going the same way in the world while the view catches up.
+var _move_yaw := 0.0
+var _last_input := Vector2.ZERO
+var _since_dir := 0.0   # time the current movement direction has been held
+var _help: CanvasLayer
 ## Locked during cutscenes (summoning intro, secret reveal): movement/look input ignored.
 var input_locked := false
 ## Weave-in materials (per-instance copies so weave_progress is ours alone).
@@ -89,6 +116,9 @@ func _ready() -> void:
 			ap.get_animation(n).loop_mode = Animation.LOOP_LINEAR
 	anim_tree.active = true
 	camera.make_current()
+	CameraSettings.ensure_loaded()
+	snap_camera()
+	_build_help()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -99,13 +129,19 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("ui_release_mouse"):
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	elif event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
-		look_input += event.relative * mouse_sensitivity
+		look_input += event.relative * mouse_sensitivity * CameraSettings.sensitivity * Vector2(1.0, -1.0 if CameraSettings.invert_y else 1.0)
+		_manual(true)
+	elif event.is_action_pressed("cam_recenter"):
+		_recenter_now = true
+	elif event.is_action_pressed("toggle_help") and _help:
+		_help.visible = not _help.visible
 
 
 func _physics_process(delta: float) -> void:
 	_apply_look()
 	var input := Vector2.ZERO if input_locked else Input.get_vector("move_left", "move_right", "move_forward", "move_back")
-	var dir := (cam_yaw.global_basis * Vector3(input.x, 0.0, input.y))
+	_update_move_basis(input)
+	var dir := (Basis(Vector3.UP, _move_yaw) * Vector3(input.x, 0.0, input.y))
 	dir.y = 0.0
 	dir = dir.normalized() * min(input.length(), 1.0)
 	sprinting = not input_locked and Input.is_action_pressed("sprint") and input.y < -0.3 and is_on_floor()
@@ -173,6 +209,125 @@ func _after_move(dir: Vector3, delta: float) -> void:
 	if was_air and is_on_floor():
 		_squash = 0.12
 	_body_language(delta)
+	_update_camera(delta)
+
+
+# ---------------------------------------------------------------- camera
+func _manual(mouse: bool) -> void:
+	_since_manual = 0.0
+	_manual_was_mouse = mouse
+	_move_yaw = cam_yaw.rotation.y
+
+
+func _update_move_basis(input: Vector2) -> void:
+	# Someone else (mouse, tests, cutscenes) moved the camera: treat as manual.
+	if absf(wrapf(cam_yaw.rotation.y - _cam_yaw_written, -PI, PI)) > 0.0005:
+		_manual(false)
+		_since_manual = RECENTER_DELAY_KEYS * 0.5
+	# New direction held (or released): re-base movement on the current view.
+	if input.length() < 0.1 or input.distance_to(_last_input) > 0.3:
+		_move_yaw = cam_yaw.rotation.y
+		_since_dir = 0.0
+	_last_input = input
+
+
+## Jump the camera rig to its resting place (spawn, teleport, respawn).
+func snap_camera() -> void:
+	_grounded_y = global_position.y
+	_look_ahead = Vector3.ZERO
+	camera_focus = global_position + Vector3(0, PIVOT_H, 0)
+	cam_yaw.global_position = camera_focus
+	_arm_len = _arm_target
+	_cam_yaw_written = cam_yaw.rotation.y
+	_move_yaw = cam_yaw.rotation.y
+
+
+func _update_camera(delta: float) -> void:
+	var k_pos := 1.0 - exp(-10.0 * delta)
+	var k_y := 1.0 - exp(-6.0 * delta)
+	_since_manual += delta
+	_since_dir += delta
+	# --- keyboard orbit / pitch
+	if not input_locked:
+		var ky := Input.get_axis("cam_right", "cam_left")
+		var kp := Input.get_axis("cam_down", "cam_up") * (-1.0 if CameraSettings.invert_y else 1.0)
+		if absf(ky) > 0.01 or absf(kp) > 0.01:
+			cam_yaw.rotation.y += ky * KEY_YAW_RATE * CameraSettings.sensitivity * delta
+			cam_pitch.rotation.x = clampf(cam_pitch.rotation.x + kp * KEY_PITCH_RATE * CameraSettings.sensitivity * delta, pitch_min, pitch_max)
+			_manual(false)
+	# --- zone hints
+	_arm_target = DEFAULT_ARM
+	_pitch_target = DEFAULT_PITCH
+	var hint_dir := Vector3.ZERO
+	for z in get_tree().get_nodes_in_group("camera_zone"):
+		if z.contains(global_position + Vector3(0, 1.0, 0)):
+			_arm_target = z.arm_length
+			_pitch_target = z.pitch
+			if z.has_hint:
+				hint_dir = z.hint - global_position
+	# --- focus: grounded height (ignore normal jumps) + look-ahead
+	var on_floor := is_on_floor()
+	if on_floor or swimming:
+		_grounded_y = lerpf(_grounded_y, global_position.y, k_y)
+	elif global_position.y < _grounded_y - 2.0:
+		_grounded_y = global_position.y + 2.0   # real falls: follow, 2 m behind
+	var hv := Vector3(velocity.x, 0.0, velocity.z)
+	var la_target := Vector3.ZERO
+	if hv.length() > 0.5:
+		la_target = hv.normalized() * LOOK_AHEAD * clampf(hv.length() / sprint_speed, 0.0, 1.0)
+	_look_ahead = _look_ahead.lerp(la_target, 1.0 - exp(-3.0 * delta))
+	camera_focus = Vector3(global_position.x, _grounded_y + PIVOT_H, global_position.z) + _look_ahead
+	var cur := cam_yaw.global_position
+	cam_yaw.global_position = Vector3(lerpf(cur.x, camera_focus.x, k_pos), lerpf(cur.y, camera_focus.y, k_y), lerpf(cur.z, camera_focus.z, k_pos))
+	# --- auto-recenter behind the motion (never while backpedalling toward the camera)
+	var behind := model.rotation.y + PI
+	if hv.length() > 1.0:
+		behind = atan2(-hv.x, -hv.z)
+	if hint_dir.length() > 0.5:
+		behind = lerp_angle(behind, atan2(-hint_dir.x, -hint_dir.z), 0.3)
+	var cam_fwd := -cam_yaw.global_basis.z
+	var backpedal := hv.length() > 0.5 and Vector2(cam_fwd.x, cam_fwd.z).normalized().dot(Vector2(hv.x, hv.z).normalized()) < -0.5
+	var delay := RECENTER_DELAY_MOUSE if _manual_was_mouse else RECENTER_DELAY_KEYS
+	var k_rc := 1.0 - exp(-RECENTER_RATE * delta)
+	if _recenter_now:
+		k_rc = 1.0 - exp(-12.0 * delta)
+		if absf(wrapf(cam_yaw.rotation.y - behind, -PI, PI)) < 0.02:
+			_recenter_now = false
+	var settled := _since_manual > delay and _since_dir > 0.5   # wait out manual input AND fresh direction changes
+	if not input_locked and (_recenter_now or (CameraSettings.auto_recenter and settled and hv.length() > 1.0 and not backpedal)):
+		cam_yaw.rotation.y = lerp_angle(cam_yaw.rotation.y, behind, k_rc)
+		cam_pitch.rotation.x = lerpf(cam_pitch.rotation.x, _pitch_target, k_rc)
+	# --- whiskers: swing away from walls before they block the view
+	var space := get_world_3d().direct_space_state
+	for side in [-1.0, 1.0]:
+		var d: Vector3 = (Basis(Vector3.UP, side * 0.6) * cam_yaw.global_basis.z).normalized()
+		var q := PhysicsRayQueryParameters3D.create(cam_yaw.global_position, cam_yaw.global_position + d * 2.2, spring_arm.collision_mask, [get_rid()])
+		if not space.intersect_ray(q).is_empty() and not input_locked:
+			cam_yaw.rotation.y += side * 0.9 * delta
+	cam_yaw.rotation.y = wrapf(cam_yaw.rotation.y, -PI, PI)
+	_cam_yaw_written = cam_yaw.rotation.y
+	# --- arm: collide in fast, ease out slowly; zone length
+	spring_arm.spring_length = _arm_target
+	var hit := spring_arm.get_hit_length()
+	var target_len := minf(hit, _arm_target)
+	var k_arm := 1.0 - exp(-(25.0 if target_len < _arm_len else 2.5) * delta)
+	_arm_len = lerpf(_arm_len, target_len, k_arm)
+	camera.position = Vector3(spring_arm.position.x, 0.0, _arm_len)
+
+
+func _build_help() -> void:
+	_help = CanvasLayer.new()
+	_help.name = "ControlsHelp"
+	_help.layer = 20
+	_help.visible = false
+	add_child(_help)
+	var panel := PanelContainer.new()
+	panel.position = Vector2(24, 24)
+	_help.add_child(panel)
+	var l := Label.new()
+	l.text = "CONTROLS (F1 to hide)\n\nMove ............ W A S D\nCamera .......... Arrow keys (or mouse)\nRecenter camera . R\nSprint .......... Shift\nJump / swim up .. Space\nInteract ........ E\nMouse look ...... click to capture, Esc to release"
+	l.add_theme_font_size_override("font_size", 18)
+	panel.add_child(l)
 
 
 func _update_water() -> void:
@@ -240,6 +395,9 @@ func _apply_look() -> void:
 	cam_yaw.rotation.y -= look_input.x
 	cam_pitch.rotation.x = clamp(cam_pitch.rotation.x - look_input.y, pitch_min, pitch_max)
 	look_input = Vector2.ZERO
+	_cam_yaw_written = cam_yaw.rotation.y
+	_since_manual = 0.0
+	_move_yaw = cam_yaw.rotation.y
 
 
 func _update_anim() -> void:
@@ -325,6 +483,7 @@ func warp_to(xform: Transform3D) -> void:
 	cam_yaw.rotation.y = atan2(-fwd.x, -fwd.z)
 	model.rotation.y = atan2(fwd.x, fwd.z)
 	reset_physics_interpolation()
+	snap_camera()
 	if not input_locked:
 		reweave(0.9)
 
