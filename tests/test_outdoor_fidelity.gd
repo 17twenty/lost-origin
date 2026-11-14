@@ -14,7 +14,7 @@ func test_at_least_40_hanging_vines() -> void:
 func test_grotto_open_to_sky_with_light_shafts() -> void:
 	await load_main()
 	var space := (scene as Node3D).get_world_3d().direct_space_state
-	for p in [Vector3(0, 1.0, -71), Vector3(0, 1.0, -81)]:
+	for p in [Vector3(4.0, 1.2, -73), Vector3(0, 1.0, -81)]:
 		var hit := space.intersect_ray(PhysicsRayQueryParameters3D.create(p, p + Vector3.UP * 60.0))
 		check(hit.is_empty(), "open sky above %s (hit %s)" % [p, hit.get("collider")])
 	var shafts := scene.get_node("Level/Outdoor/Grotto").find_children("LightShaft*", "MeshInstance3D", false, false)

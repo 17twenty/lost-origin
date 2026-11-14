@@ -327,11 +327,16 @@ static func _grotto(out: Node3D) -> void:
 	]:
 		pool.add_child(SceneUtil.box_body(r[0], r[1], stone_mat, "Rim"))
 	var pw := _water_plane(pool, "PoolWater", Vector2(9.4, 7.4), Vector3(0, floor_y + 0.16, -81.0))
+	var pwm: ShaderMaterial = water_mat.duplicate()
+	pwm.set_shader_parameter("shallow_color", Color(0.15, 0.7, 1.0))   # glowing grotto-pool blue (f01-02)
+	pwm.set_shader_parameter("deep_color", Color(0.05, 0.35, 0.9))
+	pwm.set_shader_parameter("depth_scale", 0.4)
+	(pw.mesh as PlaneMesh).material = pwm
 	var glowpool := StandardMaterial3D.new()
 	glowpool.albedo_color = Color(0.1, 0.65, 0.95)
 	glowpool.emission_enabled = true
 	glowpool.emission = Color(0.1, 0.6, 1.0)
-	glowpool.emission_energy_multiplier = 1.2
+	glowpool.emission_energy_multiplier = 2.2
 	var pbed := MeshInstance3D.new()
 	var pbm := PlaneMesh.new()
 	pbm.size = Vector2(9.4, 7.4)
@@ -342,7 +347,7 @@ static func _grotto(out: Node3D) -> void:
 	_fall(g, "GrottoFall", Vector3(0, 15.6, -84.9), Vector3(0, floor_y + 0.4, -83.2), 3.4)
 	_fall(g, "GrottoFallVeil", Vector3(1.2, 15.4, -84.8), Vector3(1.6, floor_y + 0.4, -82.8), 1.4)
 	# Stepped teleporter pad (raised tiers + glowing ring, like the video).
-	var pad := _pad(g, "TeleporterGrotto", Vector3(0, floor_y, -71), 2)
+	var pad := _pad(g, "TeleporterGrotto", Vector3(4.0, floor_y, -73.0), 2)  # front-right of the pool, like f01-02
 	pad.set_meta("zone", "grotto")
 	# Lights: cool pad glow + warm shaft from the skylight.
 	# Sun shafts slanting in over the west rim (volumetric haze makes them visible).
@@ -374,7 +379,7 @@ static func _grotto(out: Node3D) -> void:
 	g.add_child(fill2)
 	_fog_volume(g, "CaveHaze", Vector3(20, 14, 25), Vector3(0, 7.0, -73), 0.012, Color(0.9, 0.97, 1.0))
 	# Visible sun shafts over the east rim (mesh-based, so they also show on web).
-	_light_shaft(g, "LightShaft0", Vector3(10.5, 17.0, -70.5), Vector3(-3.0, floor_y, -72.5), 0.9, 2.6, 0.09)
+	_light_shaft(g, "LightShaft0", Vector3(10.5, 17.0, -70.5), Vector3(-3.0, floor_y, -72.5), 0.9, 2.6, 0.06)
 	_light_shaft(g, "LightShaft1", Vector3(10.5, 17.0, -78.0), Vector3(-2.0, floor_y, -79.5), 0.7, 2.2, 0.08)
 	_light_shaft(g, "LightShaft2", Vector3(10.0, 16.5, -64.0), Vector3(-1.0, floor_y, -66.0), 0.6, 1.8, 0.06)
 	_mist(g, "PoolMist", Vector3(0, floor_y + 0.6, -81.2), 3.0)
@@ -397,7 +402,7 @@ static func _grotto(out: Node3D) -> void:
 	for i in 8:
 		_kenney(g, ["plant_bushDetailed", "grass_leafsLarge", "plant_flatTall"][rng.randi() % 3], Vector3(rng.randf_range(-12, -4) if i % 2 == 0 else rng.randf_range(4, 12), 12.5, -60.5), rng.randf_range(4, 7), false)
 	# Lush cave floor: ferns, grass and flowers, clear of the pad, pool and east door.
-	var keep_clear := [Vector2(0, -71), Vector2(0, -81), Vector2(0, -66), Vector2(9, -66)]
+	var keep_clear := [Vector2(4, -73), Vector2(0, -81), Vector2(0, -66), Vector2(9, -66)]
 	for i in 70:
 		var gx := rng.randf_range(-9.2, 9.2)
 		var gz := rng.randf_range(-84.5, -62.5)
@@ -890,7 +895,7 @@ static func _markers(markers: Node3D, shots: Node3D) -> void:
 		"Zone_BridgeNorth": Vector3(0, T.PATH_Y, -37.0),    # foot of the north ramp
 		"Zone_Plateau": ground(0, -44),
 		"Zone_GrottoEntrance": ground(0, -57),
-		"Zone_GrottoPad": Vector3(0, T.PATH_Y, -71),
+		"Zone_GrottoPad": Vector3(4.0, T.PATH_Y, -73),
 		"Zone_GrottoInside": Vector3(0, T.PATH_Y, -66),
 		"Zone_Inlet": Vector3(7.0, h(7.0, -18.0), -18.0),    # in the shallows beside the piers
 	}

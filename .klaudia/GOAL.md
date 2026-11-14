@@ -93,7 +93,7 @@ Build a small playable Godot 4.7 (`/Applications/Godot.app`) proof of concept ba
   The rig is humanoid with spine ×3, neck, head, clavicles, arms, hands (one finger group + thumb), legs and feet/toes. Clips: `idle`, `walk`, `run`, `sprint`, `jump`, `fall`, `land`, `swim`, `interact` (lever pull), `look_around` (an idle variant, curious about the tech) and `summon` (the rise pose used by the weave-in).
 
   It replaces Wayfinder in `scenes/player.tscn`, with the AnimationTree updated and the collision capsule resized. Every existing movement, route and camera test passes with the new character. The GLB pipeline rules apply (Z-up, `export_apply=False` for the skinned mesh).
-- [ ] **Quality-gap pass (user request: "give it a red-hot go" before web export, matching the established aesthetic; animation and shaders are easy wins):**
+- [x] **Quality-gap pass (user request: "give it a red-hot go" before web export, matching the established aesthetic; animation and shaders are easy wins):**
   - **Wicker Man fidelity vs the turnaround:**
     - Sculpted heroic anatomy: pecs, delts, biceps/triceps, abs, quads and calves via extra skin-modifier verts and/or a muscle displacement pass, with no tubular limbs.
     - A head about 10–15% larger with a defined woven face (cheekbones, brow, beard mass).
@@ -156,7 +156,7 @@ All tests report PASS (exit code 0), there are at least 6 screenshots, there are
 - [x] Phase 11 — Asset fidelity pass: own leaf-card vegetation replacing Kenney plants, totem remodel, rocks and cliffs, water bodies, facility kit (arch frames, panels, consoles, grates), per-family before/after notes
 - [x] Phase 12 — Wicker Man model: Blender body + woven plates + hair/beard cards + original woven face, humanoid rig, `wicker.gdshader` procedural weave, replaces Wayfinder, all tests green
 - [ ] Phase 13 — Wicker Man animation & summoning: full clip set, AnimationTree update, summoning ring at spawn, weave-in intro (weave_progress + fibre particles + camera), lore card, skip, re-weave on respawn/teleport, tests
-- [ ] Phase 13b — Quality-gap pass: Wicker Man anatomy/head/mane/boots + weave/straw/foliage shader wins, animation secondary motion (hair spring, lean, breathing, landing squash), round mossy aqueduct piers, atrium glow, curved control glass, before/after notes
+- [x] Phase 13b — Quality-gap pass: Wicker Man anatomy/head/mane/boots + weave/straw/foliage shader wins, animation secondary motion (hair spring, lean, breathing, landing squash), round mossy aqueduct piers, atrium glow, curved control glass, before/after notes
 - [ ] Phase 14 — Water and swimming: Area3D water volumes, wading slowdown and splashes, swimming with buoyancy and a swim clip, climb-out banks, chasm → wadeable inlet, remove ChasmKill, tests
 - [ ] Phase 15 — Assisted camera and no-mouse controls: arrow-key orbit, recenter key, delayed auto-recenter, vertical stability, look-ahead, damping, collision ease-out and whiskers, zone hints, settings, F1 controls hint, tests
 - [ ] Phase 16 — Secret switch: control-room lever with E prompt, reveal cutscene (camera to door, door opens, back to player), secret relic room, tests
@@ -212,11 +212,28 @@ All tests report PASS (exit code 0), there are at least 6 screenshots, there are
 - **Control room:** curved 6-panel `GlassBay` (`_glass_bay`, `BAY_R` 5.3; panels `Panorama0..5` collide; walkable bay floor). The shell cut now reaches floor level (a 0.2 m kerb had blocked walking); `OceanEast` moved to x 90; metal facility pad; `Shot_Ref_Control` moved closer. The test now checks the bay walk and ≥ 5 panes.
 - **Status:** 45/45 tests; NOTES.md updated. Fixed a flaky secondary-motion test (spring gain 0.02 → 0.03 and a hard stop in the test; 3/3 stable runs).
 
-**Single best next step:** Phase 13b part 3, finishing the quality gaps:
-1. Run `compare_shots.sh` and fix the 2–3 worst remaining offenders. Candidates: grotto pool hidden behind the pad in `Shot_Ref_Grotto`; aqueduct arch openings reading dark; lagoon beach too wide/flat versus f05.
-2. Re-check the benchmark (≥ 50).
-3. Tick the quality-gap criterion and Phase 13b.
-4. Then Phase 13 part 2, the summoning intro.
+**Phase 13b part 3 (done):**
+- **Grotto:** pad moved to (4, -73) (`Zone_GrottoPad` + keep-clear updated); own blue pool water + brighter bed; elevated `Shot_Ref_Grotto`.
+- **Aqueduct:** `DECK_Y` 3.3 → 4.3 (taller piers, sky under the arches; ramps about 31°, still walkable).
+- **Lagoon:** `Shot_Ref_Lagoon` stands in the shallows.
+- **Status:** 45/45 tests; benchmark ≥ 50 (capped 60). **Quality-gap criterion and Phase 13b ticked.**
+
+**Single best next step:** Phase 13 part 2, the **summoning intro**:
+1. **Summoning ring:** in `outdoor.gd` at the spawn (0, h, 10): a stone circle (CSG torus/cylinder ring, mossy stone) + a glowing glyph disc (emissive shader with rotating runes) + a light.
+2. **Totem eye flare:** totems get a shared `Glow` material with an `energy` parameter animated by the intro (glow_mat → a dedicated `totem_glow` material saved as a resource so the intro can tween `emission_energy_multiplier`).
+3. **`scripts/summon_intro.gd`** (child of Main):
+   - Before the first frame, duplicates the player's wicker/straw materials (so `weave_progress` is per-instance) and sets progress to 0; sets `player.input_locked = true` (add it to `player.gd` and honour it in `_physics_process` and input).
+   - Plays `play_oneshot("summon")` with the AnimationTree time-scaled to fit; spawns fibre GPUParticles spiralling inward (attractor-free: a ring emitter with orbit velocity + negative radial accel).
+   - Tweens progress 0 → 1 over about 5 s while an intro Camera3D orbits/pushes in, then blends to the player camera (tween its transform to the player camera, then `make_current`).
+   - Fades in a lore card (CanvasLayer Label, 2–3 lines: *"The old stones called, and something answered. Woven from the island itself, its last guardian wakes — to find the deep places humming with a light that is not its own."*).
+   - Any key/click skips: progress = 1, camera to the player, unlock. `player.warp_to` triggers a short 1 s re-weave (respawn/teleport).
+4. **Test hook:** `TestCase.load_main()` should set `Main` meta `skip_intro` or the intro autoskips under `--headless` tests unless a test enables it.
+5. **Tests:**
+   - progress 0 → 1 within 7 s;
+   - input ignored during the intro;
+   - a skip key ends it and unlocks;
+   - a respawn re-weave dips progress then returns to 1.
+6. `Shot_Summon` mid-weave.
 
 ### Notes (resume here)
 - **Phase 1 (done):** `project.godot` (Forward+, autoload `InputSetup` registers WASD/Space/Shift/E/Esc in code). `tools/build_level.gd` → `scenes/main.tscn` (helpers `tools/scene_util.gd`: `box_body`, `mat`, `marker`, `save`). Conventions: `Main/Markers/Spawn`, `Main/Player`, `Main/Shots/Shot_*` markers (optional meta `player_pos`) → `tools/capture_screenshot.gd` writes `art/screens/<snake>.png` (non-headless; PNGs gitignored; `-- Shot_Name` for one). Tests: `tests/test_*.gd` extend `TestCase` (`load_main`, `seconds`, `physics_frames`, `ground_below`, `check`); filter `-- <substr>`. `./tools/validate.sh` = import → build_player → build_level → import → tests (`SHOTS=1` capture, `REBUILD_ASSETS=1` reruns Blender).

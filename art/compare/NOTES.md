@@ -66,3 +66,15 @@ Pairs: `./tools/compare_shots.sh` → `art/compare/<name>.png` (video left, game
 - **Control glass:**
   - **Before:** a flat panel.
   - **After:** a curved 6-panel glass bay bulging out of the east wall, with mullions, glowing rails, a bay floor and ceiling (walkable), and the ocean box moved out. The facility pad is now machined metal instead of mossy stone. `Shot_Ref_Control` moved closer.
+
+### Worst offenders — part 3 done
+- **Grotto (f02):**
+  - **Before:** the pad sat between the camera and the pool, hiding it.
+  - **After:** the pad moved front-right of the pool (4, -73) like f01–02; the pool water is a glowing blue (own water material, brighter bed); the light shaft is softer; and `Shot_Ref_Grotto` is elevated, looking down at the pool and pad.
+  - **Still different:** the floor is a flat bright turf rather than the video's dense fern carpet.
+- **Aqueduct (f15):**
+  - **Before:** the arch openings were low and read dark.
+  - **After:** the deck was raised to 4.3 m (`DECK_Y`), so the tall piers show sky and sea under the arches.
+- **Lagoon (f05):**
+  - **Before:** viewed from the sand with a wide flat beach in the foreground.
+  - **After:** `Shot_Ref_Lagoon` stands in the sparkling shallows with the totem row receding along the curving beach.

@@ -10,8 +10,8 @@ static func refs() -> Dictionary:
 	var F := FAC.F
 	var R := FAC.RING_Y
 	return {
-		"grotto": [Vector3(6.0, 2.6, -64.5), Vector3(-3.0, 4.0, -83.0), 80.0],
-		"lagoon": [Vector3(-1.0, 1.0, 27.5), Vector3(28.0, 3.0, 17.0), 70.0],
+		"grotto": [Vector3(-3.0, 6.5, -64.0), Vector3(1.0, 0.8, -79.0), 76.0],  # elevated, looking down at pool + pad
+		"lagoon": [Vector3(-4.0, 0.45, 33.0), Vector3(22.0, 3.2, 18.0), 72.0],  # standing in the shallows, beach curving away
 		"garden": [Vector3(25.2, F + 2.3, -94.4), Vector3(18.6, F + 3.4, -102.5), 78.0],
 		"corridor": [Vector3(19.2, F + 1.9, -87.0), Vector3(36.0, F + 1.0, -89.5), 75.0],
 		"aqueduct": [Vector3(-13.0, 0.3, -9.0), Vector3(0.5, 2.0, -24.5), 72.0],  # west side: the sunlit faces, like the video
