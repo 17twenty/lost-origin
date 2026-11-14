@@ -116,6 +116,13 @@ Build a small playable Godot 4.7 (`/Applications/Godot.app`) proof of concept ba
     - A curved, multi-panel control-room glass panorama like f21.
     - Any other worst-offender items from a fresh `compare_shots.sh` review.
   - **Proof:** a before/after per item in `art/compare/NOTES.md` (with turnaround and compare images regenerated); all tests green; benchmark ≥ 50 on every `Shot_Ref_*`.
+- [ ] **Foliage sway fix (user report: trees sway at the base rather than from the trunk — the whole tree moves):**
+  - **Expected:** palms, the tree fern, the garden tree, ferns/monstera/grass, vines and straw must stay planted at the base/attachment, with motion only increasing toward frond and leaf tips and strand ends.
+  - **Root cause (verified):** every Blender-built mesh reaches Godot with vertex colour R = 1.0 everywhere (`tree_palmTall.res`, `garden_tree_mesh.res`, `vine_a.res`: R 1.00..1.00), so the sway shaders (`foliage`, `vine`, `straw`) move every vertex, trunks and bases included. The bmesh "Col" layers aren't the active/render colour attribute when the glTF exporter runs with `export_vertex_color="ACTIVE"`.
+  - **Fix:**
+    - Set the colour attribute active and as the render colour in `build_plants.py`, `build_tree.py`, `build_vines.py` and `build_wicker.py`, then rebuild.
+    - Make the shaders robust: also gate sway by a height/attachment falloff, so a missing colour channel can never move a base.
+  - **Tests:** an automated test asserts the sway-weight channel is ~0 at the base/root vertices and > 0.5 at the tips of each plant mesh. Visually check in a running game that trunks stay put.
 - [ ] **Summoning intro ("weave-in"):** on starting a new game, the player appears inside a **summoning ring** among the beach totems, whose eyes flare. The ring is new: a stone circle with glowing glyphs at the spawn.
   - **Weave-in:** over about 4–6 s, the Wicker Man weaves into existence. `wicker.gdshader` has a `weave_progress` uniform (0→1) that reveals strands in a woven order: per-vertex order data (e.g. a UV2 channel baked in Blender from feet to head with spiralling per-limb offsets) drives a dissolve with a glowing ember/cyan edge. Fibre particles spiral in toward the body, the `summon` clip plays, and the camera does a slow orbit and push-in.
   - **Handover:** the camera then blends to the gameplay camera and control unlocks. Input is locked during the intro, and any key skips it, as does a setting.
@@ -157,6 +164,7 @@ All tests report PASS (exit code 0), there are at least 6 screenshots, there are
 - [x] Phase 12 — Wicker Man model: Blender body + woven plates + hair/beard cards + original woven face, humanoid rig, `wicker.gdshader` procedural weave, replaces Wayfinder, all tests green
 - [ ] Phase 13 — Wicker Man animation & summoning: full clip set, AnimationTree update, summoning ring at spawn, weave-in intro (weave_progress + fibre particles + camera), lore card, skip, re-weave on respawn/teleport, tests
 - [x] Phase 13b — Quality-gap pass: Wicker Man anatomy/head/mane/boots + weave/straw/foliage shader wins, animation secondary motion (hair spring, lean, breathing, landing squash), round mossy aqueduct piers, atrium glow, curved control glass, before/after notes
+- [ ] Phase 13c — Foliage sway fix: vertex-colour export in all Blender scripts, robust height falloff in sway shaders, test the base stays still
 - [ ] Phase 14 — Water and swimming: Area3D water volumes, wading slowdown and splashes, swimming with buoyancy and a swim clip, climb-out banks, chasm → wadeable inlet, remove ChasmKill, tests
 - [ ] Phase 15 — Assisted camera and no-mouse controls: arrow-key orbit, recenter key, delayed auto-recenter, vertical stability, look-ahead, damping, collision ease-out and whiskers, zone hints, settings, F1 controls hint, tests
 - [ ] Phase 16 — Secret switch: control-room lever with E prompt, reveal cutscene (camera to door, door opens, back to player), secret relic room, tests
@@ -218,7 +226,7 @@ All tests report PASS (exit code 0), there are at least 6 screenshots, there are
 - **Lagoon:** `Shot_Ref_Lagoon` stands in the shallows.
 - **Status:** 45/45 tests. **Quality-gap criterion and Phase 13b ticked.** Benchmark caveat: the post-part-3 runs read avg 24 / min 18 on two runs, because **the user's Godot editor was open and running the game embedded at the same time** (pids 49543/49567: GPU contention). The last uncontended run, after part 2, read capped 60 on every shot. **Re-run `tools/benchmark.gd` with the editor's game closed before relying on the performance tick (also part of Phase 20).**
 
-**Single best next step:** Phase 13 part 2, the **summoning intro**:
+**Single best next step:** first **Phase 13c, the foliage sway fix** (user-reported bug; root cause and fix in the criterion). Then Phase 13 part 2, the **summoning intro**:
 1. **Summoning ring:** in `outdoor.gd` at the spawn (0, h, 10): a stone circle (CSG torus/cylinder ring, mossy stone) + a glowing glyph disc (emissive shader with rotating runes) + a light.
 2. **Totem eye flare:** totems get a shared `Glow` material with an `energy` parameter animated by the intro (glow_mat → a dedicated `totem_glow` material saved as a resource so the intro can tween `emission_energy_multiplier`).
 3. **`scripts/summon_intro.gd`** (child of Main):
