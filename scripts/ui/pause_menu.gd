@@ -47,7 +47,9 @@ func _ready() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("pause"):
 		get_viewport().set_input_as_handled()
-		if get_tree().paused:
+		if _open:
+			_close_overlay()
+		elif get_tree().paused:
 			resume()
 		else:
 			pause()
@@ -66,6 +68,7 @@ func pause() -> void:
 
 
 func resume() -> void:
+	_open = null
 	for c in _root.get_children():
 		if String(c.name).begins_with("Overlay"):
 			c.queue_free()
@@ -81,7 +84,13 @@ func quit_to_title() -> void:
 	get_tree().change_scene_to_file(TITLE)
 
 
-func _overlay(p: PanelContainer) -> void:
+var _open: Control
+var _open_focus := ""
+
+
+func _overlay(p: PanelContainer, focus_name: String) -> void:
+	_open = p
+	_open_focus = focus_name
 	panel.visible = false
 	p.name = "Overlay" + p.name
 	p.position = Vector2(80, 100)
@@ -91,19 +100,17 @@ func _overlay(p: PanelContainer) -> void:
 		(first[0] as Control).grab_focus.call_deferred()
 
 
-func _close_overlay(p: Control, focus_name: String) -> void:
-	p.queue_free()
+func _close_overlay() -> void:
+	if _open:
+		_open.queue_free()
+		_open = null
 	panel.visible = true
-	(menu.get_node(focus_name) as Control).grab_focus.call_deferred()
+	(menu.get_node(_open_focus) as Control).grab_focus.call_deferred()
 
 
 func _controls() -> void:
-	var p: PanelContainer
-	p = UIKit.controls_panel(func() -> void: _close_overlay(p, "Controls"))
-	_overlay(p)
+	_overlay(UIKit.controls_panel(_close_overlay), "Controls")
 
 
 func _settings() -> void:
-	var p: PanelContainer
-	p = UIKit.settings_panel(func() -> void: _close_overlay(p, "Settings"), func() -> void: GameSettings.apply_quality(get_parent()))
-	_overlay(p)
+	_overlay(UIKit.settings_panel(_close_overlay, func() -> void: GameSettings.apply_quality(get_parent())), "Settings")

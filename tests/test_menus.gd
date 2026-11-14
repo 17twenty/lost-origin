@@ -101,3 +101,57 @@ func test_settings_round_trip() -> void:
 	GameSettings.quality = old[3]
 	GameSettings.skip_intro = old[4]
 	GameSettings.save()
+
+func _press(action: String) -> void:
+	var ev := InputEventAction.new()
+	ev.action = action
+	ev.pressed = true
+	Input.parse_input_event(ev)
+	await physics_frames(2)
+	var up := InputEventAction.new()
+	up.action = action
+	up.pressed = false
+	Input.parse_input_event(up)
+	await physics_frames(2)
+
+func _focus_name(n: Node) -> String:
+	var f := n.get_viewport().gui_get_focus_owner()
+	return String(f.name) if f else "none"
+
+func test_title_overlays_dismiss_with_back_and_esc() -> void:
+	var t := await _load_title()
+	for item in ["Controls", "Settings"]:
+		(t.menu.get_node(item) as Control).grab_focus()
+		await physics_frames(2)
+		await _press("ui_accept")
+		check(not t.menu.visible and t._overlay != null, "%s panel open" % item)
+		# Back is the last button in the panel: focus it and press Enter like a player would.
+		var buttons: Array = t._overlay.find_children("*", "Button", true, false)
+		(buttons[-1] as Control).grab_focus()
+		await physics_frames(2)
+		await _press("ui_accept")
+		check(t.menu.visible and t._overlay == null, "%s: Back closes the panel" % item)
+		check(_focus_name(t) == item, "%s: focus returns to the menu item (%s)" % [item, _focus_name(t)])
+		check(t.find_children("Overlay*", "", true, false).size() == 0, "%s: panel freed" % item)
+		await _press("ui_accept")
+		check(t._overlay != null, "%s reopens" % item)
+		await _press("ui_cancel")
+		check(t.menu.visible and t._overlay == null, "%s: Esc closes the panel" % item)
+
+func test_pause_overlays_dismiss_with_back() -> void:
+	await load_main()
+	var pm: Node = scene.get_node("PauseMenu")
+	pm.pause()
+	await tree.process_frame
+	(pm.menu.get_node("Controls") as Control).grab_focus()
+	await tree.process_frame
+	await _press("ui_accept")
+	check(pm._open != null and not pm.panel.visible, "controls overlay open")
+	var buttons: Array = pm._open.find_children("*", "Button", true, false)
+	(buttons[-1] as Control).grab_focus()
+	await tree.process_frame
+	await _press("ui_accept")
+	check(pm._open == null and pm.panel.visible, "Back returns to the pause menu")
+	check(tree.paused, "still paused")
+	pm.resume()
+	tree.paused = false

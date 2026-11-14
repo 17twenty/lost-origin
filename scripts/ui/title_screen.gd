@@ -115,7 +115,21 @@ func _build_ui() -> void:
 	start_button.grab_focus.call_deferred()
 
 
-func _swap(panel: Control) -> void:
+## The open Controls/Settings panel (lambdas capture locals by value, so the
+## Back callbacks can't reference the panel variable itself).
+var _overlay: Control
+var _overlay_focus := ""
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if _overlay and event.is_action_pressed("ui_cancel"):
+		get_viewport().set_input_as_handled()
+		_back()
+
+
+func _swap(panel: Control, focus_name: String) -> void:
+	_overlay = panel
+	_overlay_focus = focus_name
 	menu.visible = false
 	panel.name = "Overlay" + panel.name
 	(ui.get_child(0) as Control).add_child(panel)
@@ -125,22 +139,20 @@ func _swap(panel: Control) -> void:
 		(first[0] as Control).grab_focus.call_deferred()
 
 
-func _back(panel: Control, focus: Control) -> void:
-	panel.queue_free()
+func _back() -> void:
+	if _overlay:
+		_overlay.queue_free()
+		_overlay = null
 	menu.visible = true
-	focus.grab_focus.call_deferred()
+	(menu.get_node(_overlay_focus) as Control).grab_focus.call_deferred()
 
 
 func _show_controls() -> void:
-	var p: PanelContainer
-	p = UIKit.controls_panel(func() -> void: _back(p, menu.get_node("Controls")))
-	_swap(p)
+	_swap(UIKit.controls_panel(_back), "Controls")
 
 
 func _show_settings() -> void:
-	var p: PanelContainer
-	p = UIKit.settings_panel(func() -> void: _back(p, menu.get_node("Settings")), func() -> void: GameSettings.apply_quality(self))
-	_swap(p)
+	_swap(UIKit.settings_panel(_back, func() -> void: GameSettings.apply_quality(self)), "Settings")
 
 
 func start_game() -> void:
