@@ -1,0 +1,107 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/player.gd" id="1_g2els"]
+[ext_resource type="PackedScene" path="res://assets/characters/explorer.glb" id="2_qhqgy"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_dqkch"]
+radius = 0.35
+height = 1.8
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_qlg0r"]
+animation = &"idle"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_tuyoq"]
+animation = &"jump"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_fjrip"]
+animation = &"run"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_smehm"]
+animation = &"sprint"
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_ur7pv"]
+xfade_time = 0.2
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_y4r1p"]
+xfade_time = 0.2
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_d2wvv"]
+xfade_time = 0.12
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_3v2ag"]
+xfade_time = 0.2
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_jej6c"]
+xfade_time = 0.2
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_f1ej7"]
+xfade_time = 0.12
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_oprun"]
+xfade_time = 0.2
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_a8ls1"]
+xfade_time = 0.2
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_qfm1y"]
+xfade_time = 0.12
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_fulsm"]
+xfade_time = 0.2
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_4r5pv"]
+xfade_time = 0.2
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_60mlk"]
+xfade_time = 0.2
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_i4ail"]
+advance_mode = 2
+
+[sub_resource type="AnimationNodeStateMachine" id="AnimationNodeStateMachine_a38lo"]
+states/idle/node = SubResource("AnimationNodeAnimation_qlg0r")
+states/idle/position = Vector2(0, 100)
+states/jump/node = SubResource("AnimationNodeAnimation_tuyoq")
+states/jump/position = Vector2(600, 100)
+states/run/node = SubResource("AnimationNodeAnimation_fjrip")
+states/run/position = Vector2(200, 100)
+states/sprint/node = SubResource("AnimationNodeAnimation_smehm")
+states/sprint/position = Vector2(400, 100)
+transitions = ["idle", "run", SubResource("AnimationNodeStateMachineTransition_ur7pv"), "idle", "sprint", SubResource("AnimationNodeStateMachineTransition_y4r1p"), "idle", "jump", SubResource("AnimationNodeStateMachineTransition_d2wvv"), "run", "idle", SubResource("AnimationNodeStateMachineTransition_3v2ag"), "run", "sprint", SubResource("AnimationNodeStateMachineTransition_jej6c"), "run", "jump", SubResource("AnimationNodeStateMachineTransition_f1ej7"), "sprint", "idle", SubResource("AnimationNodeStateMachineTransition_oprun"), "sprint", "run", SubResource("AnimationNodeStateMachineTransition_a8ls1"), "sprint", "jump", SubResource("AnimationNodeStateMachineTransition_qfm1y"), "jump", "idle", SubResource("AnimationNodeStateMachineTransition_fulsm"), "jump", "run", SubResource("AnimationNodeStateMachineTransition_4r5pv"), "jump", "sprint", SubResource("AnimationNodeStateMachineTransition_60mlk"), "Start", "idle", SubResource("AnimationNodeStateMachineTransition_i4ail")]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_4ni07"]
+radius = 0.25
+
+[node name="Player" type="CharacterBody3D" unique_id=573497865]
+collision_layer = 2
+floor_max_angle = 0.87266463
+floor_snap_length = 0.3
+script = ExtResource("1_g2els")
+
+[node name="Collision" type="CollisionShape3D" parent="." unique_id=135289332]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+shape = SubResource("CapsuleShape3D_dqkch")
+
+[node name="Model" type="Node3D" parent="." unique_id=1155658322]
+
+[node name="Explorer" type="Node3D" parent="Model" unique_id=1317151393 instance=ExtResource("2_qhqgy")]
+
+[node name="AnimationTree" type="AnimationTree" parent="." unique_id=1180290079]
+tree_root = SubResource("AnimationNodeStateMachine_a38lo")
+anim_player = NodePath("../Model/Explorer/AnimationPlayer")
+
+[node name="CameraYaw" type="Node3D" parent="." unique_id=1224027600]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.55, 0)
+
+[node name="CameraPitch" type="Node3D" parent="CameraYaw" unique_id=630817431]
+transform = Transform3D(1, 0, 0, 0, 0.9838437, 0.17902958, 0, -0.17902958, 0.9838437, 0, 0, 0)
+
+[node name="SpringArm3D" type="SpringArm3D" parent="CameraYaw/CameraPitch" unique_id=1422450152]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.55, 0, 0)
+shape = SubResource("SphereShape3D_4ni07")
+spring_length = 3.6
+margin = 0.15
+
+[node name="Camera3D" type="Camera3D" parent="CameraYaw/CameraPitch/SpringArm3D" unique_id=1047114143]
+fov = 70.0
+far = 1500.0

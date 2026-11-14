@@ -2,3 +2,6 @@
 *.import.tmp
 /art/screens/*.png
 .DS_Store
+*.blend1
+.mcp/
+.mcp/

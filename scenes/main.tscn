@@ -1,56 +1,69 @@
 [gd_scene format=3]
 
-[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sgp6g"]
+[ext_resource type="PackedScene" path="res://scenes/player.tscn" id="1_0wfyh"]
+[ext_resource type="Script" path="res://scripts/player.gd" id="2_sugp2"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_jyhfs"]
 sky_top_color = Color(0.18, 0.45, 0.95, 1)
 sky_horizon_color = Color(0.65, 0.85, 1, 1)
 
-[sub_resource type="Sky" id="Sky_o5qli"]
-sky_material = SubResource("ProceduralSkyMaterial_sgp6g")
+[sub_resource type="Sky" id="Sky_tbgi4"]
+sky_material = SubResource("ProceduralSkyMaterial_jyhfs")
 
-[sub_resource type="Environment" id="Environment_0wfyh"]
+[sub_resource type="Environment" id="Environment_tefeu"]
 background_mode = 2
-sky = SubResource("Sky_o5qli")
+sky = SubResource("Sky_tbgi4")
 ambient_light_source = 3
 tonemap_mode = 2
 glow_enabled = true
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_sugp2"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_o6xl0"]
 albedo_color = Color(0.93, 0.88, 0.72, 1)
 roughness = 0.8
 
-[sub_resource type="BoxMesh" id="BoxMesh_jyhfs"]
-material = SubResource("StandardMaterial3D_sugp2")
+[sub_resource type="BoxMesh" id="BoxMesh_tipki"]
+material = SubResource("StandardMaterial3D_o6xl0")
 size = Vector3(60, 1, 60)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_tbgi4"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_85g3d"]
 size = Vector3(60, 1, 60)
 
-[node name="Main" type="Node3D" unique_id=1972212156]
+[node name="Main" type="Node3D" unique_id=607821945]
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=316935913]
-environment = SubResource("Environment_0wfyh")
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=83273472]
+environment = SubResource("Environment_tefeu")
 
-[node name="Sun" type="DirectionalLight3D" parent="." unique_id=1933956370]
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=1656394901]
 transform = Transform3D(0.81915206, 0.43938506, -0.36868784, 0, 0.64278764, 0.76604444, 0.57357645, -0.62750685, 0.5265408, 0, 0, 0)
 shadow_enabled = true
 
-[node name="Level" type="Node3D" parent="." unique_id=279428757]
+[node name="Level" type="Node3D" parent="." unique_id=497869395]
 
-[node name="Ground" type="StaticBody3D" parent="Level" unique_id=428628580]
+[node name="Ground" type="StaticBody3D" parent="Level" unique_id=734273301]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
 
-[node name="Mesh" type="MeshInstance3D" parent="Level/Ground" unique_id=422438392]
-mesh = SubResource("BoxMesh_jyhfs")
+[node name="Mesh" type="MeshInstance3D" parent="Level/Ground" unique_id=1212850966]
+mesh = SubResource("BoxMesh_tipki")
 
-[node name="Col" type="CollisionShape3D" parent="Level/Ground" unique_id=625004769]
-shape = SubResource("BoxShape3D_tbgi4")
+[node name="Col" type="CollisionShape3D" parent="Level/Ground" unique_id=1968147251]
+shape = SubResource("BoxShape3D_85g3d")
 
-[node name="Markers" type="Node3D" parent="." unique_id=732024299]
+[node name="Markers" type="Node3D" parent="." unique_id=1005895401]
 
-[node name="Spawn" type="Marker3D" parent="Markers" unique_id=1058732941]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+[node name="Spawn" type="Marker3D" parent="Markers" unique_id=329235317]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
 
-[node name="Shots" type="Node3D" parent="." unique_id=1735464544]
+[node name="Player" type="CharacterBody3D" parent="." unique_id=573497865 instance=ExtResource("1_0wfyh")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+collision_layer = 2
+floor_max_angle = 0.87266463
+floor_snap_length = 0.3
+script = ExtResource("2_sugp2")
 
-[node name="Shot_Overview" type="Marker3D" parent="Shots" unique_id=132769578]
+[node name="Shots" type="Node3D" parent="." unique_id=1875568494]
+
+[node name="Shot_Overview" type="Marker3D" parent="Shots" unique_id=854283643]
 transform = Transform3D(0.70710677, -0.30151135, 0.6396021, 0, 0.904534, 0.42640144, -0.70710677, -0.30151135, 0.6396021, 12, 8, 12)
+
+[node name="Shot_Character" type="Marker3D" parent="Shots" unique_id=534466932]
+transform = Transform3D(0.8240419, -0.08650668, 0.55988526, 0, 0.98827326, 0.15269598, -0.56652886, -0.1258279, 0.81437856, 2.2, 1.6, 3.2)
