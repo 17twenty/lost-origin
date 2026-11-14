@@ -85,11 +85,15 @@ static func _meshes() -> Dictionary:
 	var stem := ShaderMaterial.new()
 	stem.shader = load("res://shaders/vine.gdshader")
 	stem.set_shader_parameter("tint", Color(0.16, 0.32, 0.08))
+	stem.set_shader_parameter("hanging", true)
+	stem.set_shader_parameter("anchor_blend", 0.5)
 	var leaves := ShaderMaterial.new()
 	leaves.shader = stem.shader
 	leaves.set_shader_parameter("tex", LevelGarden._leaf_texture())
 	leaves.set_shader_parameter("tint", Color(0.95, 1.05, 0.9))
 	leaves.set_shader_parameter("alpha_cut", 0.45)
+	leaves.set_shader_parameter("hanging", true)
+	leaves.set_shader_parameter("anchor_blend", 0.5)
 	var src: Node = (load(GLB) as PackedScene).instantiate()
 	var out := {}
 	for mi: MeshInstance3D in src.find_children("*", "MeshInstance3D", true, false):

@@ -7,10 +7,13 @@ uniform sampler2D tex : source_color, filter_linear_mipmap, hint_default_white;
 uniform vec3 tint : source_color = vec3(1.0);
 uniform float alpha_cut = 0.0;
 uniform float sway = 0.16;
+uniform float anchor_blend = 0.0;   // see foliage.gdshader
+uniform bool hanging = false;
 
 void vertex() {
 	float ph = float(INSTANCE_ID) * 2.13;
-	float w = COLOR.r * COLOR.r;
+	float lock = anchor_blend > 0.0 ? smoothstep(0.0, anchor_blend, hanging ? -VERTEX.y : VERTEX.y) : 1.0;
+	float w = COLOR.r * COLOR.r * lock;
 	VERTEX.x += sin(TIME * 1.2 + ph) * sway * w;
 	VERTEX.z += cos(TIME * 0.9 + ph * 1.7) * sway * 0.6 * w;
 }

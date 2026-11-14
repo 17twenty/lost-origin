@@ -51,18 +51,22 @@ static func _load() -> void:
 	frond.shader = foliage
 	frond.set_shader_parameter("leaf_tex", _tex("frond", _frond_image()))
 	frond.set_shader_parameter("sway", 0.05)
+	frond.set_shader_parameter("anchor_blend", 0.3)
 	var broad := ShaderMaterial.new()
 	broad.shader = foliage
 	broad.set_shader_parameter("leaf_tex", _tex("broad", _broad_image()))
 	broad.set_shader_parameter("sway", 0.05)
+	broad.set_shader_parameter("anchor_blend", 0.3)
 	var grass := ShaderMaterial.new()
 	grass.shader = foliage
 	grass.set_shader_parameter("leaf_tex", _tex("grass", _grass_image()))
 	grass.set_shader_parameter("sway", 0.04)
+	grass.set_shader_parameter("anchor_blend", 0.15)
 	var trunk := ShaderMaterial.new()
 	trunk.shader = load("res://shaders/vine.gdshader")
 	trunk.set_shader_parameter("tint", Color(0.45, 0.36, 0.25))
 	trunk.set_shader_parameter("sway", 0.03)
+	trunk.set_shader_parameter("anchor_blend", 1.5)
 	_mats = {"Trunk": trunk, "Frond": frond, "Broad": broad, "Grass": grass}
 	var root: Node = (load(GLB) as PackedScene).instantiate()
 	for mi: MeshInstance3D in root.find_children("*", "MeshInstance3D", true, false):

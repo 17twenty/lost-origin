@@ -631,6 +631,18 @@ make_action("summon", 90, {
 })
 
 # ------------------------------------------------------------------- export
+
+def _activate_colors(objs):
+    """The glTF exporter only writes the *active* colour attribute; bmesh layers aren't active by default."""
+    for o in objs:
+        if o.type != "MESH":
+            continue
+        ca = o.data.color_attributes
+        if "Col" in ca:
+            ca.active_color_name = "Col"
+            ca.render_color_index = ca.find("Col")
+
+_activate_colors([body])
 os.makedirs(os.path.dirname(OUT_GLB), exist_ok=True)
 os.makedirs(os.path.dirname(OUT_BLEND), exist_ok=True)
 for o in scene.objects:

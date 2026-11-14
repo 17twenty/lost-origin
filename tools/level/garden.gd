@@ -214,6 +214,7 @@ static func _tree(parent: Node3D, pos: Vector3, s: float) -> void:
 	var leaves := ShaderMaterial.new()
 	leaves.shader = load("res://shaders/foliage.gdshader")
 	leaves.set_shader_parameter("leaf_tex", _leaf_texture())
+	leaves.set_shader_parameter("anchor_blend", 3.0)
 	for i in mesh.get_surface_count():
 		var m := mesh.surface_get_material(i)
 		mesh.surface_set_material(i, leaves if m and m.resource_name == "Leaves" else bark)
