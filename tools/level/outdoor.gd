@@ -356,7 +356,8 @@ static func _pad(parent: Node3D, name: String, pos: Vector3) -> Node3D:
 	light.light_energy = 2.0
 	light.light_color = Color(0.3, 0.9, 1.0)
 	pad.add_child(light)
-	SceneUtil.marker(pad, "Arrival", Vector3(0, 0.25, 2.6))
+	var arrival := SceneUtil.marker(pad, "Arrival", Vector3(0, 0.25, 2.6))
+	arrival.rotation.y = PI  # face away from the pad
 	return pad
 
 static func _fall(parent: Node3D, name: String, top: Vector3, bottom: Vector3, width: float) -> MeshInstance3D:
@@ -504,7 +505,8 @@ static func _bounds(out: Node3D) -> void:
 	for w in [
 		[Vector3(120, 30, 1), Vector3(0, 10, 30)],     # lagoon (knee-deep limit)
 		[Vector3(1, 80, 170), Vector3(-52, 20, -15)],
-		[Vector3(1, 80, 170), Vector3(52, 20, -15)],
+		[Vector3(1, 80, 108), Vector3(52, 20, -8)],      # east, outdoor stretch
+		[Vector3(1, 60, 40), Vector3(52, 40, -81)],      # east above the buried facility
 		[Vector3(120, 80, 1), Vector3(0, 20, -99)],
 	]:
 		var body := StaticBody3D.new()

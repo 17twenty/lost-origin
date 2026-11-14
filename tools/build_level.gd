@@ -13,6 +13,7 @@ func _initialize() -> void:
 	var shots := SceneUtil.add(root, Node3D.new(), "Shots")
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://scenes/generated"))
 	LevelOutdoor.build(level, markers, shots)
+	LevelFacility.build(level, markers, shots)
 	var spawn_pos := LevelOutdoor.ground(0, 10, 0.05)
 	SceneUtil.marker(markers, "Spawn", spawn_pos)
 	var player: Node3D = (load("res://scenes/player.tscn") as PackedScene).instantiate()
