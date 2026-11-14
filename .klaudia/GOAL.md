@@ -210,7 +210,7 @@ All tests report PASS (exit code 0), there are at least 6 screenshots, there are
 - **Aqueduct:** round moss-stained piers (`_csg_cyl`, `pier_mat` applied to the whole aqueduct) with 6 vines per pier (`vines.gd`); turquoise inlet (shallow/deep colours, sparkle 0.55); `Shot_Ref_Aqueduct` on the sunlit west side.
 - **Atrium:** the column glow is tamed (soft cap trims, light 2.2, `water_column` end fade).
 - **Control room:** curved 6-panel `GlassBay` (`_glass_bay`, `BAY_R` 5.3; panels `Panorama0..5` collide; walkable bay floor). The shell cut now reaches floor level (a 0.2 m kerb had blocked walking); `OceanEast` moved to x 90; metal facility pad; `Shot_Ref_Control` moved closer. The test now checks the bay walk and ≥ 5 panes.
-- **Status:** 45/45 tests; NOTES.md updated.
+- **Status:** 45/45 tests; NOTES.md updated. Fixed a flaky secondary-motion test (spring gain 0.02 → 0.03 and a hard stop in the test; 3/3 stable runs).
 
 **Single best next step:** Phase 13b part 3, finishing the quality gaps:
 1. Run `compare_shots.sh` and fix the 2–3 worst remaining offenders. Candidates: grotto pool hidden behind the pad in `Shot_Ref_Grotto`; aqueduct arch openings reading dark; lagoon beach too wide/flat versus f05.

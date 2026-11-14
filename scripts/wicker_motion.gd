@@ -48,7 +48,7 @@ func _step(delta: float) -> void:
 	var basis := sk.global_transform.basis.orthonormalized()
 	var a_local := basis.inverse() * acc
 	# Spring: straw is pushed opposite to the head's acceleration, gravity-ish bias.
-	var target := Vector2(clampf(a_local.z * 0.02 - a_local.y * 0.01, -max_angle, max_angle), clampf(-a_local.x * 0.02, -max_angle, max_angle))
+	var target := Vector2(clampf(a_local.z * 0.03 - a_local.y * 0.015, -max_angle, max_angle), clampf(-a_local.x * 0.03, -max_angle, max_angle))
 	var force := (target - _offset) * stiffness - _offset_vel * damping
 	_offset_vel += force * delta
 	_offset += _offset_vel * delta

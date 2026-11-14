@@ -131,7 +131,10 @@ func test_secondary_motion_and_body_language() -> void:
 	Input.action_press("sprint")
 	var max_spring := 0.0
 	var max_lean := 0.0
-	for i in 40:
+	for i in 70:
+		if i == 45:
+			Input.action_release("move_forward")  # hard stop: straw swings forward
+			Input.action_release("sprint")
 		await tree.physics_frame
 		max_spring = maxf(max_spring, absf(player.motion.spring.x) + absf(player.motion.spring.y))
 		max_lean = maxf(max_lean, player.model.rotation.x)
