@@ -37,6 +37,12 @@ var _air_time := 0.0
 var _land_left := 0.0
 ## Set while in deep water (Phase 14 drives this).
 var swimming := false
+## Locked during cutscenes (summoning intro, secret reveal): movement/look input ignored.
+var input_locked := false
+## Weave-in materials (per-instance copies so weave_progress is ours alone).
+var weave_mats: Array[ShaderMaterial] = []
+var weave := 1.0
+var _weave_tween: Tween
 var motion: WickerMotion
 ## Body language: lean into acceleration/turns, squash on landing.
 var _lean := Vector2.ZERO
@@ -53,6 +59,13 @@ var look_input := Vector2.ZERO
 
 func _ready() -> void:
 	WickerSkin.apply(model)
+	for mi: MeshInstance3D in model.find_children("*", "MeshInstance3D", true, false):
+		for i in mi.mesh.get_surface_count():
+			var m := mi.get_surface_override_material(i)
+			if m is ShaderMaterial:
+				var d: ShaderMaterial = m.duplicate()
+				mi.set_surface_override_material(i, d)
+				weave_mats.append(d)
 	var sks := model.find_children("*", "Skeleton3D", true, false)
 	if sks.size() > 0:
 		motion = WickerMotion.new()
@@ -69,6 +82,8 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if input_locked:
+		return
 	if event is InputEventMouseButton and event.pressed:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	elif event.is_action_pressed("ui_release_mouse"):
@@ -79,11 +94,11 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _physics_process(delta: float) -> void:
 	_apply_look()
-	var input := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
+	var input := Vector2.ZERO if input_locked else Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 	var dir := (cam_yaw.global_basis * Vector3(input.x, 0.0, input.y))
 	dir.y = 0.0
 	dir = dir.normalized() * min(input.length(), 1.0)
-	sprinting = Input.is_action_pressed("sprint") and input.y < -0.3 and is_on_floor()
+	sprinting = not input_locked and Input.is_action_pressed("sprint") and input.y < -0.3 and is_on_floor()
 
 	var on_floor := is_on_floor()
 	var speed := sprint_speed if sprinting else run_speed
@@ -97,7 +112,7 @@ func _physics_process(delta: float) -> void:
 	hvel = hvel.move_toward(target, rate * delta)
 
 	# Jump: buffered press + coyote time so edges feel fair.
-	var held := Input.is_action_pressed("jump")
+	var held := Input.is_action_pressed("jump") and not input_locked
 	if held and not _jump_was_held:
 		_jump_buffer = JUMP_BUFFER
 	_jump_was_held = held
@@ -130,6 +145,9 @@ func _physics_process(delta: float) -> void:
 
 
 func _apply_look() -> void:
+	if input_locked:
+		look_input = Vector2.ZERO
+		return
 	if look_input == Vector2.ZERO:
 		return
 	cam_yaw.rotation.y -= look_input.x
@@ -218,3 +236,21 @@ func warp_to(xform: Transform3D) -> void:
 	cam_yaw.rotation.y = atan2(-fwd.x, -fwd.z)
 	model.rotation.y = atan2(fwd.x, fwd.z)
 	reset_physics_interpolation()
+	if not input_locked:
+		reweave(0.9)
+
+
+## Weave-in progress for the summoning shader (0 = unwoven, 1 = whole).
+func set_weave(p: float) -> void:
+	weave = p
+	for m in weave_mats:
+		m.set_shader_parameter("weave_progress", p)
+
+
+## Quick re-weave (respawn / teleport arrival).
+func reweave(duration := 0.9) -> void:
+	if _weave_tween and _weave_tween.is_valid():
+		_weave_tween.kill()
+	set_weave(0.0)
+	_weave_tween = create_tween()
+	_weave_tween.tween_method(set_weave, 0.0, 1.0, duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)

@@ -13,6 +13,7 @@ func _run() -> void:
 	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
 	DisplayServer.window_set_size(Vector2i(1280, 720))
 	root.size = Vector2i(1280, 720)
+	Engine.set_meta("skip_intro", true)
 	var scene: Node3D = load("res://scenes/main.tscn").instantiate()
 	root.add_child(scene)
 	await process_frame

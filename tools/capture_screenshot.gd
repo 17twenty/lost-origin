@@ -14,6 +14,7 @@ func _run() -> void:
 	var only := ""
 	if OS.get_cmdline_user_args().size() > 0:
 		only = OS.get_cmdline_user_args()[0]
+	Engine.set_meta("skip_intro", true)
 	var scene: Node3D = load("res://scenes/main.tscn").instantiate()
 	root.add_child(scene)
 	await process_frame
@@ -37,6 +38,7 @@ func _run() -> void:
 			player.visible = not m.get_meta("hide_player", false)
 			if m.has_meta("player_pos"):
 				player.global_position = m.get_meta("player_pos")
+			player.set_weave(m.get_meta("weave", 1.0))
 		for i in 40:
 			await process_frame
 		await RenderingServer.frame_post_draw  # grab a frame drawn with this camera

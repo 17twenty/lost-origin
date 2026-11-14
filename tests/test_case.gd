@@ -16,7 +16,8 @@ func teardown() -> void:
 		scene.queue_free()
 		await tree.process_frame
 
-func load_main() -> Node:
+func load_main(with_intro := false) -> Node:
+	Engine.set_meta("skip_intro", not with_intro)
 	scene = load("res://scenes/main.tscn").instantiate()
 	tree.root.add_child(scene)
 	await physics_frames(2)

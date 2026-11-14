@@ -20,10 +20,18 @@ func _initialize() -> void:
 	LevelReferenceShots.build(shots)
 	var spawn_pos := LevelOutdoor.ground(0, 10, 0.05)
 	SceneUtil.marker(markers, "Spawn", spawn_pos)
+	LevelOutdoor.summoning_ring(level.get_node("Outdoor"), spawn_pos)
 	var player: Node3D = (load("res://scenes/player.tscn") as PackedScene).instantiate()
 	player.name = "Player"
 	root.add_child(player)
 	player.position = spawn_pos
+	var intro := Node.new()
+	intro.name = "SummonIntro"
+	intro.set_script(load("res://scripts/summon_intro.gd"))
+	root.add_child(intro)
+	var sm := SceneUtil.marker(shots, "Shot_Summon", spawn_pos + Vector3(3.2, 2.0, 4.2), spawn_pos + Vector3(0, 1.0, 0))
+	sm.set_meta("player_pos", spawn_pos)
+	sm.set_meta("weave", 0.55)
 	var ch := SceneUtil.marker(shots, "Shot_Character", spawn_pos + Vector3(2.2, 1.6, 3.2), spawn_pos + Vector3(0, 1.0, 0))
 	ch.set_meta("player_pos", spawn_pos)
 	# Turnaround of the player character (compare with wicker-inspo/turn-around-final.png).

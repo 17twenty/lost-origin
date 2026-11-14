@@ -227,7 +227,7 @@ static func _bridge(out: Node3D) -> void:
 	_csg_box(aq, Vector3(1.2, 1.4, 1.8), Vector3(2.6, top - 0.2, -19.0), CSGShape3D.OPERATION_SUBTRACTION)
 	# The whole aqueduct wears the moss-stained stone (video f14-16).
 	for child in aq.get_children():
-		if child is CSGShape3D and (child as CSGShape3D).get("material") == stone_mat:
+		if child is CSGShape3D and not (child is CSGPolygon3D) and (child as CSGShape3D).get("material") == stone_mat:  # ramps keep worn stone
 			child.set("material", pier_mat)
 	# Fallen chunks standing in the shallows.
 	var rubble := SceneUtil.add(out, Node3D.new(), "BridgeRubble")
@@ -245,10 +245,14 @@ static func _totem_mesh() -> Mesh:
 	var src: Node = (load(TOTEM_GLB) as PackedScene).instantiate()
 	var mi: MeshInstance3D = src.find_children("*", "MeshInstance3D", true, false)[0]
 	var mesh: ArrayMesh = mi.mesh.duplicate()
+	# Own glow material saved as a resource: the summoning intro flares every totem's eyes through it.
+	var tg: StandardMaterial3D = glow_mat.duplicate()
+	ResourceSaver.save(tg, GEN + "/totem_glow.tres")
+	tg = load(GEN + "/totem_glow.tres")
 	for i in mesh.get_surface_count():
 		var m := mesh.surface_get_material(i)
 		if m and m.resource_name == "Glow":
-			mesh.surface_set_material(i, glow_mat)
+			mesh.surface_set_material(i, tg)
 		else:
 			mesh.surface_set_material(i, stone_mat)
 	src.free()
@@ -716,6 +720,60 @@ static func _mist(parent: Node3D, name: String, pos: Vector3, width: float) -> G
 	p.draw_pass_1 = q
 	parent.add_child(p)
 	return p
+
+## Summoning ring at the spawn: low mossy stone circle, a few standing stones
+## (none to the north, so the path to the aqueduct stays clear) and glowing glyphs.
+static func summoning_ring(out: Node3D, centre: Vector3) -> void:
+	var g := SceneUtil.add(out, Node3D.new(), "SummoningRing")
+	g.position = centre - Vector3(0, 0.05, 0)
+	var ring := MeshInstance3D.new()
+	ring.name = "Stones"
+	var tm := TorusMesh.new()
+	tm.inner_radius = 2.55
+	tm.outer_radius = 3.05
+	tm.rings = 40
+	tm.ring_segments = 6
+	tm.material = stone_mat
+	ring.mesh = tm
+	ring.scale = Vector3(1, 0.25, 1)
+	ring.position.y = 0.02
+	g.add_child(ring)
+	# Dark slate floor inside the ring so the glyphs read against the bright sand.
+	var slate := MeshInstance3D.new()
+	slate.name = "Slate"
+	var sc := CylinderMesh.new()
+	sc.top_radius = 2.75
+	sc.bottom_radius = 2.85
+	sc.height = 0.08
+	sc.radial_segments = 32
+	sc.material = SceneUtil.mat(Color(0.2, 0.22, 0.24), 0.9)
+	slate.mesh = sc
+	slate.position.y = 0.02
+	g.add_child(slate)
+	var glyphs := MeshInstance3D.new()
+	glyphs.name = "Glyphs"
+	var pm := PlaneMesh.new()
+	pm.size = Vector2(6.0, 6.0)
+	var gm := ShaderMaterial.new()
+	gm.shader = load("res://shaders/summon_glyph.gdshader")
+	pm.material = gm
+	glyphs.mesh = pm
+	glyphs.position.y = 0.075
+	glyphs.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	g.add_child(glyphs)
+	for k in 5:
+		var ang := deg_to_rad(20.0 + k * 35.0)  # southern arc only (+Z), path north stays open
+		var p := Vector3(cos(ang), 0, sin(ang)) * 3.9
+		var st := SceneUtil.box_body(Vector3(0.5, 1.4 + 0.3 * (k % 2), 0.4), p + Vector3(0, 0.6, 0), stone_mat, "Menhir%d" % k)
+		st.rotation = Vector3(rng.randf_range(-0.08, 0.08), -ang, rng.randf_range(-0.08, 0.08))
+		g.add_child(st)
+	var l := OmniLight3D.new()
+	l.name = "RingLight"
+	l.position.y = 0.8
+	l.light_color = Color(1.0, 0.6, 0.25)
+	l.light_energy = 1.2
+	l.omni_range = 6.0
+	g.add_child(l)
 
 static func _birds(out: Node3D) -> void:
 	for f in [[Vector3(26, 0, 32), 9, 5], [Vector3(-20, 0, -10), 6, 11]]:

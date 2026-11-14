@@ -41,7 +41,7 @@ Build a small playable Godot 4.7 (`/Applications/Godot.app`) proof of concept ba
   - (h) Settings in one place (`scripts/camera_settings.gd` or exported vars): auto-recenter on/off, sensitivity, invert-Y.
   - An on-screen controls hint (toggled with **F1**) lists keyboard and mouse controls.
   - Tests cover: camera height stays within 0.15 m during a normal jump; the arrow keys rotate the camera; recenter doesn't kick in before the delay, then brings the yaw behind the motion within about 1.5 s; no recenter while backpedalling toward the camera; the arm length eases back (not instant) after leaving a doorway; zone hints change the arm length; and the whole beach→atrium route test passes with movement input only (no camera input), relying on auto-recenter.
-- [ ] **Start page and menus:** a title scene (`scenes/title.tscn`, the project's main scene) shows a "LOST ORIGIN" logo over a live, slow camera fly-through of the level (e.g. the lagoon and totems), with buttons **Start**, **Controls**, **Settings** and (desktop only) **Quit**. It is fully keyboard-navigable (arrows/WASD + Enter/Space, with a visible focus state) and works with the mouse too. On web, the first click or keypress also satisfies the browser's user-gesture rule for audio and pointer lock. **Controls** shows the keyboard and mouse bindings. **Settings** covers auto-recenter on/off, camera sensitivity, invert-Y and a quality preset (Low/Medium/High), and persists to `user://settings.cfg`. In-game, **Esc** opens a pause menu (Resume, Controls, Settings, Quit to title) that pauses the tree; mouse capture is released while it's open and recaptured on resume. A short fade transition plays from title to level. Tests cover: the title scene loads with Start focused; pressing Enter loads the level with the player spawned; Esc pauses and unpauses the tree; Quit to title returns to the title scene; and settings round-trip through the config file.
+- [ ] **Start page and menus:** a title scene (`scenes/title.tscn`, the project's main scene) shows a "LOST ORIGIN" logo over a live, slow camera fly-through of the level (e.g. the lagoon and totems), with buttons **Start**, **Controls**, **Settings** and (desktop only) **Quit**. It is fully keyboard-navigable (arrows/WASD + Enter/Space, with a visible focus state) and works with the mouse too. On web, the first click or keypress also satisfies the browser's user-gesture rule for audio and pointer lock. **Controls** shows the keyboard and mouse bindings. **Settings** covers auto-recenter on/off, camera sensitivity, invert-Y, **skip summoning intro** (sets Engine meta `skip_intro`; carried over from the summoning criterion) and a quality preset (Low/Medium/High), and persists to `user://settings.cfg`. In-game, **Esc** opens a pause menu (Resume, Controls, Settings, Quit to title) that pauses the tree; mouse capture is released while it's open and recaptured on resume. A short fade transition plays from title to level. Tests cover: the title scene loads with Start focused; pressing Enter loads the level with the player spawned; Esc pauses and unpauses the tree; Quit to title returns to the title scene; and settings round-trip through the config file.
 - [ ] **Web export:**
   - A committed `export_presets.cfg` has a **Web** preset that exports to `build/web/` (gitignored), using `index.html`, a custom HTML shell with a themed loading screen and progress bar, and the canvas resizing to the window.
   - The web build uses the **Compatibility** renderer (`rendering/renderer/rendering_method.web="gl_compatibility"`) while desktop keeps Forward+.
@@ -123,7 +123,7 @@ Build a small playable Godot 4.7 (`/Applications/Godot.app`) proof of concept ba
     - Set the colour attribute active and as the render colour in `build_plants.py`, `build_tree.py`, `build_vines.py` and `build_wicker.py`, then rebuild.
     - Make the shaders robust: also gate sway by a height/attachment falloff, so a missing colour channel can never move a base.
   - **Tests:** an automated test asserts the sway-weight channel is ~0 at the base/root vertices and > 0.5 at the tips of each plant mesh. Visually check in a running game that trunks stay put.
-- [ ] **Summoning intro ("weave-in"):** on starting a new game, the player appears inside a **summoning ring** among the beach totems, whose eyes flare. The ring is new: a stone circle with glowing glyphs at the spawn.
+- [x] **Summoning intro ("weave-in"):** on starting a new game, the player appears inside a **summoning ring** among the beach totems, whose eyes flare. The ring is new: a stone circle with glowing glyphs at the spawn.
   - **Weave-in:** over about 4–6 s, the Wicker Man weaves into existence. `wicker.gdshader` has a `weave_progress` uniform (0→1) that reveals strands in a woven order: per-vertex order data (e.g. a UV2 channel baked in Blender from feet to head with spiralling per-limb offsets) drives a dissolve with a glowing ember/cyan edge. Fibre particles spiral in toward the body, the `summon` clip plays, and the camera does a slow orbit and push-in.
   - **Handover:** the camera then blends to the gameplay camera and control unlocks. Input is locked during the intro, and any key skips it, as does a setting.
   - **Lore card:** a short fade-in during or after the intro, 2–3 lines setting up "summoned protector, high-tech infestation". The same lore is reachable from the start page.
@@ -162,7 +162,7 @@ All tests report PASS (exit code 0), there are at least 6 screenshots, there are
 - [x] Phase 10 — Outdoor fidelity: hanging vines and moss, aqueduct in the shallows, open-air grotto with stepped pad, lagoon glints, birds
 - [x] Phase 11 — Asset fidelity pass: own leaf-card vegetation replacing Kenney plants, totem remodel, rocks and cliffs, water bodies, facility kit (arch frames, panels, consoles, grates), per-family before/after notes
 - [x] Phase 12 — Wicker Man model: Blender body + woven plates + hair/beard cards + original woven face, humanoid rig, `wicker.gdshader` procedural weave, replaces Wayfinder, all tests green
-- [ ] Phase 13 — Wicker Man animation & summoning: full clip set, AnimationTree update, summoning ring at spawn, weave-in intro (weave_progress + fibre particles + camera), lore card, skip, re-weave on respawn/teleport, tests
+- [x] Phase 13 — Wicker Man animation & summoning: full clip set, AnimationTree update, summoning ring at spawn, weave-in intro (weave_progress + fibre particles + camera), lore card, skip, re-weave on respawn/teleport, tests
 - [x] Phase 13b — Quality-gap pass: Wicker Man anatomy/head/mane/boots + weave/straw/foliage shader wins, animation secondary motion (hair spring, lean, breathing, landing squash), round mossy aqueduct piers, atrium glow, curved control glass, before/after notes
 - [x] Phase 13c — Foliage sway fix: vertex-colour export in all Blender scripts, robust height falloff in sway shaders, test the base stays still
 - [ ] Phase 14 — Water and swimming: Area3D water volumes, wading slowdown and splashes, swimming with buoyancy and a swim clip, climb-out banks, chasm → wadeable inlet, remove ChasmKill, tests
@@ -232,22 +232,26 @@ All tests report PASS (exit code 0), there are at least 6 screenshots, there are
 - **Caveat:** verified by data + test, not by watching a running game; the user should eyeball it.
 - **Gotcha:** a GDScript runtime error inside a test function aborts the function silently and the runner still prints PASS (it happened here with a null mesh). Guard loads with `check(...)` first; a future improvement is to have the runner fail on any SCRIPT ERROR in the log.
 
-**Single best next step:** Phase 13 part 2, the **summoning intro**:
-1. **Summoning ring:** in `outdoor.gd` at the spawn (0, h, 10): a stone circle (CSG torus/cylinder ring, mossy stone) + a glowing glyph disc (emissive shader with rotating runes) + a light.
-2. **Totem eye flare:** totems get a shared `Glow` material with an `energy` parameter animated by the intro (glow_mat → a dedicated `totem_glow` material saved as a resource so the intro can tween `emission_energy_multiplier`).
-3. **`scripts/summon_intro.gd`** (child of Main):
-   - Before the first frame, duplicates the player's wicker/straw materials (so `weave_progress` is per-instance) and sets progress to 0; sets `player.input_locked = true` (add it to `player.gd` and honour it in `_physics_process` and input).
-   - Plays `play_oneshot("summon")` with the AnimationTree time-scaled to fit; spawns fibre GPUParticles spiralling inward (attractor-free: a ring emitter with orbit velocity + negative radial accel).
-   - Tweens progress 0 → 1 over about 5 s while an intro Camera3D orbits/pushes in, then blends to the player camera (tween its transform to the player camera, then `make_current`).
-   - Fades in a lore card (CanvasLayer Label, 2–3 lines: *"The old stones called, and something answered. Woven from the island itself, its last guardian wakes — to find the deep places humming with a light that is not its own."*).
-   - Any key/click skips: progress = 1, camera to the player, unlock. `player.warp_to` triggers a short 1 s re-weave (respawn/teleport).
-4. **Test hook:** `TestCase.load_main()` should set `Main` meta `skip_intro` or the intro autoskips under `--headless` tests unless a test enables it.
-5. **Tests:**
-   - progress 0 → 1 within 7 s;
-   - input ignored during the intro;
-   - a skip key ends it and unlocks;
-   - a respawn re-weave dips progress then returns to 1.
-6. `Shot_Summon` mid-weave.
+**Phase 13 part 2 (done): summoning intro.**
+- **Summoning ring:** `LevelOutdoor.summoning_ring()` at the spawn: torus stones, dark slate floor, `summon_glyph.gdshader` glyph disc (`power` uniform), 5 menhirs on the southern arc only, and a warm light.
+- **Totem eyes:** totems share `scenes/generated/totem_glow.tres` so their eyes flare.
+- **`scripts/summon_intro.gd`** (`Main/SummonIntro`):
+  - States idle → playing → handing → done.
+  - Weave progress 0 → 1 over 4.5 s, with an orbit/push-in camera and fibre particles parented to the player.
+  - The `summon` one-shot plays, and the lore card fades in.
+  - At about 5.5 s the camera tweens to the player's camera and hands control back; any key/click/joypad press skips.
+  - Skipped when Engine meta `skip_intro` is set: `TestCase.load_main(with_intro := false)`, the capture tool and the benchmark all set it.
+- **`player.gd`:** `input_locked` (movement/look/jump/sprint ignored), per-instance `weave_mats`, `set_weave()`, `reweave()` (0.9 s, triggered by `warp_to`, so respawn and teleport re-weave).
+- **Capture:** the tool honours marker meta `weave`; `Shot_Summon` shows the legs woven with the ember edge.
+- **Aqueduct ramps:** they keep worn stone (they were full-moss green).
+- **Tests:** `tests/test_summon.gd` (5 tests); 54/54, no SCRIPT/SHADER errors in the log.
+- **Left open:** the "skip intro" *setting* lives in the Settings menu (Phase 17, now listed in that criterion).
+
+**Single best next step:** Phase 14, **water and swimming**:
+1. `scripts/water_volume.gd` Area3D (group `water`, `surface_y`) for the inlet, lagoon shallows, plunge pool, grotto pool and garden/corridor pools, created in the generators.
+2. `player.gd` `water_state` (none/wade/swim) from the overlap and depth (`surface_y - feet_y` > 1.4 → swim): wading slows to 70% with splash particles at the waterline; swimming adds buoyancy to hold the head above the surface, swim speed 3.0, Space kicks up, `swimming = true` → swim clip, and the model pitches forward.
+3. Climb out where the bank is walkable; the inlet's deep channel is -2.3 (1.95 m water), so add a test-friendly deeper hole or use the plunge pool (-1.4 floor, water -0.1 → 1.3 m wade). Consider deepening the inlet middle to about -3.2 so swimming actually happens there.
+4. Tests per the criterion.
 
 ### Notes (resume here)
 - **Phase 1 (done):** `project.godot` (Forward+, autoload `InputSetup` registers WASD/Space/Shift/E/Esc in code). `tools/build_level.gd` → `scenes/main.tscn` (helpers `tools/scene_util.gd`: `box_body`, `mat`, `marker`, `save`). Conventions: `Main/Markers/Spawn`, `Main/Player`, `Main/Shots/Shot_*` markers (optional meta `player_pos`) → `tools/capture_screenshot.gd` writes `art/screens/<snake>.png` (non-headless; PNGs gitignored; `-- Shot_Name` for one). Tests: `tests/test_*.gd` extend `TestCase` (`load_main`, `seconds`, `physics_frames`, `ground_below`, `check`); filter `-- <substr>`. `./tools/validate.sh` = import → build_player → build_level → import → tests (`SHOTS=1` capture, `REBUILD_ASSETS=1` reruns Blender).
