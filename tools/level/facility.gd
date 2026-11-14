@@ -185,38 +185,7 @@ static func _pool(parent: Node3D, pos: Vector3) -> void:
 	_light(p, Vector3(0, 0.9, 0), Color(0.2, 0.85, 1.0), 1.5, 4.0)
 
 static func _ocean(parent: Node3D, name: String, pos: Vector3, size: Vector3) -> void:
-	var o := Node3D.new()
-	o.name = name
-	parent.add_child(o)
-	var mi := MeshInstance3D.new()
-	mi.name = "Backdrop"
-	var bm := BoxMesh.new()
-	bm.size = size
-	var m := ShaderMaterial.new()
-	m.shader = load("res://shaders/underwater.gdshader")
-	m.set_shader_parameter("noise_tex", O.noise_tex)
-	m.set_shader_parameter("top_y", pos.y + size.y * 0.5)
-	m.set_shader_parameter("bottom_y", pos.y - size.y * 0.5)
-	bm.material = m
-	mi.mesh = bm
-	mi.position = pos
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	o.add_child(mi)
-	# Sea floor with rocks and weed, lit cold blue.
-	var floor_y := F - 1.5
-	var sand := MeshInstance3D.new()
-	var pm := PlaneMesh.new()
-	pm.size = Vector2(size.x, size.z)
-	pm.material = SceneUtil.mat(Color(0.25, 0.45, 0.5), 1.0)
-	sand.mesh = pm
-	sand.position = Vector3(pos.x, floor_y, pos.z)
-	o.add_child(sand)
-	for i in int(size.z):
-		var rp := Vector3(pos.x + O.rng.randf_range(-size.x * 0.45, size.x * 0.45), floor_y, pos.z + O.rng.randf_range(-size.z * 0.45, size.z * 0.45))
-		O._kenney(o, ["rock_tallA", "rock_tallC", "rock_largeB", "plant_flatTall", "grass_leafsLarge"][O.rng.randi() % 5], rp, O.rng.randf_range(3, 7), false)
-	O._fog_volume(o, "WaterHaze", size - Vector3(0.5, 0.5, 0.5), pos, 0.06, Color(0.2, 0.6, 0.9))
-	var l := _light(o, Vector3(pos.x, pos.y + 4, pos.z), Color(0.3, 0.7, 1.0), 2.5, 30.0)
-	l.shadow_enabled = false
+	LevelOcean.build(parent, name, pos, size, {"floor_y": F + 0.5, "fish": 2, "kelp": int(size.x * 1.2), "coral": int(size.x * 0.5), "rocks": int(size.z * 0.4)})
 
 # ---------------------------------------------------------------------- atrium
 static func _atrium(fac: Node3D) -> void:
@@ -320,6 +289,18 @@ static func _atrium(fac: Node3D) -> void:
 	_oct(caps, 3.0, 0.8, Vector3(0, h - 0.4, 0), metal)
 	_oct(caps, 3.1, 0.08, Vector3(0, 0.52, 0), trim)
 	_oct(caps, 3.1, 0.08, Vector3(0, h - 0.82, 0), trim)
+	var fs := MultiMeshInstance3D.new()
+	fs.name = "ColumnFish"
+	fs.set_script(load("res://scripts/fish_school.gd"))
+	fs.position = Vector3(0, (h - 1.0) * 0.5 + 0.5, 0)
+	fs.set("count", 14)
+	fs.set("ring_radius", 1.3)
+	fs.set("extents", Vector3(1.4, 3.5, 1.4))
+	fs.set("fish_length", 0.42)
+	fs.set("spread", 0.6)
+	fs.set("speed", 0.08)
+	fs.set("colors", PackedColorArray([Color(1.0, 0.8, 0.2), Color(1.0, 0.5, 0.15)]))
+	col.add_child(fs)
 	var cl := _light(col, Vector3(0, 4, 0), Color(0.2, 0.8, 1.0), 4.0, 14.0)
 	cl.shadow_enabled = false
 	_light(a, ATRIUM + Vector3(0, h - 1.5, 0), Color(0.85, 0.95, 1.0), 2.0, 18.0)
@@ -344,37 +325,44 @@ static func _control(fac: Node3D) -> void:
 	for z in [-84.05, -91.95]:
 		_strip(r, Vector3(x1 - x0, 0.06, 0.08), Vector3(xc, RING_Y + 0.05, z))
 		_strip(r, Vector3(x1 - x0, 0.06, 0.08), Vector3(xc, RING_Y + 5.9, z))
-	# Consoles along both walls, facing the room centre.
+	# Full-width glass panorama on the east wall onto the open ocean (video f20-23).
+	_box(shell, Vector3(1.4, 5.2, 7.6), Vector3(x1, RING_Y + 2.9, -88), metal, CSGShape3D.OPERATION_SUBTRACTION)
+	r.add_child(SceneUtil.box_body(Vector3(0.08, 5.2, 7.6), Vector3(x1 + 0.1, RING_Y + 2.9, -88), glass, "Panorama"))
+	for y in [RING_Y + 0.3, RING_Y + 5.5]:
+		_strip(r, Vector3(0.15, 0.1, 7.8), Vector3(x1 + 0.05, y, -88))
+	for z in [-91.85, -84.15]:
+		_strip(r, Vector3(0.15, 5.3, 0.1), Vector3(x1 + 0.05, RING_Y + 2.9, z))
+	LevelOcean.build(r, "OceanEast", Vector3(87.5, RING_Y + 3.0, -88), Vector3(26, 16, 34), {"floor_y": RING_Y - 0.3, "fish": 3, "kelp": 40, "coral": 24, "rocks": 10})
+	# Row of consoles facing the room, glass beyond (operators' view).
 	var i := 0
-	for cx in [63.5, 67.0]:
-		for side in [-1.0, 1.0]:
-			_console(r, Vector3(cx, RING_Y, -88 + side * 3.0), side, i)
-			i += 1
-	# Teleporter pad at the far end; arrival point faces back into the room.
-	var pad := O._pad(r, "TeleporterFacility", Vector3(71.2, RING_Y, -88))
+	for cz in [-90.6, -88.0, -85.4]:
+		_console(r, Vector3(71.4, RING_Y, cz), -PI / 2.0, i)
+		i += 1
+	# Teleporter pad in the middle of the room; arrival point faces back west.
+	var pad := O._pad(r, "TeleporterFacility", Vector3(66.8, RING_Y, -88))
 	pad.rotation.y = -PI / 2.0
 	pad.set_meta("zone", "facility")
-	# Big holo display above the pad.
+	# Small holo display on the north wall.
 	var disp := MeshInstance3D.new()
 	disp.name = "HoloDisplay"
 	var q := QuadMesh.new()
-	q.size = Vector2(6.0, 2.6)
+	q.size = Vector2(4.0, 1.8)
 	var sm := ShaderMaterial.new()
 	sm.shader = load("res://shaders/holo_screen.gdshader")
 	sm.set_shader_parameter("seed", 3.0)
 	q.material = sm
 	disp.mesh = q
-	disp.position = Vector3(x1 - 0.15, RING_Y + 3.6, -88)
-	disp.rotation.y = -PI / 2.0
+	disp.position = Vector3(66.8, RING_Y + 3.4, -84.1)
+	disp.rotation.y = PI
 	r.add_child(disp)
-	_light(r, Vector3(xc, RING_Y + 5.0, -88), Color(0.8, 0.92, 1.0), 1.6, 12.0)
-	_light(r, Vector3(x1 - 1.5, RING_Y + 3.0, -88), Color(0.3, 0.9, 1.0), 2.0, 8.0)
+	_light(r, Vector3(xc, RING_Y + 5.0, -88), Color(0.8, 0.92, 1.0), 1.4, 12.0)
+	_light(r, Vector3(x1 - 1.5, RING_Y + 3.0, -88), Color(0.3, 0.75, 1.0), 2.0, 9.0)
 
-static func _console(parent: Node3D, pos: Vector3, side: float, idx: int) -> void:
+static func _console(parent: Node3D, pos: Vector3, yaw: float, idx: int) -> void:
 	var c := Node3D.new()
 	c.name = "Console%d" % idx
 	c.position = pos
-	c.rotation.y = 0.0 if side < 0 else PI  # screens face the room centre line
+	c.rotation.y = yaw  # local +Z (screen side) points along yaw
 	parent.add_child(c)
 	var body := SceneUtil.box_body(Vector3(2.4, 1.0, 0.9), Vector3(0, 0.5, 0), metal, "Desk")
 	c.add_child(body)
@@ -388,14 +376,15 @@ static func _console(parent: Node3D, pos: Vector3, side: float, idx: int) -> voi
 	c.add_child(top)
 	var screen := MeshInstance3D.new()
 	var q := QuadMesh.new()
-	q.size = Vector2(2.0, 0.9)
+	q.size = Vector2(1.5, 0.6)
 	var sm := ShaderMaterial.new()
 	sm.shader = load("res://shaders/holo_screen.gdshader")
 	sm.set_shader_parameter("seed", float(idx))
+	sm.set_shader_parameter("intensity", 0.9)
 	q.material = sm
 	screen.mesh = q
-	screen.position = Vector3(0, 1.75, -0.2)
-	screen.rotation.x = deg_to_rad(-12)
+	screen.position = Vector3(0, 1.32, -0.15)
+	screen.rotation.x = deg_to_rad(-35)
 	c.add_child(screen)
 	_strip(c, Vector3(2.4, 0.05, 0.05), Vector3(0, 0.05, 0.46))
 
@@ -412,7 +401,7 @@ static func _markers(markers: Node3D, shots: Node3D) -> void:
 		"Zone_AtriumRing": Vector3(ATRIUM.x + RAMP_X - 4.4, RING_Y, ATRIUM.z + ring_mid),
 		"Zone_RingSE": Vector3(ATRIUM.x + ring_mid * 0.7, RING_Y, ATRIUM.z + ring_mid * 0.7),
 		"Zone_RingEast": Vector3(ATRIUM.x + ring_mid, RING_Y, ATRIUM.z),
-		"Zone_Control": Vector3(66.0, RING_Y, -88),
+		"Zone_Control": Vector3(63.2, RING_Y, -86.0),
 	}
 	for n in zones:
 		SceneUtil.marker(markers, n, zones[n] + Vector3(0, 0.05, 0))
@@ -425,5 +414,5 @@ static func _markers(markers: Node3D, shots: Node3D) -> void:
 	s1.set_meta("player_pos", Vector3(23.5, F + 0.05, -86.0))
 	var s2 := SceneUtil.marker(shots, "Shot_Atrium", Vector3(42.5, F + 2.0, -85.0), Vector3(52, F + 5.0, -89))
 	s2.set_meta("player_pos", Vector3(45.0, F + 0.05, -86.5))
-	var s3 := SceneUtil.marker(shots, "Shot_Control", Vector3(62.0, RING_Y + 2.4, -86.5), Vector3(72, RING_Y + 1.2, -88.5))
-	s3.set_meta("player_pos", Vector3(65.5, RING_Y + 0.05, -87.0))
+	var s3 := SceneUtil.marker(shots, "Shot_Control", Vector3(62.0, RING_Y + 2.4, -86.0), Vector3(78, RING_Y + 1.5, -88.5))
+	s3.set_meta("player_pos", Vector3(69.0, RING_Y + 0.05, -86.0))

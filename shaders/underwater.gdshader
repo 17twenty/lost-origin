@@ -3,8 +3,8 @@ render_mode unshaded, cull_front;
 // Inside of the "ocean" box seen through aquarium windows: depth gradient,
 // animated caustics and slanting light shafts.
 
-uniform vec3 deep_color : source_color = vec3(0.01, 0.10, 0.24);
-uniform vec3 shallow_color : source_color = vec3(0.10, 0.55, 0.75);
+uniform vec3 deep_color : source_color = vec3(0.01, 0.08, 0.28);
+uniform vec3 shallow_color : source_color = vec3(0.05, 0.42, 0.80);
 uniform float top_y = 4.0;
 uniform float bottom_y = -12.0;
 uniform sampler2D noise_tex : repeat_enable, filter_linear_mipmap;
@@ -29,6 +29,6 @@ void fragment() {
 	col += vec3(0.3, 0.7, 0.9) * smoothstep(0.55, 0.8, shafts) * t * 0.35;
 	// Distance haze: far walls dissolve into deep water so the box reads as open sea.
 	float dist = length(VERTEX);
-	col = mix(col, mix(deep_color, shallow_color, 0.35 + t * 0.3), 1.0 - exp(-dist * 0.07));
+	col = mix(col, mix(deep_color, shallow_color, 0.25 + t * 0.35), 1.0 - exp(-dist * 0.05));
 	ALBEDO = col;
 }
