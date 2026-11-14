@@ -140,6 +140,13 @@ Build a small playable Godot 4.7 (`/Applications/Godot.app`) proof of concept ba
 - [x] **Performance:** `tools/benchmark.gd` (non-headless) visits every `Shot_Ref_*` and reports an average FPS of at least 50 at 1280×720 on this Mac, printed as `BENCH avg_fps=<n>`.
 - [x] **Fidelity review:** all 7 `art/compare/*.png` pairs have been reviewed, with a short per-composition note in `art/compare/NOTES.md` saying what matches and any deliberate differences. Every round-1 and round-2 test passes headless.
 
+### Round 3: Wicker Man detube + spiky hair (PROPOSED — awaiting user approval)
+User request: "detube them, and remember it's spiky wicker hair, rather than a crown or halo."
+- [ ] **Anatomical body, not tubes:** the body silhouette reads as a heroic anatomy in the front, side and back turnarounds: deltoid/bicep/forearm taper, a wrist narrower than the forearm, a thigh→knee pinch→calf bulge→ankle, a V-taper torso with pecs/lats/glutes, and a neck that meets the trapezius. There should be no constant-radius limb segments: in the Blender build report, the limb cross-section radius sampled at 5 points along each upper arm, forearm, thigh and shin varies by ≥ 25%. Hands have separate thumb + finger mass (at least thumb, index, and a fused middle/ring/little), not mitts. Base: **A (recommended)** the Quaternius Universal Base Characters (CC0) superhero-male mesh, conformed to *our* 28-bone rig (keeps our clips, AnimationTree, spring bones, weave-order UV2), credited in `CREDITS.md`; fallback **B** our own lofted per-muscle cross-sections replacing the skin-modifier cylinders.
+- [ ] **Weave follows the muscles:** UV0 is re-unwrapped per muscle group, so strands wrap the forearm/calf spirally, run vertically on the abdomen, and fan across the pecs and deltoids. The sternum chevron is kept. Braided bands, layered pauldrons and boots are re-fitted to the new surface (no floating or sinking shells).
+- [ ] **Spiky wicker hair (not a crown or halo):** stiff, tapered straw/rattan quills in clumps of 3–6 (thin 4-sided tapered tubes, or crossed strand cards with alpha-tapered tips), about 60–100 clumps scattered with a Poisson-disc over the *whole* scalp: crown, temples, sides, back and down to the nape, never along a single ring. Lengths are 6–24 cm (longest at the crown/back, shortest at the temples/nape). They point along the scalp normal with a back-and-up windswept bias, a ±20° random tilt and slight curl, with lighter, thinner tips. Build report checks: the root heights span ≥ 60% of the head height; roots cover ≥ 300° of azimuth *and* have an elevation spread (no ring); no more than 15% of the tips lie within ±3 cm of a common horizontal plane. The turnaround should read as "spiky woven hair" from the front, side and back. The beard stays a fuller, coarser straw mass.
+- [ ] **Proof:** before/after turnarounds in `art/compare/wicker_turnaround.png` + a NOTES entry; tris ≤ 40k; all tests green; `tools/playthrough.gd` completes; desktop FPS ≥ 50, web ≥ 30; redeployed.
+
 ## Verify
 ```sh
 cd /Users/nickglynn/Projects/lost-origin && \
@@ -179,9 +186,13 @@ All tests report PASS (exit code 0), there are at least 6 screenshots, there are
 - [x] Phase 18 — Web export: Compatibility renderer path and quality presets, WebGL2-safe shaders, export preset and HTML shell, templates (user approval), `tools/export_web.sh`, `tools/web_smoke.sh`, size budget, web FPS of at least 30
 - [x] Phase 19 — Deploy: Caddy site block for lost-origin.curiola.com (the user configures Caddy; we verify), reload, local and public curl checks, public smoke test
 - [x] Phase 20 — Fidelity review & performance:
-- [x] Phase 21 — Post-launch polish: octagonal pool water (done) + Wicker Man fidelity round 2 (face, anatomy, braids, pauldrons, finer weave), re-export + redeploy compare all 7 pairs (desktop **and** web renders), write `art/compare/NOTES.md`, desktop FPS at least 50 and web at least 30, full Verify green
+- [x] Phase 21 — Post-launch polish: octagonal pool water (done) + Wicker Man fidelity round 2 (face, anatomy, braids, pauldrons, finer weave), re-export + redeploy
+- [ ] Phase 22 — (proposed) Wicker Man detube: 22a base body (Quaternius CC0 conformed to our rig, or lofted fallback) + hands; 22b muscle-flow weave UVs + refit shells; 22c spiky clumped quill hair + coarser beard; 22d turnaround/NOTES, tests, playthrough, benchmark, redeploy compare all 7 pairs (desktop **and** web renders), write `art/compare/NOTES.md`, desktop FPS at least 50 and web at least 30, full Verify green
 
-### Status summary (written when the goal loop paused, after commit `a854234`)
+### Current state (after commit `5d6d570`, 2026-11-15)
+All acceptance criteria and Phases 1–21 are done; the goal loop was completed after a full Verify. 76/76 tests; desktop benchmark avg 100.7 FPS; web pck 5.0 MB / wasm 37.7 MB, public smoke OK (~56 FPS). `README.md` documents controls, building, tests, the playthrough and deploy. Wicker Man: 23.3k tris, 28 bones, 11 clips. Known gaps: tubular limbs and a mane that reads as a crown/fan; these are Round 3 (proposed). The status summaries below are historical.
+
+### Status summary (written when the goal loop paused, after commit `a854234`; historical)
 **Verified state:** the working tree is clean. Last full run: `./tools/validate.sh` passed 74/74 tests with no SCRIPT/SHADER errors in the log. Phases 1–17 (plus 8b, 13b, 13c) are done.
 - **Unticked criteria:**
   - Web export.

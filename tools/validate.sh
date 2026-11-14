@@ -3,7 +3,11 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 BLENDER=${BLENDER:-/Applications/Blender.app/Contents/MacOS/Blender}
-if [[ "${REBUILD_ASSETS:-0}" == "1" ]]; then "$BLENDER" -b -P tools/blender/build_character.py | grep BUILD_CHARACTER_OK; fi
+if [[ "${REBUILD_ASSETS:-0}" == "1" ]]; then
+  for b in wicker:WICKER plants:PLANTS tree:TREE vines:VINES totem:TOTEM; do
+    "$BLENDER" -b -P "tools/blender/build_${b%%:*}.py" | grep "BUILD_${b##*:}_OK" || { echo "blender build_${b%%:*} failed"; exit 1; }
+  done
+fi
 GODOT=${GODOT:-/Applications/Godot.app/Contents/MacOS/Godot}
 # macOS has no `timeout`; a GDScript parse error leaves a SceneTree script running forever.
 t() { local secs=$1; shift; perl -e 'alarm shift; exec @ARGV' "$secs" "$@"; }
