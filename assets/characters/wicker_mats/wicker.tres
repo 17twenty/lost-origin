@@ -1,0 +1,15 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://shaders/wicker.gdshader" id="1_77mv1"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_77mv1")
+shader_parameter/strand_light = null
+shader_parameter/strand_dark = null
+shader_parameter/gap_color = null
+shader_parameter/density = null
+shader_parameter/herring = null
+shader_parameter/weave_progress = null
+shader_parameter/edge_color = null
+shader_parameter/edge_width = null

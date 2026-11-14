@@ -26,6 +26,11 @@ func _initialize() -> void:
 	player.position = spawn_pos
 	var ch := SceneUtil.marker(shots, "Shot_Character", spawn_pos + Vector3(2.2, 1.6, 3.2), spawn_pos + Vector3(0, 1.0, 0))
 	ch.set_meta("player_pos", spawn_pos)
+	# Turnaround of the player character (compare with wicker-inspo/turn-around-final.png).
+	for view in [["Front", Vector3(0, 1.15, 3.4)], ["Back", Vector3(0, 1.15, -3.4)], ["Side", Vector3(3.4, 1.15, 0)]]:
+		var m := SceneUtil.marker(shots, "Shot_Turn" + view[0], spawn_pos + view[1], spawn_pos + Vector3(0, 1.08, 0))
+		m.set_meta("player_pos", spawn_pos)
+		m.set_meta("fov", 40.0)
 	var err := SceneUtil.save(root, OUT)
 	root.free()
 	print("build_level: saved %s (err=%d)" % [OUT, err])

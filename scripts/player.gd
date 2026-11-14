@@ -1,5 +1,5 @@
 extends CharacterBody3D
-## Wayfinder third-person controller: Halo-weighted movement (momentum, sprint,
+## Wicker Man third-person controller: Halo-weighted movement (momentum, sprint,
 ## buffered jump with coyote time) and an over-the-shoulder SpringArm camera.
 
 @export var run_speed := 5.5
@@ -35,6 +35,7 @@ var look_input := Vector2.ZERO
 
 
 func _ready() -> void:
+	WickerSkin.apply(model)
 	spring_arm.add_excluded_object(get_rid())
 	var ap: AnimationPlayer = anim_tree.get_node(anim_tree.anim_player)
 	for n in LOOPING:
